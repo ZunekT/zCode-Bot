@@ -48,7 +48,7 @@ www.zxcode.pl {
 }
 
 zxcode.pl {
-	encode gzip
+	encode zstd gzip
 	reverse_proxy 127.0.0.1:3001
 }
 EOF

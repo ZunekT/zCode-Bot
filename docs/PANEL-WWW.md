@@ -49,27 +49,38 @@ Przycisk „Zamów bota” prowadzi do `DISCORD_INVITE_URL` (bez niego – do lo
    Skrypt dopisze sekrety do `.env`, zapyta o Client Secret (wpisywany niewidocznie), doda domeny do Caddy
    i uruchomi bota oraz stronę.
 
-## Co jest w panelu
+## Panel (zxcode.pl/panel)
 
-- **Moje boty** – boty, których jesteś właścicielem (`/sdk dodaj … wlasciciel`), plus sam bot zxCode
-  (właściciel serwera albo `OWNER_ID`).
-- **Bot** – serwery, monitoring (uptime, awarie), profil: status, aktywność, nazwa, avatar.
-- **Serwer → Ustawienia** – wszystkie moduły i pola zadeklarowane przez bota. Walidacja po stronie bota,
-  zmiany trafiają na żywo.
-- **Serwer → Uprawnienia komend** – role, które mogą używać danej komendy.
+Wspólny układ: menu boczne (komputer) i wysuwane menu (telefon). Grupa **Administracja** jest widoczna
+tylko dla właściciela (`OWNER_ID` albo właściciel serwera zxCode).
 
-## Administracja (tylko właściciel)
+**Panel klienta**
 
-Zakładka **Administracja** widoczna tylko dla właściciela (`OWNER_ID` albo właściciel serwera zxCode);
-dla innych `/admin` zwraca 404. Wymaga `MATHOST_API_KEY`.
+- **Pulpit** – boty, zlecenia w toku, kwota do zapłaty, stan monitoringu.
+- **Moje boty** (`/panel/boty`) – ustawienia na serwerach, uprawnienia komend, profil, monitoring.
+- **Zlecenia** (`/panel/zlecenia`) – postęp etapami, zadania, wpłaty, proformy (HTML do druku/PDF),
+  dane do przelewu z tytułem do skopiowania, link do ticketu.
 
-- stan VPS: CPU, RAM, dysk, czas działania, sieć, wykresy (godzina / doba / tydzień / miesiąc),
-- ważność, cena, auto-odnawianie, transfer, kopie zapasowe,
-- **Kopia zapasowa** i **Restart VPS** (z potwierdzeniem, wpis w audycie).
+**Administracja**
 
-To samo na Discordzie: `/vps status | restart | kopia` (status – administracja, restart i kopia – właściciel).
-Co 5 min bot sprawdza VPS i ostrzega na kanale alertów obsługi: dysk ≥ 85%, RAM ≥ 90%, CPU ≥ 90% przez
-10 min, wygaśnięcie w ciągu 7 dni bez auto-odnawiania, zawieszenie (każdy alert najwyżej raz na 12 h).
+- **Przegląd** – przychód (miesiąc, wykres 12 mies.), należności, tickety, klienci, zaległe proformy.
+- **Zlecenia** – filtry, wyszukiwanie, nowe zlecenie, edycja, status, wpłaty, zadania, proforma.
+- **Tickety** – lista z czasem oczekiwania klienta, rozmowa z kanału, odpowiedź z panelu (bot wysyła
+  ją na kanał), zamknięcie (transkrypt, archiwum, prośba o ocenę).
+- **Klienci** – zlecenia, wpłaty, należności.
+- **Ewidencja** – uproszczona ewidencja sprzedaży z wpłat (kwartał, dzienne sumy, eksport CSV) i limit
+  przychodu działalności nierejestrowanej (domyślnie 225% płacy minimalnej, edytowalny).
+- **Dziennik** – kto co zmienił (Discord i panel).
+- **Strona i serwer** – tryb „Start wkrótce”, podgląd przed startem, VPS w Mathost.
+
+## Wydajność
+
+- Strona publiczna bez bibliotek animacji: CSS (transform/opacity) i jeden IntersectionObserver;
+  sekcje renderowane na serwerze, JS tylko w małych „wyspach”. Zdjęcia portfolio przez `next/image`
+  (AVIF/WebP). Emotki i grafiki z cache przeglądarki na tydzień.
+- Panel: szkło (`backdrop-filter`) tylko na komputerach, pełne tła na telefonach; szkielety ładowania
+  i pasek postępu przy nawigacji.
+- Pomiar przy CPU ×4 (Pixel 7): menu, przewijanie, lista wyboru – 0 długich klatek; LCP stron 0,16–0,56 s.
 
 ## Bezpieczeństwo
 

@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      // Emotki i grafiki zmieniają się rzadko – przeglądarka trzyma je tydzień.
+      {
+        source: '/:dir(emojis|branding)/:file*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }],
+      },
       {
         source: '/:path*',
         headers: [
