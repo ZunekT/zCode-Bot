@@ -12,7 +12,7 @@ export interface SettingDef {
 
 /** Kanały ustawiane przez /config kanal */
 export const CHANNEL_SETTINGS = {
-  logi: { field: 'logChannelId', label: 'Logi', emoji: 'database' },
+  logi: { field: 'logChannelId', label: 'Logi ticketów', emoji: 'database' },
   audyt: { field: 'auditChannelId', label: 'Audyt (akcje adminów)', emoji: 'shield_check' },
   ogloszenia: { field: 'announcementChannelId', label: 'Ogłoszenia', emoji: 'announcement' },
   changelog: { field: 'changelogChannelId', label: 'Changelog', emoji: 'git_branch' },
@@ -36,6 +36,7 @@ export const ROLE_SETTINGS = {
   klient: { field: 'clientRoleId', label: 'Klient', emoji: 'client_badge' },
   staly_klient: { field: 'loyalClientRoleId', label: 'Stały klient', emoji: 'client_crown' },
   zweryfikowany: { field: 'verifiedRoleId', label: 'Zweryfikowany', emoji: 'verified' },
+  niezweryfikowany: { field: 'unverifiedRoleId', label: 'Niezweryfikowany (opcjonalna)', emoji: 'shield_x' },
 } as const satisfies Record<string, SettingDef>;
 
 export type ChannelSettingKey = keyof typeof CHANNEL_SETTINGS;

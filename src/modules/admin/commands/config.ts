@@ -185,7 +185,7 @@ export const configCommand = defineCommand({
         const role = interaction.options.getRole('rola');
         if (role) {
           const me = interaction.guild.members.me;
-          const managedByBot = ['klient', 'staly_klient', 'zweryfikowany'].includes(key);
+          const managedByBot = ['klient', 'staly_klient', 'zweryfikowany', 'niezweryfikowany'].includes(key);
           if (managedByBot && me && role.position >= me.roles.highest.position) {
             throw new UserError(
               `Rola ${role} jest wyżej niż rola bota – bot nie będzie mógł jej nadawać. Przesuń rolę bota wyżej.`,

@@ -5,3 +5,4 @@ src/generated/
 *.log
 backups/
 transcripts/
+dump.rdb

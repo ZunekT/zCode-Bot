@@ -7,7 +7,7 @@
 Bot Discord dla serwera **zxCode** (studio programowania botów): tickety, zlecenia, ręczne płatności, ogłoszenia, changelog, portfolio, opinie, moderacja i więcej.
 Interfejs zbudowany na **Components v2**, z emotkami z paczki zxCode wgranymi jako **Application Emojis**.
 
-> Status: rdzeń, `/config`, `/serwis`, **tickety** i **FAQ**. Kolejne moduły dochodzą etapami, patrz [Plan](#plan).
+> Status: rdzeń, `/config`, `/serwis`, **tickety**, **FAQ**, **logi** i **weryfikacja**. Kolejne moduły dochodzą etapami, patrz [Plan](#plan).
 
 ## Stack
 
@@ -82,6 +82,40 @@ Komendy rejestrują się automatycznie na serwerze z `GUILD_ID` przy każdym sta
 | `/notatka dodaj/lista`             | obsługa        | notatki wewnętrzne (klient ich nie widzi)                        |
 | `/faq pokaz/lista`                 | wszyscy        | baza pytań (obsługa może wysłać publicznie)                      |
 | `/faq dodaj/edytuj/usun`           | obsługa        | artykuły ze słowami kluczowymi                                   |
+
+## Logi
+
+`/logi konfiguracja` otwiera panel. W select menu wybierasz typ logów (albo „Wszystkie typy naraz”), a potem kanał. Drugie menu ustawia kanały i kategorie pomijane w logach. Typ bez kanału jest wyłączony. `/logi test` wysyła testowy wpis na każdy ustawiony kanał.
+
+| Typ            | Co trafia                                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------------------------ |
+| Wiadomości     | usunięte (z treścią i załącznikami), edytowane (przed ➜ po), masowe czyszczenie (plik .txt), przypięcia      |
+| Członkowie     | wejścia (⚠️ nowe konta < 7 dni), wyjścia (role, staż), pseudonimy, nadane/odebrane role, boosty, weryfikacja |
+| Moderacja      | bany, odbany, kicki, wyciszenia (timeout), czystki, AutoMod, alerty rajdu                                    |
+| Kanały głosowe | dołączenia, wyjścia, przeniesienia, rozłączenia przez moderację                                              |
+| Kanały         | tworzenie, usuwanie, zmiany (nazwa, temat, tryb powolny…), uprawnienia, wątki                                |
+| Role           | tworzenie, usuwanie, zmiany (uprawnienia po polsku jako ➕/➖, kolor, nazwa)                                 |
+| Serwer         | ustawienia, zaproszenia, webhooki, emotki, naklejki, dodane boty                                             |
+
+Wykonawcę i powód akcji bot bierze z dziennika zdarzeń Discorda. Własne akcje bota (kanały ticketów, rola po weryfikacji) są pomijane, bo bot loguje je sam.
+Wiadomości wysłane przed uruchomieniem bota nie są w pamięci, więc przy ich usunięciu log pokaże „treść niedostępna”.
+
+## Weryfikacja
+
+**Konfiguracja:**
+
+1. Utwórz rolę **Zweryfikowany** i ustaw ją: `/config rola typ:Zweryfikowany`. Opcjonalnie dodaj rolę **Niezweryfikowany**, nadawaną automatycznie przy wejściu.
+2. Uprawnienia kanałów: `@everyone` widzi tylko kanał weryfikacji, a rola Zweryfikowany widzi resztę serwera.
+3. `/weryfikacja ustawienia tryb:Captcha min_wiek_konta:3 antyrajd:true antyrajd_limit:10 antyrajd_sekundy:30`
+4. `/weryfikacja panel kanal:#weryfikacja regulamin:#regulamin`
+
+**Jak to działa:**
+
+- **Captcha:** obrazek z 5-znakowym kodem (generowany w czystym JS, działa też na Termuxie) i okienko do wpisania kodu. Masz 3 próby i każda błędna daje nowy obrazek. Po 3 błędach następuje 10 min przerwy. Kod jest ważny 5 min.
+- **Jedno kliknięcie:** alternatywny tryb bez captchy.
+- **Wiek konta:** zbyt nowe konta dostają informację, kiedy będą mogły się zweryfikować. Próba trafia do logów.
+- **Ochrona przed rajdem:** gdy w krótkim czasie wejdzie dużo osób (np. 10 w 30 s), weryfikacja zostaje wstrzymana. Obsługa dostaje alert z przyciskiem **Odblokuj weryfikację**. Ręcznie: `/weryfikacja blokada`.
+- `/weryfikacja zweryfikuj @osoba` to ręczna weryfikacja przez obsługę. `/weryfikacja statystyki` pokazuje dziś, 7 i 30 dni.
 
 ## Produkcja (VPS)
 
@@ -188,7 +222,7 @@ Na koniec dopisz moduł do `src/modules/index.ts`. Router sam sprawdzi, czy modu
 
 ## Plan
 
-1. **MVP:** ✅ rdzeń, UI, baza, `/config`, `/serwis`, tickety, FAQ · ⏳ logi, weryfikacja
+1. **MVP:** ✅ rdzeń, UI, baza, `/config`, `/serwis`, tickety, FAQ, logi, weryfikacja
 2. **Biznes:** zlecenia `ZX-xxxx`, płatności ręczne i proforma, cennik z kalkulatorem, portfolio, opinie, role klienta
 3. **Automatyzacja:** changelog z GitHuba, monitoring botów klientów, planowane ogłoszenia, statystyki, przypomnienia
 4. **Extra:** user-install, snippety, giveaway, propozycje, partnerstwa, Scheduled Events

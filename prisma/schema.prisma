@@ -41,6 +41,19 @@ model GuildConfig {
   loyalClientRoleId String?
   verifiedRoleId    String?
 
+  // Logi serwera: typ logu -> ID kanału (np. { "messages": "123" }) i kanały/kategorie pomijane w logach
+  logChannels        Json     @default("{}")
+  logIgnoredChannels String[] @default([])
+
+  // Weryfikacja
+  unverifiedRoleId              String?
+  verificationMode              String  @default("captcha")
+  verificationMinAccountAgeDays Int     @default(0)
+  verificationLockdown          Boolean @default(false)
+  antiRaidEnabled               Boolean @default(true)
+  antiRaidJoins                 Int     @default(10)
+  antiRaidSeconds               Int     @default(30)
+
   // Moduły włączone/wyłączone (nazwa modułu -> bool)
   modules Json @default("{}")
 
@@ -461,6 +474,26 @@ model Snippet {
   title     String
   code      String
   createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────── Weryfikacja ───────────────────────────────
+
+enum VerificationResult {
+  PASSED
+  MANUAL
+  FAILED
+  BLOCKED_AGE
+  BLOCKED_LOCKDOWN
+}
+
+model VerificationEvent {
+  id        Int                @id @default(autoincrement())
+  userId    String
+  result    VerificationResult
+  createdAt DateTime           @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
 }
 
 // ─────────────────────────────── Audyt ───────────────────────────────

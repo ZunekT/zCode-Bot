@@ -18,6 +18,8 @@ export class ZxClient extends Client {
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildModeration,
         GatewayIntentBits.GuildScheduledEvents,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildInvites,
         GatewayIntentBits.DirectMessages,
       ],
       partials: [Partials.Channel, Partials.Message, Partials.GuildMember],
