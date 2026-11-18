@@ -193,12 +193,19 @@ export function statusBoard(bots: MonitoredBot[]): Panel {
     return [b.online ? '+' : '-', cols.filter(Boolean).join('  ').trimEnd()];
   });
   panel.text(diffBlock(rows));
-  return panel.footer(`Sprawdzane co minutę · aktualizacja ${discordTime(new Date(), 'T')}`);
+  return panel.footer(
+    `Sprawdzane co minutę · tablica odświeżana co 10 min · ostatnio ${discordTime(new Date(), 'T')}`,
+  );
 }
 
-let runs = 0;
+/** Co ile odświeżać tablicę statusu, gdy nic się nie zmienia. */
+export const BOARD_REFRESH_MS = 10 * 60_000;
+let lastBoardRefresh = 0;
 
-/** Zadanie: sprawdza wszystkie boty, a tablicę statusu odświeża przy zmianie stanu albo co 5 minut. */
+/**
+ * Zadanie (co minutę): sprawdza wszystkie boty – alerty o awarii przychodzą od razu.
+ * Tablicę statusu odświeża co 10 minut, a przy zmianie stanu (awaria / powrót) natychmiast.
+ */
 export async function runChecks(client: ZxClient): Promise<void> {
   const bots = await prisma.monitoredBot.findMany({ orderBy: { name: 'asc' } });
   let changed = false;
@@ -209,8 +216,10 @@ export async function runChecks(client: ZxClient): Promise<void> {
       log.error(`Błąd sprawdzania ${bot.name}`, err);
     }
   }
-  runs++;
-  if (changed || runs % 5 === 1) await refreshBoard(client);
+  if (changed || Date.now() - lastBoardRefresh >= BOARD_REFRESH_MS) {
+    lastBoardRefresh = Date.now();
+    await refreshBoard(client);
+  }
 }
 
 export async function refreshBoard(client: ZxClient): Promise<void> {
