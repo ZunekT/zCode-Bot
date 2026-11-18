@@ -9,6 +9,7 @@ import { card, codeBlock } from '../../ui/components/card.js';
 import { discordTime, truncate } from '../../utils/format.js';
 import { sdkHub } from './hub.js';
 import { createBot, deleteBot, regenerateKey } from './service.js';
+import { selfBotId } from './self.js';
 
 const SDK_URL = () => env.PUBLIC_URL?.replace(/\/$/, '') ?? `http://ADRES-SERWERA:${env.HTTP_PORT}`;
 
@@ -112,6 +113,9 @@ const sdkCommand = defineCommand({
     }
 
     const bot = await findBot(interaction.options.getString('bot', true));
+    if (bot.id === selfBotId()) {
+      throw new UserError('To jest sam bot zxCode – łączy się z panelem automatycznie, bez klucza.');
+    }
     if (sub === 'klucz') {
       const key = await regenerateKey(bot.id);
       await audit(client, { action: 'sdk.key', actorId, summary: `Nowy klucz dla bota SDK **${bot.name}** (#${bot.id})` });

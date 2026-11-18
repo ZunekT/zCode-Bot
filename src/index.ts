@@ -11,6 +11,7 @@ import { startScheduler, stopScheduler } from './core/scheduler.js';
 import { startHttpServer } from './http/server.js';
 import { startInternalServer } from './http/internal.js';
 import { modules } from './modules/index.js';
+import { startSelfSdk } from './modules/sdk/self.js';
 import { loadApplicationEmojis } from './ui/emojis.js';
 import { logger } from './utils/logger.js';
 
@@ -37,6 +38,7 @@ async function main() {
       await module.onReady?.(client).catch((err) => logger.error(`onReady modułu ${module.name}`, err));
     }
     startScheduler(client, modules);
+    await startSelfSdk(client, modules).catch((err) => logger.error('Panel ustawień bota (SDK)', err));
     logger.info('Bot gotowy');
   });
 

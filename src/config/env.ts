@@ -22,6 +22,8 @@ const schema = z.object({
   /** Wewnętrzne API dla strony zxcode.pl (tylko sieć Dockera). Bez sekretu API się nie uruchamia. */
   INTERNAL_API_SECRET: z.string().min(32, 'INTERNAL_API_SECRET musi mieć min. 32 znaki').optional(),
   INTERNAL_PORT: z.coerce.number().int().positive().default(3100),
+  /** Kto edytuje ustawienia bota zxCode w panelu WWW (domyślnie właściciel serwera). */
+  OWNER_ID: z.string().regex(/^\d{17,20}$/, 'OWNER_ID musi być ID użytkownika Discord').optional(),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });

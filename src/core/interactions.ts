@@ -7,6 +7,7 @@ import { createLogger } from '../utils/logger.js';
 import { getConfig, isModuleEnabled } from './config-service.js';
 import { handleInteractionError } from './errors.js';
 import { accessLabel, hasAccess, isAdmin } from './permissions.js';
+import { panelCommandRoles } from '../modules/sdk/self.js';
 import type { AccessLevel, BotModule, ComponentHandler, Context, SlashCommand } from './types.js';
 
 const log = createLogger('interactions');
@@ -41,6 +42,7 @@ async function guard(
   access: AccessLevel | undefined,
   allowInMaintenance: boolean | undefined,
   allowDM = false,
+  commandName?: string,
 ): Promise<Context | null> {
   // Interakcje z DM (np. ocena ticketu) – tylko moduł i tryb serwisowy, bez uprawnień serwerowych.
   if (allowDM && !interaction.inGuild()) {
@@ -82,12 +84,19 @@ async function guard(
     return null;
   }
 
-  if (!hasAccess(member, config, access)) {
+  // Uprawnienia ustawione w panelu WWW zastępują domyślne dla tej komendy.
+  const panelRoles = commandName ? panelCommandRoles(commandName) : null;
+  const allowed = panelRoles
+    ? admin || panelRoles.some((id) => member.roles.cache.has(id))
+    : hasAccess(member, config, access);
+  if (!allowed) {
     if (interaction.isRepliable()) {
       await interaction.reply(
         failure(
           'Brak uprawnień',
-          `Ta akcja jest dostępna tylko dla: **${accessLabel[access ?? 'everyone']}**.`,
+          panelRoles
+            ? `Ta komenda jest dostępna tylko dla ról: ${panelRoles.map((id) => `<@&${id}>`).join(', ')}.`
+            : `Ta akcja jest dostępna tylko dla: **${accessLabel[access ?? 'everyone']}**.`,
         ),
       );
     }
@@ -119,7 +128,15 @@ export async function routeInteraction(client: ZxClient, interaction: Interactio
     const { command, module } = entry;
     const where = `/${interaction.commandName}`;
     try {
-      const ctx = await guard(interaction, client, module, command.access, command.allowInMaintenance);
+      const ctx = await guard(
+        interaction,
+        client,
+        module,
+        command.access,
+        command.allowInMaintenance,
+        false,
+        interaction.commandName,
+      );
       if (!ctx) return;
 
       if (command.cooldown) {

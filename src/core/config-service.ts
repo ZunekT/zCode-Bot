@@ -41,7 +41,23 @@ export async function updateConfig(
     update: data,
   });
   await redis.del(RedisKeys.guildConfig(guildId)).catch(() => undefined);
+  for (const fn of updateListeners) {
+    try {
+      fn(config);
+    } catch (err) {
+      log.warn('Błąd słuchacza zmian configu', err);
+    }
+  }
   return config;
+}
+
+type UpdateListener = (config: GuildConfig) => void;
+const updateListeners = new Set<UpdateListener>();
+
+/** Powiadomienie po każdej zmianie configu (np. synchronizacja z panelem WWW). */
+export function onConfigUpdated(fn: UpdateListener): () => void {
+  updateListeners.add(fn);
+  return () => updateListeners.delete(fn);
 }
 
 /** Czy moduł jest włączony (domyślnie tak). */
