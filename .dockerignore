@@ -3,3 +3,7 @@ dist
 .env
 .git
 src/generated
+**/node_modules
+web/.next
+web/public/emojis
+web/public/branding

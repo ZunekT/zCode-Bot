@@ -207,7 +207,7 @@ class ZxCode extends EventEmitter {
 
   /**
    * Zgłasza ustawienia od strony bota (np. zmienione komendą na Discordzie), żeby panel je pokazał.
-   * values: { moduł: { pole: wartość } } – moduły podmieniane w całości.
+   * values: { moduł: { pole: wartość } } – zmieniane tylko podane pola, null czyści pole.
    */
   async set(guildId, values) {
     const res = await this._request('PUT', `/sdk/v1/config/${guildId}`, { values });

@@ -181,7 +181,7 @@ export async function guildData(botId: number, guildId: string): Promise<GuildDa
 
 /**
  * Zapis ustawień serwera (z panelu albo od samego bota).
- * Moduły podmieniane w całości, pozostałe zostają. Bot dostaje zmianę na żywo.
+ * Pola scalane (niewysłane zostają). Bot dostaje zmianę na żywo.
  */
 export async function setConfig(
   botId: number,
@@ -202,7 +202,10 @@ export async function setConfig(
   if (input.values !== undefined) {
     const { values, errors } = validateValues(schemaOf(bot), input.values, guild);
     if (errors.length) throw new ValidationFailed(errors);
-    data.values = json({ ...((current?.values as ConfigValues | null) ?? {}), ...values });
+    // Scalanie pole po polu: zapis części modułu nie kasuje pozostałych pól (null czyści pole).
+    const merged: ConfigValues = { ...((current?.values as ConfigValues | null) ?? {}) };
+    for (const [mod, fields] of Object.entries(values)) merged[mod] = { ...(merged[mod] ?? {}), ...fields };
+    data.values = json(merged);
   }
   if (input.permissions !== undefined) {
     const { permissions, errors } = validatePermissions(input.permissions, commandsOf(bot), guild);
