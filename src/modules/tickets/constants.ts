@@ -78,3 +78,50 @@ export const LIMITS = {
 };
 
 export const CHECK_INTERVAL_MS = 5 * 60 * 1000;
+
+/** Akcje w select menu panelu ticketu. staff = tylko obsługa. */
+export const CONTROL_ACTIONS = {
+  claim: { label: 'Przejmij ticket', description: 'Zajmij się tą sprawą', emoji: 'user_crown', staff: true },
+  unclaim: {
+    label: 'Zwolnij ticket',
+    description: 'Oddaj sprawę innej osobie z obsługi',
+    emoji: 'user_remove',
+    staff: true,
+  },
+  priority: {
+    label: 'Zmień priorytet',
+    description: 'Niski, normalny, wysoki lub pilny',
+    emoji: 'lightning',
+    staff: true,
+  },
+  add: { label: 'Dodaj osobę', description: 'Daj komuś dostęp do ticketu', emoji: 'user_add', staff: true },
+  remove: {
+    label: 'Usuń osobę',
+    description: 'Odbierz dostęp dodanej osobie',
+    emoji: 'user_remove',
+    staff: true,
+  },
+  note: {
+    label: 'Dodaj notatkę',
+    description: 'Widoczna tylko dla obsługi',
+    emoji: 'documentation',
+    staff: true,
+  },
+  remind: {
+    label: 'Przypomnij klientowi',
+    description: 'Ping z prośbą o odpowiedź',
+    emoji: 'notification',
+    staff: true,
+  },
+  close: {
+    label: 'Zamknij ticket',
+    description: 'Transkrypt, archiwum i prośba o ocenę',
+    emoji: 'lock',
+    staff: false,
+  },
+} as const satisfies Record<string, { label: string; description: string; emoji: EmojiName; staff: boolean }>;
+
+export type ControlAction = keyof typeof CONTROL_ACTIONS;
+
+/** Jak często można przypominać klientowi (s). */
+export const REMIND_COOLDOWN = 30 * 60;

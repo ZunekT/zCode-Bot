@@ -15,6 +15,7 @@ export const ticketChannels = {
   set: (channelId: string, ticketId: number) => activeChannels.set(channelId, ticketId),
   delete: (channelId: string) => activeChannels.delete(channelId),
   get: (channelId: string) => activeChannels.get(channelId),
+  ids: () => [...activeChannels.keys()],
   async load(): Promise<number> {
     const rows = await prisma.ticket.findMany({
       where: { status: { in: ACTIVE_STATUSES }, channelId: { not: null } },

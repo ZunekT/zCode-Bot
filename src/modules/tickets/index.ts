@@ -9,6 +9,7 @@ import { ticketComponents } from './components.js';
 import { ticketJobs } from './jobs.js';
 import { trackTicketMessage } from './services/activity.js';
 import { onTicketChannelDeleted } from './services/close.js';
+import { refreshControlPanel } from './services/control.js';
 import { ticketChannels } from './services/store.js';
 
 const log = createLogger('tickets');
@@ -48,6 +49,10 @@ export const ticketsModule = defineModule({
       }
     }
     const active = await ticketChannels.load();
+
+    // Odśwież panele aktywnych ticketów (np. po aktualizacji wyglądu bota).
+    const tickets = await prisma.ticket.findMany({ where: { channelId: { in: ticketChannels.ids() } } });
+    for (const t of tickets) await refreshControlPanel(client, t);
     log.info(`Aktywne tickety: ${active}${orphaned ? `, zamknięto ${orphaned} z usuniętym kanałem` : ''}`);
   },
 });

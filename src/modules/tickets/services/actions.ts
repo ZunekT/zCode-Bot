@@ -4,24 +4,26 @@ import type { ZxClient } from '../../../client.js';
 import { prisma } from '../../../db/prisma.js';
 import { UserError } from '../../../core/errors.js';
 import { isAdmin, isStaff } from '../../../core/permissions.js';
-import { Panel } from '../../../ui/builders/container.js';
+import type { Panel } from '../../../ui/builders/container.js';
 import { v2Message } from '../../../ui/builders/payload.js';
-import type { ToneName } from '../../../ui/theme.js';
-import { withLock } from '../../../utils/locks.js';
-import { PRIORITIES } from '../constants.js';
+import { card, change } from '../../../ui/components/card.js';
+import { checkCooldown, withLock } from '../../../utils/locks.js';
+import { PRIORITIES, REMIND_COOLDOWN, STATUS_LABELS } from '../constants.js';
 import { ticketNo } from '../panels.js';
 import { getTicketTextChannel, logTicket } from './channel.js';
 import { isActive } from './store.js';
 
-/** Krótka informacja w kanale ticketu („X przejął ticket”). */
+const avatar = (m: GuildMember) => m.displayAvatarURL({ size: 128 });
+const prio = (p: TicketPriority) => `${PRIORITIES[p].icon} ${PRIORITIES[p].label}`;
+
+/** Karta zdarzenia w kanale ticketu. */
 export async function channelNotice(
   channel: TextChannel | null,
-  text: string,
-  tone: ToneName = 'info',
+  panel: Panel,
   mentionUsers: string[] = [],
 ): Promise<void> {
   await channel
-    ?.send({ ...v2Message(new Panel({ tone }).text(text)), allowedMentions: { users: mentionUsers } })
+    ?.send({ ...v2Message(panel), allowedMentions: { users: mentionUsers } })
     .catch(() => undefined);
 }
 
@@ -59,7 +61,20 @@ export async function toggleClaim(
       });
       await channelNotice(
         channel,
-        `👋 <@${member.id}> zwolnił(a) ticket – czeka na kolejną osobę z obsługi.`,
+        card({
+          tone: 'warning',
+          emoji: 'user_remove',
+          title: 'Ticket zwolniony',
+          description: `<@${member.id}> oddał(a) sprawę – zajmie się nią kolejna osoba z obsługi.`,
+          thumbnail: avatar(member),
+          fields: [
+            {
+              emoji: 'notification',
+              label: 'Status',
+              value: change(STATUS_LABELS[ticket.status], STATUS_LABELS.OPEN),
+            },
+          ],
+        }),
       );
       return updated;
     }
@@ -70,14 +85,35 @@ export async function toggleClaim(
     });
     await channelNotice(
       channel,
-      `🙋 <@${member.id}> zajmie się Twoją sprawą, <@${ticket.userId}>!`,
-      'success',
+      card({
+        tone: 'success',
+        emoji: 'user_crown',
+        title: 'Ticket przejęty',
+        description: `<@${ticket.userId}>, Twoją sprawą zajmie się **${member.displayName}** (<@${member.id}>).`,
+        thumbnail: avatar(member),
+        fields: [
+          {
+            emoji: 'notification',
+            label: 'Status',
+            value: change(STATUS_LABELS[ticket.status], STATUS_LABELS.CLAIMED),
+          },
+        ],
+      }),
       [ticket.userId],
     );
     await logTicket(
       client,
       config,
-      new Panel({ tone: 'info' }).text(`🙋 <@${member.id}> przejął ticket ${ticketNo(ticketId)}`),
+      card({
+        tone: 'info',
+        emoji: 'user_crown',
+        title: `Ticket ${ticketNo(ticketId)} przejęty`,
+        thumbnail: avatar(member),
+        fields: [
+          { emoji: 'user_crown', label: 'Obsługa', value: `<@${member.id}>` },
+          { emoji: 'ticket', label: 'Kanał', value: `<#${ticket.channelId}>` },
+        ],
+      }),
     );
     return updated;
   });
@@ -87,17 +123,26 @@ export async function setPriority(
   client: ZxClient,
   ticketId: number,
   priority: TicketPriority,
-  actorId: string,
+  actor: GuildMember,
 ): Promise<Ticket> {
   return locked(ticketId, async () => {
     const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
     assertActive(ticket);
     if (ticket.priority === priority) return ticket;
     const updated = await prisma.ticket.update({ where: { id: ticketId }, data: { priority } });
-    const p = PRIORITIES[priority];
+    const up = Object.keys(PRIORITIES).indexOf(priority) > Object.keys(PRIORITIES).indexOf(ticket.priority);
     await channelNotice(
       await getTicketTextChannel(client, ticket),
-      `${p.icon} <@${actorId}> ustawił(a) priorytet: **${p.label}**`,
+      card({
+        tone: priority === 'URGENT' ? 'error' : up ? 'warning' : 'info',
+        emoji: 'lightning',
+        title: up ? 'Priorytet podniesiony' : 'Priorytet obniżony',
+        thumbnail: avatar(actor),
+        fields: [
+          { emoji: 'lightning', label: 'Priorytet', value: change(prio(ticket.priority), prio(priority)) },
+          { emoji: 'user', label: 'Zmienił(a)', value: `<@${actor.id}>` },
+        ],
+      }),
     );
     return updated;
   });
@@ -107,7 +152,7 @@ export async function addParticipants(
   client: ZxClient,
   ticketId: number,
   members: GuildMember[],
-  actorId: string,
+  actor: GuildMember,
   config: GuildConfig,
 ): Promise<string[]> {
   return locked(ticketId, async () => {
@@ -144,8 +189,14 @@ export async function addParticipants(
     const ids = toAdd.map((m) => m.id);
     await channelNotice(
       channel,
-      `➕ <@${actorId}> dodał(a) do ticketu: ${ids.map((id) => `<@${id}>`).join(', ')}`,
-      'info',
+      card({
+        tone: 'info',
+        emoji: 'user_add',
+        title: ids.length > 1 ? 'Nowe osoby w tickecie' : 'Nowa osoba w tickecie',
+        description: `${ids.map((id) => `<@${id}>`).join(', ')} – witaj! Masz teraz dostęp do tej rozmowy.`,
+        thumbnail: ids.length === 1 ? avatar(toAdd[0]!) : undefined,
+        fields: [{ emoji: 'user', label: 'Dodał(a)', value: `<@${actor.id}>` }],
+      }),
       ids,
     );
     return ids;
@@ -156,7 +207,7 @@ export async function removeParticipant(
   client: ZxClient,
   ticketId: number,
   userId: string,
-  actorId: string,
+  actor: GuildMember,
 ): Promise<void> {
   await locked(ticketId, async () => {
     const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
@@ -170,8 +221,44 @@ export async function removeParticipant(
       where: { id: ticketId },
       data: { participants: ticket.participants.filter((id) => id !== userId) },
     });
-    await channelNotice(channel, `➖ <@${actorId}> usunął(a) z ticketu <@${userId}>`);
+    await channelNotice(
+      channel,
+      card({
+        tone: 'neutral',
+        emoji: 'user_remove',
+        title: 'Osoba usunięta z ticketu',
+        description: `<@${userId}> nie ma już dostępu do tej rozmowy.`,
+        fields: [{ emoji: 'user', label: 'Usunął(a)', value: `<@${actor.id}>` }],
+      }),
+    );
   });
+}
+
+/** Ping klienta z prośbą o odpowiedź (z cooldownem na ticket). */
+export async function remindClient(client: ZxClient, ticketId: number, actor: GuildMember): Promise<void> {
+  const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
+  assertActive(ticket);
+  const left = await checkCooldown('ticket:remind', String(ticketId), REMIND_COOLDOWN);
+  if (left > 0)
+    throw new UserError(
+      `Przypomnienie można wysłać ponownie za **${Math.ceil(left / 60)} min**.`,
+      'Za wcześnie',
+    );
+  await channelNotice(
+    await getTicketTextChannel(client, ticket),
+    card({
+      tone: 'warning',
+      emoji: 'notification',
+      title: 'Czekamy na Twoją odpowiedź',
+      description: `<@${ticket.userId}>, **${actor.displayName}** prosi o odpowiedź w tym tickecie. Daj znać, czy sprawa jest nadal aktualna!`,
+      thumbnail: avatar(actor),
+    }),
+    [ticket.userId],
+  );
+}
+
+export async function addNote(ticketId: number, authorId: string, content: string): Promise<void> {
+  await prisma.ticketNote.create({ data: { ticketId, authorId, content: content.slice(0, 1000) } });
 }
 
 /** Klient lub obsługa potwierdza, że sprawa jest aktualna – zeruje ostrzeżenie o auto-zamknięciu. */

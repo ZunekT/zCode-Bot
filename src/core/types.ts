@@ -81,13 +81,18 @@ export interface DmButtonHandler extends Omit<ComponentBase, 'access'> {
   run(interaction: ButtonInteraction, args: string[], ctx: Context): Promise<unknown>;
 }
 
+export interface DmSelectHandler extends Omit<ComponentBase, 'access'> {
+  type: 'dmSelect';
+  run(interaction: AnySelectMenuInteraction, args: string[], ctx: Context): Promise<unknown>;
+}
+
 export interface DmModalHandler extends Omit<ComponentBase, 'access'> {
   type: 'dmModal';
   run(interaction: ModalSubmitInteraction, args: string[], ctx: Context): Promise<unknown>;
 }
 
 export type ComponentHandler =
-  ButtonHandler | SelectHandler | ModalHandler | DmButtonHandler | DmModalHandler;
+  ButtonHandler | SelectHandler | ModalHandler | DmButtonHandler | DmSelectHandler | DmModalHandler;
 
 export interface EventHandler<K extends keyof ClientEvents = keyof ClientEvents> {
   event: K;

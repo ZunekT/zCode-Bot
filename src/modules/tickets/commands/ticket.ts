@@ -8,6 +8,7 @@ import { defineCommand } from '../../../core/types.js';
 import { bannerFile } from '../../../ui/assets.js';
 import { Panel } from '../../../ui/builders/container.js';
 import { v2, v2Message } from '../../../ui/builders/payload.js';
+import { card } from '../../../ui/components/card.js';
 import { success } from '../../../ui/components/notice.js';
 import { e } from '../../../ui/emojis.js';
 import { discordTime } from '../../../utils/format.js';
@@ -97,6 +98,7 @@ export const ticketCommand = defineCommand({
           interaction.options.getChannel('kanal', false, [ChannelType.GuildText]) ?? interaction.channel;
         if (!target?.isSendable()) throw new UserError('Nie mogę pisać na tym kanale.');
         const msg = await target.send(v2Message(publicPanel(), { files: [bannerFile()] }));
+        // Panel z select menu – handler `ticket:category` (components.ts).
         await audit(client, {
           action: 'tickets.panel',
           actorId: member.id,
@@ -112,10 +114,20 @@ export const ticketCommand = defineCommand({
         const reason = interaction.options.getString('powod');
         if (!reason) return interaction.showModal(closeReasonModal(ticket.id));
         await interaction.deferReply({ flags: ['Ephemeral'] });
-        await closeTicket(client, ticket.id, { closedBy: member.id, reason });
+        const closed = await closeTicket(client, ticket.id, { closedBy: member.id, reason });
         return interaction
           .editReply(
-            v2Message(new Panel({ tone: 'success' }).text(`🔒 Ticket ${ticketNo(ticket.id)} zamknięty.`)),
+            v2Message(
+              card({
+                tone: 'success',
+                emoji: 'lock',
+                title: `Ticket ${ticketNo(ticket.id)} zamknięty`,
+                description: closed.archived
+                  ? 'Kanał przeniesiony do archiwum.'
+                  : 'Kanał zostanie usunięty za chwilę.',
+                timestamp: false,
+              }),
+            ),
           )
           .catch(() => undefined);
       }
@@ -125,7 +137,7 @@ export const ticketCommand = defineCommand({
         const ticket = await requireTicketChannel(interaction.channelId);
         const target = interaction.options.getMember('uzytkownik');
         if (!target) throw new UserError('Tej osoby nie ma na serwerze.');
-        await addParticipants(client, ticket.id, [target], member.id, config);
+        await addParticipants(client, ticket.id, [target], member, config);
         return interaction.reply(success('Dodano', `<@${target.id}> ma teraz dostęp do ticketu.`));
       }
 
@@ -133,7 +145,7 @@ export const ticketCommand = defineCommand({
         requireStaffMember(member, config);
         const ticket = await requireTicketChannel(interaction.channelId);
         const user = interaction.options.getUser('uzytkownik', true);
-        await removeParticipant(client, ticket.id, user.id, member.id);
+        await removeParticipant(client, ticket.id, user.id, member);
         return interaction.reply(success('Usunięto', `<@${user.id}> nie ma już dostępu do ticketu.`));
       }
 
@@ -141,7 +153,7 @@ export const ticketCommand = defineCommand({
         requireStaffMember(member, config);
         const ticket = await requireTicketChannel(interaction.channelId);
         const priority = interaction.options.getString('poziom', true) as TicketPriority;
-        const updated = await setPriority(client, ticket.id, priority, member.id);
+        const updated = await setPriority(client, ticket.id, priority, member);
         await refreshControlPanel(client, updated);
         return interaction.reply(
           success('Zapisano', `Priorytet: ${PRIORITIES[priority].icon} **${PRIORITIES[priority].label}**`),

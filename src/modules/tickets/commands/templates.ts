@@ -6,6 +6,7 @@ import { defineCommand, defineComponent } from '../../../core/types.js';
 import { Panel } from '../../../ui/builders/container.js';
 import { Form } from '../../../ui/builders/modal.js';
 import { v2, v2Message } from '../../../ui/builders/payload.js';
+import { card } from '../../../ui/components/card.js';
 import { success } from '../../../ui/components/notice.js';
 import { truncate } from '../../../utils/format.js';
 import { ticketNo } from '../panels.js';
@@ -155,10 +156,14 @@ export const replyCommand = defineCommand({
         .replaceAll('{obsluga}', `<@${interaction.user.id}>`)
         .replaceAll('{ticket}', ticket ? ticketNo(ticket.id) : '');
 
-    const panel = new Panel({ tone: 'brand' })
-      .title('support', fill(template.title), 3)
-      .text(fill(template.content))
-      .footer(`${interaction.member.displayName} • zxCode Support`);
+    const panel = card({
+      tone: 'brand',
+      emoji: 'support',
+      title: fill(template.title),
+      description: fill(template.content),
+      thumbnail: interaction.member.displayAvatarURL({ size: 128 }),
+      footer: `${interaction.member.displayName} • zxCode Support`,
+    });
 
     await interaction.channel.send({
       ...v2Message(panel),

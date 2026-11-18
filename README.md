@@ -56,13 +56,15 @@ Komendy rejestrują się automatycznie na serwerze z `GUILD_ID` przy każdym sta
 
 **Jak to działa:**
 
-- Panel ma 5 kategorii (zamówienie, wsparcie, współpraca, pytanie, reklamacja). Każda otwiera własny formularz (modal v2 z selectami i uploadem plików).
-- Ticket to kanał w kategorii ticketów z panelem sterowania: **Przejmij / Zwolnij**, **Priorytet**, **Dodaj osobę**, **Zamknij**.
+- Panel ma select menu z 5 kategoriami (zamówienie, wsparcie, współpraca, pytanie, reklamacja). Każda otwiera własny formularz (modal v2 z selectami i uploadem plików).
+- Ticket to kanał w kategorii ticketów z panelem sterowania i menu **⚙️ Zarządzaj ticketem**: przejmij/zwolnij, priorytet, dodaj/usuń osobę, notatka, przypomnij klientowi, zamknij. Akcje obsługi są zablokowane dla klienta.
+- Po każdym wyborze bot odświeża panel, więc tę samą opcję można wybrać ponownie.
+- Wszystkie komunikaty (przejęcie, zmiana priorytetu, opinie, alerty, logi) to jednolite karty z avatarem i zmianą „przed ➜ po”.
 - Limity: 1 ticket na kategorię, 3 naraz na osobę, 30 s cooldownu. Discord pozwala na 50 kanałów w kategorii.
 - Bot podpowiada artykuły FAQ, jeśli słowa kluczowe pasują do treści formularza.
 - **SLA:** gdy klient czeka dłużej niż `sla` godzin, bot pinguje obsługę na kanale alertów (raz, do następnej odpowiedzi).
 - **Auto-zamykanie:** gdy obsługa odpisała, a klient milczy `auto_zamkniecie` godzin, bot ostrzega z przyciskiem „Zostaw otwarty”. Po kolejnych maks. 24 h zamyka ticket.
-- **Zamknięcie:** transkrypt HTML trafia na kanał transkryptów, klient dostaje DM z podsumowaniem, transkryptem i oceną 1–5 ⭐. Kanał idzie do archiwum (widoczny tylko dla obsługi) albo zostaje usunięty, jeśli archiwum nie ma lub jest pełne. Z archiwum można go ponownie otworzyć albo usunąć.
+- **Zamknięcie:** transkrypt HTML trafia na kanał transkryptów, klient dostaje DM z podsumowaniem i oceną 1–5 ⭐ (select menu i opcjonalny komentarz) oraz osobną wiadomość z transkryptem. Kanał idzie do archiwum (widoczny tylko dla obsługi) albo zostaje usunięty, jeśli archiwum nie ma lub jest pełne. Z archiwum można go ponownie otworzyć albo usunąć.
 - Oceny ≤ 2 ⭐ trafiają też na kanał alertów.
 
 **Komendy:**

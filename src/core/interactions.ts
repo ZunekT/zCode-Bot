@@ -7,9 +7,22 @@ import { createLogger } from '../utils/logger.js';
 import { getConfig, isModuleEnabled } from './config-service.js';
 import { handleInteractionError } from './errors.js';
 import { accessLabel, hasAccess, isAdmin } from './permissions.js';
-import type { AccessLevel, BotModule, Context, SlashCommand } from './types.js';
+import type { AccessLevel, BotModule, ComponentHandler, Context, SlashCommand } from './types.js';
 
 const log = createLogger('interactions');
+
+/** Typ handlera -> rodzaj interakcji i czy działa w DM. */
+const HANDLER_KINDS: Record<
+  ComponentHandler['type'],
+  { interaction: 'button' | 'select' | 'modal'; dm: boolean }
+> = {
+  button: { interaction: 'button', dm: false },
+  select: { interaction: 'select', dm: false },
+  modal: { interaction: 'modal', dm: false },
+  dmButton: { interaction: 'button', dm: true },
+  dmSelect: { interaction: 'select', dm: true },
+  dmModal: { interaction: 'modal', dm: true },
+};
 
 /** Rozbija customId "ticket:close:42" -> { key: "ticket:close", args: ["42"] } */
 export function parseCustomId(customId: string): { key: string; args: string[] } {
@@ -144,17 +157,18 @@ export async function routeInteraction(client: ZxClient, interaction: Interactio
     const { handler, module } = entry;
     const where = `komponent ${key}`;
 
+    const kind = HANDLER_KINDS[handler.type];
     const typeMatches =
-      ((handler.type === 'button' || handler.type === 'dmButton') && interaction.isButton()) ||
-      (handler.type === 'select' && interaction.isAnySelectMenu()) ||
-      ((handler.type === 'modal' || handler.type === 'dmModal') && interaction.isModalSubmit());
+      (kind.interaction === 'button' && interaction.isButton()) ||
+      (kind.interaction === 'select' && interaction.isAnySelectMenu()) ||
+      (kind.interaction === 'modal' && interaction.isModalSubmit());
     if (!typeMatches) {
       log.warn(`Handler ${key} ma typ ${handler.type}, a przyszła inna interakcja`);
       return;
     }
 
     try {
-      const dm = handler.type === 'dmButton' || handler.type === 'dmModal';
+      const dm = kind.dm;
       const access = 'access' in handler ? handler.access : undefined;
       const ctx = await guard(interaction, client, module, access, handler.allowInMaintenance, dm);
       if (!ctx) return;

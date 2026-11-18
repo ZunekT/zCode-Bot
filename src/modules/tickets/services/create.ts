@@ -10,10 +10,9 @@ import type { FaqArticle, GuildConfig, Prisma, TicketCategory } from '../../../g
 import type { ZxClient } from '../../../client.js';
 import { prisma } from '../../../db/prisma.js';
 import { UserError } from '../../../core/errors.js';
-import { Panel } from '../../../ui/builders/container.js';
+import { card } from '../../../ui/components/card.js';
 import { linkButton } from '../../../ui/builders/buttons.js';
 import { v2Message } from '../../../ui/builders/payload.js';
-import { e } from '../../../ui/emojis.js';
 import { withLock } from '../../../utils/locks.js';
 import { padNumber, slugify } from '../../../utils/format.js';
 import { createLogger } from '../../../utils/logger.js';
@@ -141,7 +140,13 @@ export async function createTicket(
       // Załączniki z formularza – przesyłamy ponownie, bo linki z modala wygasają.
       if (form.files.length) {
         const files = attachmentFiles(form.files);
-        const panel = new Panel({ tone: 'brand' }).title('cloud_upload', 'Załączniki od klienta', 3);
+        const panel = card({
+          tone: 'brand',
+          emoji: 'cloud_upload',
+          title: 'Załączniki od klienta',
+          description: `${files.length} ${files.length === 1 ? 'plik' : files.length < 5 ? 'pliki' : 'plików'} z formularza`,
+          timestamp: false,
+        });
         const images = files.filter((f) => f.isImage);
         if (images.length) panel.gallery(images.map((f) => ({ url: `attachment://${f.name}` })));
         for (const f of files.filter((x) => !x.isImage)) {
@@ -161,11 +166,22 @@ export async function createTicket(
       await logTicket(
         client,
         config,
-        new Panel({ tone: 'success' })
-          .title(def.emoji, `Nowy ticket ${ticketNo(ticket.id)}`, 3)
-          .text(
-            `<@${member.id}> • ${def.label} • <#${channel.id}>${form.subject ? `\n> ${form.subject}` : ''}`,
-          ),
+        card({
+          tone: 'success',
+          emoji: def.emoji,
+          title: `Nowy ticket ${ticketNo(ticket.id)} • ${def.label}`,
+          thumbnail: member.displayAvatarURL({ size: 128 }),
+          fields: [
+            { emoji: 'user', label: 'Klient', value: `<@${member.id}>` },
+            { emoji: 'documentation', label: 'Temat', value: form.subject || null },
+            { emoji: 'ticket', label: 'Kanał', value: `<#${channel.id}>` },
+            {
+              emoji: 'cloud_upload',
+              label: 'Załączniki',
+              value: form.files.length ? String(form.files.length) : null,
+            },
+          ],
+        }),
       );
 
       return channel;
@@ -181,10 +197,13 @@ export async function createTicket(
 
   await interaction.editReply(
     v2Message(
-      new Panel({ tone: 'success' })
-        .title('order_complete', 'Ticket utworzony!', 3)
-        .text(`${e('ticket')} Przejdź do kanału ${result} – obsługa odpowie najszybciej, jak to możliwe.`)
-        .buttons(linkButton(result.url, 'Przejdź do ticketu', 'ticket')),
+      card({
+        tone: 'success',
+        emoji: 'order_complete',
+        title: 'Ticket utworzony!',
+        description: `Twój prywatny kanał: ${result}\nObsługa odpowie najszybciej, jak to możliwe – dostaniesz wzmiankę, gdy ktoś przejmie zgłoszenie.`,
+        timestamp: false,
+      }).buttons(linkButton(result.url, 'Przejdź do ticketu', 'ticket')),
     ),
   );
 }

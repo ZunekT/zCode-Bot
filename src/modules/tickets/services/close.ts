@@ -6,14 +6,14 @@ import { prisma } from '../../../db/prisma.js';
 import { getSendableChannel } from '../../../core/channels.js';
 import { getConfig } from '../../../core/config-service.js';
 import { UserError } from '../../../core/errors.js';
-import { Panel } from '../../../ui/builders/container.js';
 import { linkButton } from '../../../ui/builders/buttons.js';
 import { v2Message } from '../../../ui/builders/payload.js';
-import { formatDuration, padNumber } from '../../../utils/format.js';
+import { card } from '../../../ui/components/card.js';
+import { padNumber } from '../../../utils/format.js';
 import { withLock } from '../../../utils/locks.js';
 import { createLogger } from '../../../utils/logger.js';
-import { CATEGORIES, LIMITS } from '../constants.js';
-import { closedDmPanel, closedPanel, ticketNo } from '../panels.js';
+import { LIMITS } from '../constants.js';
+import { closeSummaryCard, closedDmPanel, closedPanel, ticketNo } from '../panels.js';
 import { getCategory, getTicketTextChannel, hasRoom, logTicket, ticketOverwrites } from './channel.js';
 import { refreshControlPanel } from './control.js';
 import { isActive, ticketChannels } from './store.js';
@@ -50,13 +50,12 @@ export async function closeTicket(
 
       const config = await getConfig();
       const channel = await getTicketTextChannel(client, current);
-      const closedAt = new Date();
 
       let ticket = await prisma.ticket.update({
         where: { id: ticketId },
         data: {
           status: 'CLOSED',
-          closedAt,
+          closedAt: new Date(),
           closedBy: opts.closedBy,
           closeReason: opts.reason?.slice(0, 500) || null,
         },
@@ -69,55 +68,58 @@ export async function closeTicket(
         return { ticket, archived: false, transcriptUrl: null };
       }
 
+      const owner = await client.users.fetch(ticket.userId).catch(() => null);
+      const ownerAvatar = owner?.displayAvatarURL({ size: 128 });
+
       // ── Transkrypt ──
       const fileName = `ticket-${padNumber(ticket.id)}.html`;
       let transcript: Buffer | null = null;
       try {
-        const owner = await client.users.fetch(ticket.userId).catch(() => null);
         transcript = renderTranscript(ticket, channel, await fetchAllMessages(channel), owner?.username);
       } catch (err) {
         log.error(`Nie udało się wygenerować transkryptu ticketu #${ticket.id}`, err);
       }
+      const transcriptFile = () =>
+        transcript ? [new AttachmentBuilder(transcript, { name: fileName })] : [];
+      const withFile = <T extends { container: { addFileComponents: (...c: FileBuilder[]) => unknown } }>(
+        panel: T,
+      ) => {
+        if (transcript)
+          panel.container.addFileComponents(new FileBuilder().setURL(`attachment://${fileName}`));
+        return panel;
+      };
 
       let transcriptUrl: string | null = null;
-      const def = CATEGORIES[ticket.category];
-      const summary = () =>
-        new Panel({ tone: 'neutral' })
-          .title(def.emoji, `Ticket ${ticketNo(ticket.id)} • ${def.label}`, 3)
-          .fields({
-            Klient: `<@${ticket.userId}>`,
-            Temat: ticket.subject,
-            Obsługa: ticket.claimedBy ? `<@${ticket.claimedBy}>` : null,
-            Zamknął: `<@${opts.closedBy}>`,
-            Powód: ticket.closeReason,
-            'Czas trwania': formatDuration(closedAt.getTime() - ticket.openedAt.getTime()),
-          });
-
       const transcriptChannel = await getSendableChannel(
         client,
         config.transcriptChannelId ?? config.logChannelId,
       );
       if (transcript && transcriptChannel) {
-        const panel = summary();
-        panel.container.addFileComponents(new FileBuilder().setURL(`attachment://${fileName}`));
         const msg = await transcriptChannel
-          .send(v2Message(panel, { files: [new AttachmentBuilder(transcript, { name: fileName })] }))
+          .send(v2Message(withFile(closeSummaryCard(ticket, ownerAvatar)), { files: transcriptFile() }))
           .catch((err) => log.warn('Nie udało się wysłać transkryptu', err));
         if (msg) transcriptUrl = msg.url;
       }
-
       ticket = await prisma.ticket.update({ where: { id: ticketId }, data: { transcriptUrl } });
 
-      // ── DM do klienta: podsumowanie, transkrypt i ocena ──
-      try {
-        const user = await client.users.fetch(ticket.userId);
-        const panel = closedDmPanel(ticket, channel.guild.name);
-        const files = transcript ? [new AttachmentBuilder(transcript, { name: fileName })] : [];
-        if (transcript)
-          panel.container.addFileComponents(new FileBuilder().setURL(`attachment://${fileName}`));
-        await user.send(v2Message(panel, { files }));
-      } catch {
-        log.debug(`Nie można wysłać DM do ${ticket.userId} (zablokowane wiadomości prywatne)`);
+      // ── DM do klienta: karta z oceną + osobno transkrypt ──
+      // Osobne wiadomości, żeby kartę oceny dało się później edytować bez ruszania załącznika.
+      if (owner) {
+        try {
+          await owner.send(v2Message(closedDmPanel(ticket, channel.guild.name)));
+          if (transcript) {
+            const filePanel = card({
+              tone: 'neutral',
+              emoji: 'documentation',
+              title: `Zapis rozmowy • ticket ${ticketNo(ticket.id)}`,
+              description: 'Otwórz plik w przeglądarce, żeby zobaczyć całą rozmowę.',
+              timestamp: false,
+            });
+            await owner.send(v2Message(withFile(filePanel), { files: transcriptFile() }));
+          }
+        } catch {
+          log.debug(`Nie można wysłać DM do ${ticket.userId} (zablokowane wiadomości prywatne)`);
+        }
       }
 
       // ── Archiwum albo usunięcie ──
@@ -141,7 +143,7 @@ export async function closeTicket(
         }, LIMITS.deleteDelaySeconds * 1000);
       }
 
-      const logPanel = summary();
+      const logPanel = closeSummaryCard(ticket, ownerAvatar);
       if (transcriptUrl) logPanel.buttons(linkButton(transcriptUrl, 'Transkrypt', 'documentation'));
       await logTicket(client, config, logPanel.footer(archived ? 'Kanał w archiwum' : 'Kanał usunięty'));
 
@@ -198,9 +200,15 @@ export async function reopenTicket(
     await logTicket(
       client,
       config,
-      new Panel({ tone: 'info' }).text(
-        `🔓 Ticket ${ticketNo(ticketId)} ponownie otwarty przez <@${staffId}> • <#${channel.id}>`,
-      ),
+      card({
+        tone: 'info',
+        emoji: 'unlock',
+        title: `Ticket ${ticketNo(ticketId)} ponownie otwarty`,
+        fields: [
+          { emoji: 'user_crown', label: 'Otworzył(a)', value: `<@${staffId}>` },
+          { emoji: 'ticket', label: 'Kanał', value: `<#${channel.id}>` },
+        ],
+      }),
     );
     return reopened;
   });

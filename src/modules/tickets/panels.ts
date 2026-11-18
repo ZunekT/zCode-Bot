@@ -1,67 +1,142 @@
+import { StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from 'discord.js';
 import type { FaqArticle, Ticket } from '../../generated/prisma/client.js';
+import { Colors } from '../../config/constants.js';
 import { Panel } from '../../ui/builders/container.js';
 import { button, linkButton } from '../../ui/builders/buttons.js';
 import { BANNER_URL } from '../../ui/assets.js';
-import { e } from '../../ui/emojis.js';
+import { card, quote, stars } from '../../ui/components/card.js';
+import { e, emojiComponent } from '../../ui/emojis.js';
 import { discordTime, formatDuration, padNumber, truncate } from '../../utils/format.js';
-import { CATEGORIES, CATEGORY_KEYS, PRIORITIES, STATUS_LABELS } from './constants.js';
+import {
+  CATEGORIES,
+  CATEGORY_KEYS,
+  CONTROL_ACTIONS,
+  PRIORITIES,
+  STATUS_LABELS,
+  type ControlAction,
+} from './constants.js';
 import { answersOf } from './forms.js';
 
 export const ticketNo = (id: number) => `#${padNumber(id)}`;
 
-/** Publiczny panel „Centrum pomocy” wysyłany przez /ticket panel. */
+/** Kolor akcentu panelu ticketu zależny od priorytetu. */
+const PRIORITY_ACCENT = {
+  LOW: Colors.success,
+  NORMAL: Colors.brand,
+  HIGH: 0xe67e22,
+  URGENT: Colors.error,
+} as const;
+
+const statusLine = (t: Ticket) => STATUS_LABELS[t.status];
+const priorityLine = (t: Ticket) => `${PRIORITIES[t.priority].icon} ${PRIORITIES[t.priority].label}`;
+
+// ───────────────────────────── Panel „Centrum pomocy” ─────────────────────────────
+
+export function categorySelect(): StringSelectMenuBuilder {
+  return new StringSelectMenuBuilder()
+    .setCustomId('ticket:category')
+    .setPlaceholder('📩 Wybierz kategorię zgłoszenia…')
+    .addOptions(
+      CATEGORY_KEYS.map((key) =>
+        new StringSelectMenuOptionBuilder()
+          .setValue(key)
+          .setLabel(CATEGORIES[key].label)
+          .setDescription(CATEGORIES[key].description)
+          .setEmoji(emojiComponent(CATEGORIES[key].emoji)),
+      ),
+    );
+}
+
 export function publicPanel(): Panel {
-  const panel = new Panel({ tone: 'brand' })
+  return new Panel({ tone: 'brand' })
     .banner(BANNER_URL)
     .title('support', 'Centrum pomocy zxCode')
     .text(
-      'Potrzebujesz bota, masz problem albo pytanie? Wybierz kategorię i wypełnij krótki formularz – ' +
-        'utworzymy prywatny kanał, w którym porozmawiasz z nami bezpośrednio.',
+      'Chcesz zamówić bota, coś przestało działać albo masz pytanie? ' +
+        'Otwórz ticket – porozmawiamy na prywatnym kanale, który widzisz tylko Ty i nasza obsługa.',
     )
-    .separator();
-
-  for (const key of CATEGORY_KEYS) {
-    const def = CATEGORIES[key];
-    panel.sectionWithButton(
-      `${e(def.emoji)} **${def.label}**\n-# ${def.description}`,
-      button(`ticket:open:${key}`, 'Otwórz', { style: key === 'ORDER' ? 'primary' : 'secondary' }),
-    );
-  }
-
-  return panel
     .separator()
-    .footer('Jeden ticket na kategorię • Nie podawaj haseł ani tokenów botów w tickecie');
+    .text(
+      `### ${e('checklist')} Jak to działa?\n` +
+        `**1.** Wybierz kategorię z listy poniżej\n` +
+        `**2.** Wypełnij krótki formularz (możesz dodać pliki)\n` +
+        `**3.** Rozmawiaj z nami na prywatnym kanale`,
+    )
+    .separator()
+    .text(
+      CATEGORY_KEYS.map(
+        (k) => `${e(CATEGORIES[k].emoji)} **${CATEGORIES[k].label}** – ${CATEGORIES[k].description}`,
+      ).join('\n'),
+    )
+    .select(categorySelect())
+    .footer('Jeden ticket na kategorię • Nigdy nie podawaj haseł ani tokenów botów');
 }
 
-/** Panel sterowania na początku kanału ticketu. */
+// ───────────────────────────── Panel w kanale ticketu ─────────────────────────────
+
+export function actionSelect(ticket: Ticket): StringSelectMenuBuilder {
+  const actions: ControlAction[] = [
+    ticket.claimedBy ? 'unclaim' : 'claim',
+    'priority',
+    'add',
+    ...(ticket.participants.length ? (['remove'] as const) : []),
+    'note',
+    'remind',
+    'close',
+  ];
+  return new StringSelectMenuBuilder()
+    .setCustomId(`ticket:action:${ticket.id}`)
+    .setPlaceholder('⚙️ Zarządzaj ticketem…')
+    .addOptions(
+      actions.map((a) => {
+        const def = CONTROL_ACTIONS[a];
+        const description =
+          a === 'priority'
+            ? `Aktualny: ${PRIORITIES[ticket.priority].label}`
+            : a === 'close' || !def.staff
+              ? def.description
+              : `${def.description} • obsługa`;
+        return new StringSelectMenuOptionBuilder()
+          .setValue(a)
+          .setLabel(def.label)
+          .setDescription(description)
+          .setEmoji(emojiComponent(def.emoji));
+      }),
+    );
+}
+
 export function controlPanel(
   ticket: Ticket,
   opts: { avatarUrl: string; staffRoleId?: string | null; faq?: FaqArticle[]; mention?: boolean },
 ): Panel {
   const def = CATEGORIES[ticket.category];
-  const prio = PRIORITIES[ticket.priority];
   const answers = answersOf(ticket.formData);
   const perAnswer = Math.max(200, Math.floor(2400 / Math.max(answers.length, 1)));
 
-  const mentions = opts.mention
-    ? `<@${ticket.userId}>${opts.staffRoleId ? ` • <@&${opts.staffRoleId}>` : ''}\n`
-    : '';
+  const greeting = opts.mention
+    ? `Cześć <@${ticket.userId}>! Dziękujemy za zgłoszenie – ${opts.staffRoleId ? `<@&${opts.staffRoleId}>` : 'obsługa'} odpowie najszybciej, jak to możliwe.`
+    : `Zgłoszenie od <@${ticket.userId}>`;
 
-  const panel = new Panel({ accent: ticket.priority === 'URGENT' ? 0xe74c3c : undefined, tone: 'brand' })
-    .title(def.emoji, `Ticket ${ticketNo(ticket.id)} • ${def.label}`)
+  const panel = new Panel({ accent: PRIORITY_ACCENT[ticket.priority] })
     .sectionWithThumbnail(
-      `${mentions}` +
-        [
-          `**Klient:** <@${ticket.userId}>`,
-          `**Status:** ${STATUS_LABELS[ticket.status]}`,
-          `**Priorytet:** ${prio.icon} ${prio.label}`,
-          `**Obsługa:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : '_jeszcze nikt_'}`,
-          `**Otwarty:** ${discordTime(ticket.openedAt, 'f')}`,
-        ].join('\n'),
+      `## ${e(def.emoji)} ${def.label} • ${ticketNo(ticket.id)}\n${greeting}`,
       opts.avatarUrl,
+    )
+    .separator()
+    .text(
+      [
+        `${e('notification')} **Status:** ${statusLine(ticket)}`,
+        `${e('lightning')} **Priorytet:** ${priorityLine(ticket)}`,
+        `${e('user_crown')} **Obsługa:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : '_czeka na przejęcie_'}`,
+        `${e('calendar')} **Otwarty:** ${discordTime(ticket.openedAt, 'f')} (${discordTime(ticket.openedAt, 'R')})`,
+        ...(ticket.participants.length
+          ? [`${e('users')} **Dodani:** ${ticket.participants.map((id) => `<@${id}>`).join(', ')}`]
+          : []),
+      ].join('\n'),
     )
     .separator();
 
+  if (answers.length) panel.text(`### ${e('documentation')} Formularz`);
   // „>>>” cytuje do końca bloku tekstu, więc każda odpowiedź to osobny TextDisplay.
   for (const a of answers) panel.text(`**${a.label}**\n>>> ${truncate(a.value, perAnswer)}`);
 
@@ -69,105 +144,189 @@ export function controlPanel(
     panel
       .separator()
       .text(
-        `${e('documentation')} **Może to pomoże, zanim odpowiemy:**\n` +
+        `### ${e('idea')} Może to pomoże, zanim odpowiemy\n` +
           opts.faq
-            .map((f) => `• **${f.title}** – ${truncate(f.content.replace(/\s+/g, ' '), 120)}`)
+            .map((f) => `**${f.title}**\n-# ${truncate(f.content.replace(/\s+/g, ' '), 140)}`)
             .join('\n') +
-          '\n-# Pełną treść zobaczysz przez `/faq pokaz`.',
+          '\n-# Pełna odpowiedź: `/faq pokaz`',
       );
   }
 
   return panel
     .separator()
-    .buttons(
-      ticket.claimedBy
-        ? button(`ticket:claim:${ticket.id}`, 'Zwolnij', { emoji: 'user_remove' })
-        : button(`ticket:claim:${ticket.id}`, 'Przejmij', { style: 'success', emoji: 'user_crown' }),
-      button(`ticket:priority:${ticket.id}`, 'Priorytet', { emoji: 'lightning' }),
-      button(`ticket:add:${ticket.id}`, 'Dodaj osobę', { emoji: 'user_add' }),
-      button(`ticket:close:${ticket.id}`, 'Zamknij', { style: 'danger', emoji: 'lock' }),
-    )
-    .footer('Obsługa odpowie najszybciej, jak to możliwe • Prosimy nie pingować obsługi');
+    .select(actionSelect(ticket))
+    .footer('Opisz sprawę jak najdokładniej • Prosimy nie pingować obsługi');
 }
+
+// ───────────────────────────── Zamknięcie / archiwum ─────────────────────────────
 
 export function closedPanel(
   ticket: Ticket,
   opts: { archived: boolean; transcriptUrl?: string | null },
 ): Panel {
-  const panel = new Panel({ tone: 'neutral' })
-    .title('lock', `Ticket ${ticketNo(ticket.id)} zamknięty`, 3)
-    .fields({
-      Zamknął: ticket.closedBy ? `<@${ticket.closedBy}>` : 'system',
-      Powód: ticket.closeReason ?? 'brak',
-      'Czas trwania': ticket.closedAt
-        ? formatDuration(ticket.closedAt.getTime() - ticket.openedAt.getTime())
-        : null,
-    });
-
+  const panel = card({
+    tone: 'neutral',
+    emoji: 'lock',
+    title: `Ticket ${ticketNo(ticket.id)} zamknięty`,
+    description: opts.archived
+      ? 'Kanał trafił do archiwum – widzi go tylko obsługa.'
+      : 'Kanał zostanie usunięty za kilka sekund. Transkrypt jest zapisany.',
+    fields: [
+      { emoji: 'user', label: 'Zamknął', value: ticket.closedBy ? `<@${ticket.closedBy}>` : 'system' },
+      { emoji: 'documentation', label: 'Powód', value: ticket.closeReason ?? 'brak' },
+      {
+        emoji: 'calendar',
+        label: 'Czas trwania',
+        value: ticket.closedAt ? formatDuration(ticket.closedAt.getTime() - ticket.openedAt.getTime()) : null,
+      },
+    ],
+  });
   if (opts.archived) {
     panel.buttons(
       button(`ticket:reopen:${ticket.id}`, 'Otwórz ponownie', { style: 'success', emoji: 'unlock' }),
       button(`ticket:delete:${ticket.id}`, 'Usuń kanał', { style: 'danger', emoji: 'shield_x' }),
       ...(opts.transcriptUrl ? [linkButton(opts.transcriptUrl, 'Transkrypt', 'documentation')] : []),
     );
-    panel.footer('Kanał przeniesiony do archiwum • widoczny tylko dla obsługi');
-  } else {
-    panel.footer('Kanał zostanie usunięty za chwilę');
   }
   return panel;
 }
 
-/** DM do klienta po zamknięciu: podsumowanie + prośba o ocenę. */
-export function closedDmPanel(ticket: Ticket, guildName: string): Panel {
+/** Podsumowanie zamknięcia (kanał transkryptów i logi). */
+export function closeSummaryCard(ticket: Ticket, ownerAvatar?: string) {
   const def = CATEGORIES[ticket.category];
-  return new Panel({ tone: 'brand' })
-    .title('ticket', `Twój ticket ${ticketNo(ticket.id)} został zamknięty`)
-    .fields({
-      Serwer: guildName,
-      Kategoria: `${e(def.emoji)} ${def.label}`,
-      Temat: ticket.subject,
-      'Powód zamknięcia': ticket.closeReason ?? 'brak',
-    })
-    .separator()
-    .text(`${e('star')} **Jak oceniasz naszą obsługę?** Twoja opinia pomaga nam działać lepiej.`)
-    .buttons(
-      ...[1, 2, 3, 4, 5].map((n) =>
-        button(`ticket:rate:${ticket.id}:${n}`, `${n}`, {
-          emoji: 'star',
-          style: n >= 4 ? 'success' : 'secondary',
-        }),
+  return card({
+    tone: 'neutral',
+    emoji: def.emoji,
+    title: `Ticket ${ticketNo(ticket.id)} zamknięty • ${def.label}`,
+    thumbnail: ownerAvatar,
+    fields: [
+      { emoji: 'user', label: 'Klient', value: `<@${ticket.userId}>` },
+      { emoji: 'documentation', label: 'Temat', value: ticket.subject },
+      { emoji: 'user_crown', label: 'Obsługa', value: ticket.claimedBy ? `<@${ticket.claimedBy}>` : null },
+      { emoji: 'lock', label: 'Zamknął', value: ticket.closedBy ? `<@${ticket.closedBy}>` : null },
+      { emoji: 'checklist', label: 'Powód', value: ticket.closeReason },
+      {
+        emoji: 'calendar',
+        label: 'Czas trwania',
+        value: ticket.closedAt ? formatDuration(ticket.closedAt.getTime() - ticket.openedAt.getTime()) : null,
+      },
+    ],
+  });
+}
+
+// ───────────────────────────── DM: ocena ─────────────────────────────
+
+export function ratingSelect(ticketId: number): StringSelectMenuBuilder {
+  const labels = ['Bardzo źle', 'Słabo', 'Przeciętnie', 'Dobrze', 'Rewelacja'];
+  return new StringSelectMenuBuilder()
+    .setCustomId(`ticket:rate:${ticketId}`)
+    .setPlaceholder('⭐ Oceń obsługę…')
+    .addOptions(
+      [5, 4, 3, 2, 1].map((n) =>
+        new StringSelectMenuOptionBuilder()
+          .setValue(String(n))
+          .setLabel(`${'★'.repeat(n)}${'☆'.repeat(5 - n)}  ${labels[n - 1]}`)
+          .setDescription(n === 5 ? 'Wszystko super!' : n === 1 ? 'Coś poszło bardzo nie tak' : `${n} z 5`)
+          .setEmoji(emojiComponent('star')),
       ),
-    )
-    .footer('Pełny zapis rozmowy w załączniku');
-}
-
-export function ratedDmPanel(ticket: Ticket): Panel {
-  return new Panel({ tone: 'success' })
-    .title('order_complete', `Dziękujemy za ocenę ticketu ${ticketNo(ticket.id)}!`, 3)
-    .text(
-      `${'⭐'.repeat(ticket.rating ?? 0)}${ticket.ratingComment ? `\n> ${truncate(ticket.ratingComment, 500)}` : ''}`,
-    )
-    .footer('Do zobaczenia na zxCode');
-}
-
-export function slaAlertPanel(ticket: Ticket, staffRoleId: string | null, waitingMs: number): Panel {
-  const def = CATEGORIES[ticket.category];
-  return new Panel({ tone: 'warning' })
-    .title('notification', `Ticket ${ticketNo(ticket.id)} czeka na odpowiedź`, 3)
-    .text(
-      `${staffRoleId ? `<@&${staffRoleId}> ` : ''}Klient <@${ticket.userId}> czeka już **${formatDuration(waitingMs)}**.\n` +
-        `${e(def.emoji)} ${def.label} • ${PRIORITIES[ticket.priority].icon} ${PRIORITIES[ticket.priority].label}` +
-        `${ticket.claimedBy ? ` • obsługa: <@${ticket.claimedBy}>` : ' • **nikt nie przejął**'}\n` +
-        `Kanał: <#${ticket.channelId}>`,
     );
 }
 
-export function closeWarningPanel(ticket: Ticket, closesAt: Date): Panel {
-  return new Panel({ tone: 'warning' })
-    .title('lightning', 'Czy sprawa jest nadal aktualna?', 3)
+export function closedDmPanel(ticket: Ticket, guildName: string): Panel {
+  const def = CATEGORIES[ticket.category];
+  return card({
+    tone: 'brand',
+    emoji: 'ticket',
+    title: `Twój ticket ${ticketNo(ticket.id)} został zamknięty`,
+    description: `Dziękujemy za kontakt z **${guildName}**!`,
+    fields: [
+      { emoji: def.emoji, label: 'Kategoria', value: def.label },
+      { emoji: 'documentation', label: 'Temat', value: ticket.subject },
+      { emoji: 'user_crown', label: 'Obsługa', value: ticket.claimedBy ? `<@${ticket.claimedBy}>` : null },
+      { emoji: 'lock', label: 'Powód zamknięcia', value: ticket.closeReason ?? 'brak' },
+    ],
+    timestamp: false,
+  })
+    .separator()
     .text(
-      `<@${ticket.userId}>, nie dostaliśmy od Ciebie odpowiedzi. ` +
-        `Jeśli nic nie napiszesz, ticket zostanie automatycznie zamknięty ${discordTime(closesAt, 'R')}.`,
+      `### ${e('star')} Jak oceniasz naszą obsługę?\nTwoja opinia pomaga nam działać lepiej – zajmie to 10 sekund.`,
     )
-    .buttons(button(`ticket:keepOpen:${ticket.id}`, 'Zostaw otwarty', { style: 'success', emoji: 'unlock' }));
+    .select(ratingSelect(ticket.id))
+    .footer('Zapis rozmowy znajdziesz w wiadomości poniżej');
+}
+
+export function ratedDmPanel(ticket: Ticket): Panel {
+  return card({
+    tone: 'success',
+    emoji: 'order_complete',
+    title: `Dziękujemy za ocenę ticketu ${ticketNo(ticket.id)}!`,
+    description: `${stars(ticket.rating ?? 0)}${ticket.ratingComment ? `\n${quote(truncate(ticket.ratingComment, 500))}` : ''}`,
+    footer: 'Do zobaczenia na zxCode',
+  });
+}
+
+/** Ocena na kanale logów / alertów. */
+export function ratingLogCard(ticket: Ticket, avatarUrl?: string) {
+  const rating = ticket.rating ?? 0;
+  return card({
+    tone: rating <= 2 ? 'error' : rating === 3 ? 'warning' : 'success',
+    emoji: 'star',
+    title: `Nowa opinia • ticket ${ticketNo(ticket.id)}`,
+    description: stars(rating),
+    thumbnail: avatarUrl,
+    fields: [
+      { emoji: 'user', label: 'Klient', value: `<@${ticket.userId}>` },
+      {
+        emoji: 'user_crown',
+        label: 'Obsługa',
+        value: ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'nikt nie przejął',
+      },
+      {
+        emoji: CATEGORIES[ticket.category].emoji,
+        label: 'Kategoria',
+        value: CATEGORIES[ticket.category].label,
+      },
+    ],
+    body: ticket.ratingComment ? quote(truncate(ticket.ratingComment, 1000)) : '-# Bez komentarza',
+  });
+}
+
+// ───────────────────────────── Alerty ─────────────────────────────
+
+export function slaAlertPanel(ticket: Ticket, staffRoleId: string | null, waitingMs: number): Panel {
+  const def = CATEGORIES[ticket.category];
+  return card({
+    tone: 'warning',
+    emoji: 'notification',
+    title: `Ticket ${ticketNo(ticket.id)} czeka na odpowiedź`,
+    description: `${staffRoleId ? `<@&${staffRoleId}> ` : ''}Klient czeka już **${formatDuration(waitingMs)}**.`,
+    fields: [
+      { emoji: 'user', label: 'Klient', value: `<@${ticket.userId}>` },
+      { emoji: def.emoji, label: 'Kategoria', value: def.label },
+      { emoji: 'lightning', label: 'Priorytet', value: priorityLine(ticket) },
+      {
+        emoji: 'user_crown',
+        label: 'Obsługa',
+        value: ticket.claimedBy ? `<@${ticket.claimedBy}>` : '**nikt nie przejął**',
+      },
+      { emoji: 'ticket', label: 'Kanał', value: `<#${ticket.channelId}>` },
+    ],
+  });
+}
+
+export function closeWarningPanel(ticket: Ticket, closesAt: Date): Panel {
+  return card({
+    tone: 'warning',
+    emoji: 'lightning',
+    title: 'Czy sprawa jest nadal aktualna?',
+    description:
+      `<@${ticket.userId}>, nie dostaliśmy od Ciebie odpowiedzi.\n` +
+      `Jeśli nic nie napiszesz, ticket zostanie automatycznie zamknięty **${discordTime(closesAt, 'R')}**.`,
+    timestamp: false,
+  }).buttons(
+    button(`ticket:keepOpen:${ticket.id}`, 'Sprawa aktualna – zostaw otwarty', {
+      style: 'success',
+      emoji: 'unlock',
+    }),
+  );
 }
