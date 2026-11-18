@@ -8,7 +8,6 @@ import { card } from '../../ui/components/card.js';
 import { MathostError, mathost, mathostEnabled, vpsId } from './mathost.js';
 import { checkVps, isOwner, snapshot, vpsCard } from './service.js';
 
-/** Karta stanu z przyciskami (restart i kopia tylko dla właściciela – sprawdzane przy kliknięciu). */
 async function statusPayload() {
   const s = await snapshot();
   return vpsCard(s).buttons(

@@ -46,7 +46,6 @@ export async function orderPanelPayload(client: ZxClient, order: FullOrder) {
   return v2Message(orderPanel(order, await avatarOf(client, order.userId)));
 }
 
-/** Odświeża panel zlecenia (też resetuje select menu). */
 export async function refreshOrderPanel(client: ZxClient, id: number): Promise<void> {
   const order = await getOrder(id);
   if (!order.panelChannelId || !order.panelMessageId) return;
@@ -60,7 +59,6 @@ export async function refreshOrderPanel(client: ZxClient, id: number): Promise<v
   }
 }
 
-/** Wysyła (nowy) panel zlecenia na kanał i zapamiętuje go. */
 export async function postOrderPanel(client: ZxClient, id: number, channel: SendableChannels): Promise<void> {
   const order = await getOrder(id);
   const msg = await channel.send({
@@ -74,7 +72,6 @@ export async function postOrderPanel(client: ZxClient, id: number, channel: Send
   });
 }
 
-/** DM do klienta (ciche niepowodzenie, gdy ma zablokowane wiadomości). */
 export async function notifyClient(
   client: ZxClient,
   userId: string,
@@ -89,7 +86,6 @@ export async function notifyClient(
   }
 }
 
-/** Karta w kanale panelu (zwykle ticket). */
 async function panelChannelNotice(
   client: ZxClient,
   order: Order,
@@ -185,7 +181,6 @@ export async function createOrder(
   return full;
 }
 
-/** Zmiana statusu ze wszystkimi skutkami: historia, DM, panel, role klienta, prośba o opinię. */
 export async function setOrderStatus(
   client: ZxClient,
   id: number,
@@ -335,7 +330,6 @@ export async function addTasks(client: ZxClient, id: number, lines: string[]): P
   return items.length;
 }
 
-/** Ustawia stan „zrobione” dokładnie dla wybranych zadań (reszta – niezrobione). */
 export async function setDoneTasks(client: ZxClient, id: number, doneIds: number[]): Promise<void> {
   await locked(id, async () => {
     await prisma.$transaction([
@@ -346,7 +340,6 @@ export async function setDoneTasks(client: ZxClient, id: number, doneIds: number
   await refreshOrderPanel(client, id);
 }
 
-/** Zapisuje wpłatę; gdy saldo spłacone – proformy na „opłacone” i status dalej. */
 export async function addPayment(
   client: ZxClient,
   id: number,
@@ -415,7 +408,6 @@ async function nextInvoiceNumber(now: Date): Promise<string> {
   return `${prefix}${String(n).padStart(4, '0')}`;
 }
 
-/** Wystawia proformę (domyślnie na pozostałą kwotę) i wysyła ją do ticketu oraz w DM. */
 export async function issueInvoice(
   client: ZxClient,
   id: number,

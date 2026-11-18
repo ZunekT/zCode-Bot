@@ -1,6 +1,5 @@
 import { env } from '@/lib/env';
 
-/** Zdjęcia portfolio z bazy bota (publiczne, cache 1 dzień). */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const id = Number((await params).id);
   if (!Number.isSafeInteger(id) || id <= 0) return new Response('Not found', { status: 404 });

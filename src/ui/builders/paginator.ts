@@ -1,10 +1,6 @@
 import type { ButtonBuilder } from 'discord.js';
 import { button } from './buttons.js';
 
-/**
- * Przyciski ◀ x/y ▶. customId: `${prefix}:${page}`.
- * Moduł rejestruje handler na `${prefix}` i dostaje numer strony w args.
- */
 export function pageButtons(prefix: string, page: number, totalPages: number): ButtonBuilder[] {
   const last = Math.max(totalPages - 1, 0);
   return [

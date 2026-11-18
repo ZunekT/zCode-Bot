@@ -4,7 +4,6 @@ import { getConfig } from '../../../core/config-service.js';
 import { isStaff } from '../../../core/permissions.js';
 import { ticketChannels } from './store.js';
 
-/** Zapis aktywności obsługi (wiadomość, szablon). */
 export async function recordStaffActivity(ticketId: number, at = new Date()): Promise<void> {
   await prisma.$transaction([
     prisma.ticket.update({
@@ -26,7 +25,6 @@ export async function recordClientActivity(ticketId: number, at = new Date()): P
   });
 }
 
-/** messageCreate: kto ostatnio pisał w tickecie (do SLA i auto-zamykania). */
 export async function trackTicketMessage(message: Message): Promise<void> {
   if (message.author.bot || !message.inGuild()) return;
   const ticketId = ticketChannels.get(message.channelId);

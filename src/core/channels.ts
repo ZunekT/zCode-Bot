@@ -4,7 +4,6 @@ import { createLogger } from '../utils/logger.js';
 
 const log = createLogger('channels');
 
-/** Pobiera kanał, na który bot może pisać (null, gdy brak ID, kanał usunięty albo brak dostępu). */
 export async function getSendableChannel(
   client: ZxClient,
   channelId: string | null | undefined,

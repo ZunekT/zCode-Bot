@@ -22,14 +22,6 @@ import {
 } from './schema.js';
 import { guildData, hello, profileResult, setConfig, syncGuilds, type Profile } from './service.js';
 
-/**
- * Sam bot zxCode jako bot SDK: wszystkie jego ustawienia (GuildConfig) są widoczne i edytowalne
- * w panelu zxcode.pl tak samo jak ustawienia botów klientów. Połączenie w procesie – bez klucza,
- * bez HTTP. Synchronizacja w obie strony:
- *   panel → hub → updateConfig()     (zmiana działa od razu w bocie)
- *   /config na Discordzie → updateConfig() → setConfig()  (panel pokazuje aktualny stan)
- */
-
 const log = createLogger('sdk:self');
 const pkg = createRequire(import.meta.url)('../../../package.json') as { version: string };
 
@@ -37,7 +29,6 @@ type Column = keyof GuildConfig;
 interface Binding {
   module: string;
   field: SchemaField;
-  /** Kolumna GuildConfig albo typ logu (logChannels[typ]). */
   column?: Column;
   logType?: string;
 }
@@ -87,7 +78,6 @@ interface ModuleDef {
   key: string;
   label: string;
   description?: string;
-  /** Nazwa modułu bota, którego przełącznik (config.modules) steruje „enabled”. */
   toggle?: string;
   fields: [SchemaField, Column | { log: string }][];
 }
@@ -235,7 +225,6 @@ const MODULES: ModuleDef[] = [
   },
 ];
 
-/** Moduły bota bez ustawień – w panelu tylko przełącznik. */
 const SIMPLE_TOGGLES: Record<string, string> = {
   faq: 'FAQ',
   pricing: 'Cennik i kalkulator',
@@ -279,7 +268,6 @@ export function selfSchema(botModules: BotModule[]): BotSchema {
 const toggleOf = (moduleKey: string) =>
   MODULES.find((m) => m.key === moduleKey)?.toggle ?? (moduleKey in SIMPLE_TOGGLES ? moduleKey : undefined);
 
-/** GuildConfig → wartości w formacie panelu. */
 export function configToValues(config: GuildConfig, schema: BotSchema): ConfigValues {
   const modules = (config.modules ?? {}) as Record<string, boolean>;
   const logChannels = (config.logChannels ?? {}) as Record<string, string>;
@@ -296,7 +284,6 @@ export function configToValues(config: GuildConfig, schema: BotSchema): ConfigVa
   return values;
 }
 
-/** Wartości z panelu (już zwalidowane) → zmiana GuildConfig. */
 export function valuesToUpdate(values: ConfigValues, config: GuildConfig): Prisma.GuildConfigUpdateInput {
   const data: Record<string, unknown> = {};
   const modules = { ...((config.modules ?? {}) as Record<string, boolean>) };
@@ -334,7 +321,6 @@ export function valuesToUpdate(values: ConfigValues, config: GuildConfig): Prism
 
 let permissions: Record<string, { roles: string[] }> = {};
 
-/** Role, którym panel dał dostęp do komendy (null = brak reguły, działają domyślne uprawnienia). */
 export function panelCommandRoles(commandName: string): string[] | null {
   return permissions[commandName]?.roles?.length ? permissions[commandName]!.roles : null;
 }
@@ -397,7 +383,6 @@ async function ensureSelfBot(client: ZxClient, guild: Guild): Promise<SdkBot> {
   });
 }
 
-/** Zapisuje aktualny GuildConfig jako ustawienia w panelu (pola z usuniętymi kanałami/rolami pomija). */
 async function pushConfig(config: GuildConfig) {
   if (!selfBot) return;
   const guild = await guildData(selfBot.id, config.guildId);
@@ -464,7 +449,6 @@ async function applyProfile(client: ZxClient, profile: Profile, revision: number
 
 let started = false;
 
-/** Wywoływane po zalogowaniu: rejestruje bota zxCode w panelu i włącza synchronizację. */
 export async function startSelfSdk(client: ZxClient, botModules: BotModule[]): Promise<void> {
   const guild = client.guilds.cache.get(env.GUILD_ID);
   if (!guild || !client.user) {

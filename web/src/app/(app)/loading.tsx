@@ -1,4 +1,3 @@
-/** Szkielet ładowania – pokazywany natychmiast po kliknięciu, zanim serwer odda dane. */
 export default function Loading() {
   return (
     <div className="app-page" aria-busy="true" aria-label="Ładowanie">

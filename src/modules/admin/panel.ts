@@ -15,7 +15,6 @@ function lines(config: GuildConfig, defs: Record<string, SettingDef>, mention: (
     .join('\n');
 }
 
-/** Panel /config pokaz – pełny przegląd konfiguracji. */
 export function configPanel(client: ZxClient, config: GuildConfig): Panel {
   const modules = [...client.modules.values()]
     .filter((m) => m.toggleable !== false)

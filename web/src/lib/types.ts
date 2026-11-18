@@ -1,5 +1,3 @@
-/** Typy odpowiedzi wewnętrznego API bota (src/http/internal.ts). */
-
 export type FieldType = 'boolean' | 'text' | 'textarea' | 'number' | 'select' | 'channel' | 'role' | 'color';
 export type ChannelKind = 'text' | 'voice' | 'category' | 'announcement' | 'forum' | 'stage' | 'other';
 

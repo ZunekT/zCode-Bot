@@ -10,7 +10,6 @@ import { notifyClient, refreshOrderPanel } from './service.js';
 
 const HOUR = 3_600_000;
 
-/** Przypomnienie dzień przed terminem i oznaczanie zaległych proform. */
 async function checkInvoices(client: ZxClient) {
   const now = Date.now();
   const invoices = await prisma.invoice.findMany({ where: { status: 'ISSUED' }, include: { order: true } });

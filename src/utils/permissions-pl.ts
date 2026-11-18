@@ -1,6 +1,5 @@
 import { PermissionsBitField, type PermissionResolvable } from 'discord.js';
 
-/** Polskie nazwy uprawnień Discorda (nieznane zostają w oryginale). */
 const PL: Record<string, string> = {
   CreateInstantInvite: 'Tworzenie zaproszeń',
   KickMembers: 'Wyrzucanie członków',
@@ -62,7 +61,6 @@ export function permissionList(bits: PermissionResolvable | null | undefined): s
   return new PermissionsBitField(bits).toArray().map(permissionName);
 }
 
-/** Różnica uprawnień: dodane i odebrane (po polsku). */
 export function permissionDiff(
   oldBits: PermissionResolvable | null | undefined,
   newBits: PermissionResolvable | null | undefined,

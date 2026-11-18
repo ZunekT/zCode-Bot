@@ -13,7 +13,6 @@ export const MODE_LABELS: Record<string, string> = {
   button: 'Jedno kliknięcie',
 };
 
-/** Publiczny panel weryfikacji. */
 export function verificationPanel(config: GuildConfig, rulesChannelId?: string | null): Panel {
   const steps =
     config.verificationMode === 'button'
@@ -39,7 +38,6 @@ export function verificationPanel(config: GuildConfig, rulesChannelId?: string |
     .footer('Weryfikacja zajmuje kilka sekund • Masz problem? Napisz do administracji');
 }
 
-/** Wiadomość z captchą (ephemeral) + plik obrazka. */
 export function captchaPayloadParts(code: string, opts: { warning?: string } = {}) {
   const panel = card({
     tone: opts.warning ? 'warning' : 'info',

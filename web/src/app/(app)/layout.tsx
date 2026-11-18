@@ -5,7 +5,6 @@ import './app.css';
 
 export const dynamic = 'force-dynamic';
 
-/** Wspólny układ panelu klienta i administracji (menu boczne, powiadomienia, pasek ładowania). */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await requireSession();
   const me = await api.me(session.id);

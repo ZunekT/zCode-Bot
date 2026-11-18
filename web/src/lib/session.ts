@@ -3,11 +3,6 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { env } from './env';
 
-/**
- * Sesja w podpisanym ciasteczku (HMAC-SHA256): dane użytkownika Discord, bez bazy po stronie strony.
- * Token Discorda nie jest przechowywany – po zalogowaniu potrzebujemy tylko ID.
- */
-
 export { SESSION_COOKIE, STATE_COOKIE, encodeSession, decodeSession, type Session } from './session-core';
 import { SESSION_COOKIE, decodeSession, type Session } from './session-core';
 
@@ -25,7 +20,6 @@ export async function getSession(): Promise<Session | null> {
   return decodeSession((await cookies()).get(SESSION_COOKIE)?.value);
 }
 
-/** Wymaga zalogowania – inaczej przekierowanie na logowanie przez Discord. */
 export async function requireSession(): Promise<Session> {
   const s = await getSession();
   if (!s) redirect('/api/auth/login');

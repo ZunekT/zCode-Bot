@@ -10,7 +10,6 @@ import { discountLabel, discountValue } from './discounts.js';
 
 const PACKAGE_EMOJIS = ['cube', 'rocket', 'crown', 'star', 'lightning'] as const;
 
-/** Publiczny cennik (panel na kanale albo ephemeral z /cennik). */
 export function pricingPanel(
   packages: PricingPackage[],
   stats: { avg: number | null; count: number },
@@ -63,7 +62,6 @@ export function calcSummary(items: PricingItem[], state: CalcState, dc: Discount
   return { chosen, sum, discount, total: cents(sum - discount) };
 }
 
-/** Kalkulator wyceny (ephemeral). */
 export function calculatorPanel(
   items: PricingItem[],
   state: CalcState,
@@ -127,7 +125,6 @@ export function calculatorPanel(
   return panel;
 }
 
-/** Opis do formularza ticketu na podstawie kalkulatora. */
 export function calcOrderDescription(
   items: PricingItem[],
   state: CalcState,

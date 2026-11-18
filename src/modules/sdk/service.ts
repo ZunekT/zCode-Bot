@@ -28,7 +28,6 @@ export interface Presence {
 
 export interface Profile {
   presence?: Presence;
-  /** Jednorazowe żądania zmiany profilu – bot wykonuje je i zgłasza wynik. */
   request?: { username?: string; avatar?: string } | null;
   lastResult?: { revision: number; ok: boolean; error?: string; at: string } | null;
 }
@@ -47,7 +46,6 @@ const commandsOf = (bot: Pick<SdkBot, 'commands'>): string[] =>
 
 // ───────────────────────────── Zarządzanie botami ─────────────────────────────
 
-/** Nowy bot SDK + wpis w monitoringu. Klucz zwracany tylko raz. */
 export async function createBot(name: string, ownerId: string): Promise<{ bot: SdkBot; key: string }> {
   const temp = hashKey(`pending-${Date.now()}-${Math.random()}`);
   const bot = await prisma.sdkBot.create({ data: { name, ownerId, keyHash: temp, keyPrefix: '' } });
@@ -135,7 +133,6 @@ export interface HelloPayload {
   guilds?: unknown[];
 }
 
-/** Bot się łączy: zapisujemy schemat, komendy i serwery, oddajemy aktualne ustawienia. */
 export async function hello(bot: SdkBot, body: HelloPayload) {
   const { schema, warnings } = sanitizeSchema(body.schema);
   const commands = (Array.isArray(body.commands) ? body.commands : [])
@@ -221,10 +218,6 @@ export async function guildData(botId: number, guildId: string): Promise<GuildDa
     : null;
 }
 
-/**
- * Zapis ustawień serwera (z panelu albo od samego bota).
- * Pola scalane (niewysłane zostają). Bot dostaje zmianę na żywo.
- */
 export async function setConfig(
   botId: number,
   guildId: string,
@@ -273,7 +266,6 @@ export async function setConfig(
   return saved;
 }
 
-/** Profil bota z panelu: status/aktywność (trwałe) oraz zmiana nazwy/avatara (jednorazowo). */
 export async function setProfile(
   botId: number,
   input: { presence?: unknown; username?: unknown; avatar?: unknown },

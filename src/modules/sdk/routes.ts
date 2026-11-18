@@ -23,7 +23,6 @@ declare module 'fastify' {
   }
 }
 
-/** Wspólna obsługa błędów: błędy walidacji -> 400 z listą pól, reszta -> 500. */
 export function sendError(reply: FastifyReply, err: unknown) {
   if (err instanceof ValidationFailed)
     return reply.code(400).send({ error: 'validation', errors: err.errors });
@@ -32,10 +31,6 @@ export function sendError(reply: FastifyReply, err: unknown) {
   return reply.code(500).send({ error: 'Błąd serwera' });
 }
 
-/**
- * Publiczne API dla botów z zxcode-sdk (https://bot.zxcode.pl/sdk/v1/…).
- * Uwierzytelnienie: nagłówek „Authorization: Bearer zxk_…”.
- */
 export async function sdkRoutes(app: FastifyInstance): Promise<void> {
   const keepAlive = setInterval(() => sdkHub.keepAlive(), 25_000);
   keepAlive.unref();
@@ -86,7 +81,6 @@ export async function sdkRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
-  /** Bot zgłasza własne ustawienia (np. zmienione komendą na Discordzie). */
   app.put('/sdk/v1/config/:guildId', async (request, reply) => {
     try {
       const { guildId } = request.params as { guildId: string };
@@ -98,7 +92,6 @@ export async function sdkRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
-  /** Strumień zdarzeń (SSE): zmiany ustawień i profilu na żywo. */
   app.get('/sdk/v1/events', async (request, reply) => {
     const bot = request.sdkBot!;
     reply.hijack();

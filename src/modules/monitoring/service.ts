@@ -14,9 +14,7 @@ import { createLogger } from '../../utils/logger.js';
 
 const log = createLogger('monitoring');
 
-/** Ile nieudanych sprawdzeń z rzędu oznacza awarię (chroni przed fałszywymi alarmami). */
 export const FAILS_TO_DOWN = 2;
-/** Brak heartbeatu dłużej niż tyle = awaria. */
 export const HEARTBEAT_TIMEOUT_MS = 3 * 60_000;
 const HTTP_TIMEOUT_MS = 10_000;
 
@@ -137,7 +135,6 @@ async function alert(client: ZxClient, bot: MonitoredBot, down: boolean, result:
   }
 }
 
-/** Jedno sprawdzenie bota z zapisem wyniku i alertami przy zmianie stanu. Zwraca, czy stan się zmienił. */
 export async function processBot(client: ZxClient, bot: MonitoredBot): Promise<boolean> {
   const result = await checkBot(client, bot);
   const failures = result.ok ? 0 : bot.consecutiveFailures + 1;
@@ -167,11 +164,6 @@ export async function processBot(client: ZxClient, bot: MonitoredBot): Promise<b
   return goesDown || goesUp;
 }
 
-/**
- * Tablica statusu (publiczna) – blok ```diff: działające boty na zielono, awarie na czerwono.
- *   + Bot RP           online    99,98%   v1.4.2   120 ms
- *   - Heartbeat Bot    offline   od 12m
- */
 export function statusBoard(bots: MonitoredBot[]): Panel {
   const allOk = bots.every((b) => b.online);
   const panel = new Panel({ tone: allOk ? 'success' : 'error' }).title('server', 'Status botów zxCode');
@@ -198,14 +190,9 @@ export function statusBoard(bots: MonitoredBot[]): Panel {
   );
 }
 
-/** Co ile odświeżać tablicę statusu, gdy nic się nie zmienia. */
 export const BOARD_REFRESH_MS = 10 * 60_000;
 let lastBoardRefresh = 0;
 
-/**
- * Zadanie (co minutę): sprawdza wszystkie boty – alerty o awarii przychodzą od razu.
- * Tablicę statusu odświeża co 10 minut, a przy zmianie stanu (awaria / powrót) natychmiast.
- */
 export async function runChecks(client: ZxClient): Promise<void> {
   const bots = await prisma.monitoredBot.findMany({ orderBy: { name: 'asc' } });
   let changed = false;

@@ -1,12 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { decodeSession, SESSION_COOKIE } from '@/lib/session-core';
 
-/**
- * Tryb „Start wkrótce”: dopóki strona nie jest uruchomiona (/strona uruchom albo panel Administracja),
- * wszyscy poza właścicielem i osobami z podglądem widzą tylko /wkrotce.
- * Decyzję podejmuje bot; wynik trzymamy chwilę w pamięci, żeby nie pytać przy każdym pliku.
- */
-
 const TTL_MS = 15_000;
 const cache = new Map<string, { at: number; allowed: boolean; launched: boolean }>();
 let lastLaunched: boolean | null = null;

@@ -13,10 +13,6 @@ import {
 } from 'discord.js';
 import { emojiComponent, type EmojiName } from '../emojis.js';
 
-/**
- * Modal v2 – pola opakowane w Label (tytuł + opis nad polem),
- * możliwe select menu, wybór kanału/roli, upload plików i tekst informacyjny.
- */
 export class Form {
   readonly modal: ModalBuilder;
   private count = 0;
@@ -38,7 +34,6 @@ export class Form {
     return l;
   }
 
-  /** Tekst informacyjny w modalu (nie liczy się do 5 pól). */
   info(content: string): this {
     this.modal.addTextDisplayComponents(new TextDisplayBuilder().setContent(content));
     return this;

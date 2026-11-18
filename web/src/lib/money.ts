@@ -9,7 +9,6 @@ export const date = (iso: string | null | undefined) =>
 export const dateTime = (iso: string) =>
   new Date(iso).toLocaleString('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-/** Kolor pigułki statusu zlecenia. */
 export const statusTone = (s: string) =>
   s === 'COMPLETED' || s === 'DELIVERED'
     ? 'pill-ok'

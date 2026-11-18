@@ -21,10 +21,6 @@ const PREFIX_KEYS: [RegExp, SectionKey][] = [
   [/^(refactor|perf|chore|docs|style|build|ci|test)(\(.+?\))?!?:\s*/i, 'changed'],
 ];
 
-/**
- * Treść release'u (markdown) -> sekcje changelogu.
- * Rozpoznaje nagłówki („### Added”, „## Naprawiono”…) i prefiksy commitów („feat:”, „fix:”).
- */
 export function parseReleaseBody(body: string): Sections {
   const sections = emptySections();
   let current: SectionKey | null = null;
@@ -72,7 +68,6 @@ interface ReleasePayload {
   repository?: { full_name?: string };
 }
 
-/** Webhook „release” -> szkic changelogu + karta do akceptacji dla obsługi. */
 export async function onRelease(client: ZxClient, payload: ReleasePayload): Promise<void> {
   if (payload.action !== 'published' || !payload.release || payload.release.draft) return;
   const repo = payload.repository?.full_name?.toLowerCase();

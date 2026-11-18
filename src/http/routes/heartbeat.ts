@@ -1,10 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../../db/prisma.js';
 
-/**
- * Heartbeat monitoringu: bot klienta co ~60 s wywołuje GET/POST /heartbeat/<token>.
- * Opcjonalnie ?version=1.2.3 – wersja pokaże się na tablicy statusu.
- */
 export async function heartbeatRoutes(app: FastifyInstance): Promise<void> {
   const handler = async (
     request: { params: unknown; query: unknown },

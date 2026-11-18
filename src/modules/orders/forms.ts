@@ -119,7 +119,6 @@ export function discountModal(order: Order) {
     .build();
 }
 
-/** Odczyt ceny z pola modala ("" = brak). */
 export function readPrice(raw: string): number | null {
   if (!raw.trim()) return null;
   const v = parseMoney(raw);

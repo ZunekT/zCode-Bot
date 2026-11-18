@@ -1,8 +1,3 @@
-/**
- * Format schematu, który bot klienta wysyła przez zxcode-sdk, i walidacja wartości z panelu.
- * Panel może zapisać tylko to, co bot zadeklarował – z kontrolą typów i istnienia kanałów/ról.
- */
-
 export const FIELD_TYPES = [
   'boolean',
   'text',
@@ -26,15 +21,11 @@ export interface SchemaField {
   default?: unknown;
   required?: boolean;
   multiple?: boolean;
-  /** text/textarea */
   maxLength?: number;
-  /** number */
   min?: number;
   max?: number;
   integer?: boolean;
-  /** select */
   options?: { value: string; label: string }[];
-  /** channel */
   channelTypes?: ChannelKind[];
 }
 
@@ -42,7 +33,6 @@ export interface SchemaModule {
   key: string;
   label: string;
   description?: string;
-  /** Moduł ma przełącznik włącz/wyłącz (wartość „enabled”). */
   toggle?: boolean;
   defaultEnabled?: boolean;
   fields: SchemaField[];
@@ -92,7 +82,6 @@ const LIMITS = {
 
 const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : undefined);
 
-/** Czyści schemat przysłany przez bota (nie ufamy danym z zewnątrz). Zwraca też ostrzeżenia. */
 export function sanitizeSchema(input: unknown): { schema: BotSchema; warnings: string[] } {
   const warnings: string[] = [];
   const modules: SchemaModule[] = [];
@@ -221,7 +210,6 @@ function one(field: SchemaField, v: unknown, guild: GuildData | null): Check {
   }
 }
 
-/** Waliduje jedno pole (obsługuje „multiple” i null jako „wyczyść”). */
 export function validateField(field: SchemaField, v: unknown, guild: GuildData | null): Check {
   if (v === null || v === undefined || (v === '' && field.type !== 'text' && field.type !== 'textarea')) {
     return field.required ? { ok: false, error: 'pole wymagane' } : { ok: true, value: null };
@@ -246,10 +234,6 @@ export interface ValidationError {
   message: string;
 }
 
-/**
- * Waliduje wartości z panelu względem schematu i danych serwera.
- * Nieznane moduły/pola są odrzucane. Zwraca znormalizowane wartości albo listę błędów.
- */
 export function validateValues(
   schema: BotSchema,
   input: unknown,
@@ -284,7 +268,6 @@ export function validateValues(
   return { values, errors };
 }
 
-/** Uprawnienia komend: { komenda: { roles: [id] } } – tylko znane komendy i istniejące role. */
 export function validatePermissions(
   input: unknown,
   commands: string[],
@@ -311,7 +294,6 @@ export function validatePermissions(
   return { permissions, errors };
 }
 
-/** Czyści dane serwera przysłane przez bota. */
 export function sanitizeGuild(
   g: Record<string, unknown>,
 ): { id: string; name: string; icon: string | null; data: GuildData } | null {

@@ -24,7 +24,6 @@ export interface LinkButton {
 export const linksOf = (a: Pick<Announcement, 'buttons'>): LinkButton[] =>
   Array.isArray(a.buttons) ? (a.buttons as unknown as LinkButton[]).filter((b) => b?.url) : [];
 
-/** „Nazwa | https://…” albo samo „https://…”, każdy link w nowej linii (max 5). */
 export function parseLinks(raw: string): LinkButton[] {
   const out: LinkButton[] = [];
   for (const line of raw
@@ -43,7 +42,6 @@ export function parseLinks(raw: string): LinkButton[] {
 
 export const linksText = (links: LinkButton[]) => links.map((l) => `${l.label} | ${l.url}`).join('\n');
 
-/** Pobiera obrazek z formularza do bazy. */
 export async function downloadImage(
   a: Attachment,
 ): Promise<{ imageData: Uint8Array<ArrayBuffer>; imageName: string; imageType: string }> {
@@ -74,7 +72,6 @@ export function pingMentions(ping: string | null): MessageMentionOptions {
   return { parse: [] };
 }
 
-/** Wygląd ogłoszenia (to samo w podglądzie i na kanale). */
 export function announcementPanel(
   a: Announcement,
   authorName: string,
@@ -107,7 +104,6 @@ export async function renderAnnouncement(client: ZxClient, a: Announcement) {
   return announcementPanel(a, await authorName(client, a));
 }
 
-/** Publikuje ogłoszenie na kanale (z auto-crosspostem na kanale ogłoszeń). */
 export async function publishAnnouncement(
   client: ZxClient,
   id: number,
@@ -146,7 +142,6 @@ export async function publishAnnouncement(
   return result;
 }
 
-/** Aktualizuje opublikowaną wiadomość po edycji. */
 export async function updatePublished(client: ZxClient, a: Announcement): Promise<void> {
   if (!a.channelId || !a.messageId) return;
   const channel = await getSendableChannel(client, a.channelId);
@@ -158,7 +153,6 @@ export async function updatePublished(client: ZxClient, a: Announcement): Promis
   await msg.edit({ ...v2Message(panel, { files }), attachments: [] });
 }
 
-/** Zadanie: publikacja zaplanowanych ogłoszeń. */
 export async function publishDue(client: ZxClient): Promise<void> {
   const due = await prisma.announcement.findMany({
     where: { status: 'SCHEDULED', publishAt: { lte: new Date() } },

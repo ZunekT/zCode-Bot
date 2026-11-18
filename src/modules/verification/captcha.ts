@@ -1,11 +1,6 @@
 import { randomInt } from 'node:crypto';
 import { Canvas, type RGB } from '../../utils/png.js';
 
-/**
- * Captcha jako PNG generowany w czystym JS (bez natywnych bibliotek – działa też na Termuxie).
- * Znaki z czcionki bitmapowej 5×7, każdy obrócony, przesunięty i w innym kolorze, plus szum i linie.
- */
-
 // Bez znaków mylących się ze sobą (0/O, 1/I, 2/Z, 5/S, 8/B).
 export const CAPTCHA_CHARSET = 'ACDEFGHJKLMNPRTUVWXY3479';
 
@@ -75,7 +70,6 @@ function drawGlyph(c: Canvas, ch: string, cx: number, cy: number, angle: number,
   }
 }
 
-/** Generuje obrazek PNG z kodem. */
 export function renderCaptcha(code: string): Buffer {
   const c = new Canvas(W, H);
 

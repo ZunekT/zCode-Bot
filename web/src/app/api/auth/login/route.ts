@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { env } from '@/lib/env';
 import { STATE_COOKIE } from '@/lib/session';
 
-/** Logowanie przez Discord (OAuth2, zakres „identify” – tylko ID, nazwa i avatar). */
 export async function GET(request: Request) {
   const next = new URL(request.url).searchParams.get('next');
   const state = randomBytes(16).toString('hex');

@@ -12,7 +12,6 @@ import type { AccessLevel, BotModule, ComponentHandler, Context, SlashCommand } 
 
 const log = createLogger('interactions');
 
-/** Typ handlera -> rodzaj interakcji i czy działa w DM. */
 const HANDLER_KINDS: Record<
   ComponentHandler['type'],
   { interaction: 'button' | 'select' | 'modal'; dm: boolean }
@@ -25,16 +24,11 @@ const HANDLER_KINDS: Record<
   dmModal: { interaction: 'modal', dm: true },
 };
 
-/** Rozbija customId "ticket:close:42" -> { key: "ticket:close", args: ["42"] } */
 export function parseCustomId(customId: string): { key: string; args: string[] } {
   const [module = '', action = '', ...args] = customId.split(':');
   return { key: `${module}:${action}`, args };
 }
 
-/**
- * Wspólne sprawdzenia: tylko nasz serwer, moduł włączony, tryb serwisowy, uprawnienia.
- * Zwraca kontekst albo null (wtedy odpowiedź została już wysłana).
- */
 async function guard(
   interaction: Interaction,
   client: ZxClient,

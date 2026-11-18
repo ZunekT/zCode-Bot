@@ -3,11 +3,6 @@ import { createLogger } from '../utils/logger.js';
 
 const log = createLogger('emojis');
 
-/**
- * Emotki z paczki zxCode (assets/emojis/*.png).
- * Wgrywane jako Application Emojis skryptem `npm run emojis:sync`.
- * Każda ma zapasowy unicode, gdyby nie była jeszcze wgrana.
- */
 export const EMOJI_FALLBACKS = {
   announcement: '📢',
   bot: '🤖',
@@ -79,7 +74,6 @@ interface LoadedEmoji {
 
 const loaded = new Map<string, LoadedEmoji>();
 
-/** Pobiera Application Emojis i buduje mapę nazwa -> emoji. Wywoływane przy starcie. */
 export async function loadApplicationEmojis(client: Client<true>): Promise<void> {
   try {
     const emojis = await client.application.emojis.fetch();
@@ -97,14 +91,12 @@ export async function loadApplicationEmojis(client: Client<true>): Promise<void>
   }
 }
 
-/** Emotka jako tekst do TextDisplay / treści: e('ticket') -> "<:ticket:123>" albo "🎫". */
 export function e(name: EmojiName): string {
   const emoji = loaded.get(name);
   if (!emoji) return EMOJI_FALLBACKS[name];
   return `<${emoji.animated ? 'a' : ''}:${emoji.name}:${emoji.id}>`;
 }
 
-/** Emotka do przycisków i opcji select menu. */
 export function emojiComponent(name: EmojiName): APIMessageComponentEmoji {
   const emoji = loaded.get(name);
   if (!emoji) return { name: EMOJI_FALLBACKS[name] };

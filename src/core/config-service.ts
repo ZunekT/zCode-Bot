@@ -12,7 +12,6 @@ function revive(raw: string): GuildConfig {
   return { ...parsed, updatedAt: new Date(parsed.updatedAt) };
 }
 
-/** Config serwera z cache w Redis (5 min). Tworzy rekord przy pierwszym użyciu. */
 export async function getConfig(guildId: string = env.GUILD_ID): Promise<GuildConfig> {
   const key = RedisKeys.guildConfig(guildId);
   try {
@@ -54,13 +53,11 @@ export async function updateConfig(
 type UpdateListener = (config: GuildConfig) => void;
 const updateListeners = new Set<UpdateListener>();
 
-/** Powiadomienie po każdej zmianie configu (np. synchronizacja z panelem WWW). */
 export function onConfigUpdated(fn: UpdateListener): () => void {
   updateListeners.add(fn);
   return () => updateListeners.delete(fn);
 }
 
-/** Czy moduł jest włączony (domyślnie tak). */
 export function isModuleEnabled(config: GuildConfig, moduleName: string): boolean {
   const modules = (config.modules ?? {}) as Record<string, boolean>;
   return modules[moduleName] !== false;

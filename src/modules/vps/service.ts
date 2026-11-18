@@ -13,7 +13,6 @@ import { mathost, vpsId, type RrdPoint, type VpsBackup } from './mathost.js';
 
 const log = createLogger('vps');
 
-/** Progi alertów. */
 export const LIMITS = { diskPct: 85, memPct: 90, cpuPct: 90, expiryDays: 7 };
 const DAY_MS = 86_400_000;
 
@@ -39,7 +38,6 @@ export interface VpsSnapshot {
   backups: VpsBackup[];
 }
 
-/** Pełny stan VPS z kilku zapytań do Mathost (równolegle). */
 export async function snapshot(opts: { backups?: boolean } = {}): Promise<VpsSnapshot> {
   const id = await vpsId();
   const [info, live, hour, backups] = await Promise.all([
@@ -94,7 +92,6 @@ export function bytes(n: number): string {
 
 export const daysLeft = (iso: string) => Math.ceil((new Date(iso).getTime() - Date.now()) / DAY_MS);
 
-/** Problemy do pokazania na karcie i w alertach. */
 export function issues(s: VpsSnapshot): { key: string; text: string }[] {
   const out: { key: string; text: string }[] = [];
   if (s.suspended) out.push({ key: 'suspended', text: `VPS zawieszony: ${s.suspended}` });
@@ -120,7 +117,6 @@ export function issues(s: VpsSnapshot): { key: string; text: string }[] {
   return out;
 }
 
-/** Karta stanu VPS na Discordzie. */
 export function vpsCard(s: VpsSnapshot): Panel {
   const problems = issues(s);
   const running = s.status === 'running';
@@ -168,7 +164,6 @@ export function vpsCard(s: VpsSnapshot): Panel {
   return panel;
 }
 
-/** Zadanie co 5 min: alert na kanale obsługi przy problemie (każdy typ najwyżej raz na 12 h). */
 export async function checkVps(client: ZxClient): Promise<void> {
   let s: VpsSnapshot;
   try {
@@ -202,7 +197,6 @@ export async function checkVps(client: ZxClient): Promise<void> {
     .catch(() => undefined);
 }
 
-/** Właściciel studia: OWNER_ID albo właściciel serwera zxCode. */
 export async function isOwner(client: ZxClient, userId: string): Promise<boolean> {
   if (env.OWNER_ID) return userId === env.OWNER_ID;
   const guild = client.guilds.cache.get(env.GUILD_ID);

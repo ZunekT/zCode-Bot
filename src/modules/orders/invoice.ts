@@ -24,7 +24,6 @@ function banner(): string {
 export const invoiceFileName = (invoice: Pick<Invoice, 'number'>) =>
   `proforma-${invoice.number.replace(/\//g, '-')}.html`;
 
-/** Faktura proforma jako samodzielny plik HTML (można wydrukować lub zapisać jako PDF). */
 export function renderInvoice(
   invoice: Invoice,
   order: Order,

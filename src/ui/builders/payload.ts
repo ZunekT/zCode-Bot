@@ -6,7 +6,6 @@ type V2Component = ContainerBuilder | Panel;
 export interface V2Options {
   ephemeral?: boolean;
   files?: AttachmentBuilder[];
-  /** Domyślnie wzmianki są wyłączone – bot nie pinguje przypadkiem. */
   allowedMentions?: MessageMentionOptions;
 }
 
@@ -18,12 +17,10 @@ interface BasePayload {
   allowedMentions: MessageMentionOptions;
 }
 
-/** Odpowiedź na interakcję (może być ephemeral). */
 export interface V2Payload extends BasePayload {
   flags: readonly V2Flag[];
 }
 
-/** Wiadomość na kanał / edycja wiadomości (bez Ephemeral). */
 export interface V2MessagePayload extends BasePayload {
   flags: readonly ['IsComponentsV2'];
 }
@@ -40,10 +37,6 @@ function base(components: V2Component | V2Component[], options: V2Options): Base
   return payload;
 }
 
-/**
- * Odpowiedź Components v2 na interakcję (reply / followUp).
- * Uwaga: wiadomość z flagą IsComponentsV2 nie może mieć `content` ani `embeds`.
- */
 export function v2(components: V2Component | V2Component[], options: V2Options = {}): V2Payload {
   return {
     ...base(components, options),
@@ -51,7 +44,6 @@ export function v2(components: V2Component | V2Component[], options: V2Options =
   };
 }
 
-/** Wiadomość Components v2 na kanał, do edycji (message.edit, interaction.update/editReply) lub w DM. */
 export function v2Message(
   components: V2Component | V2Component[],
   options: Omit<V2Options, 'ephemeral'> = {},

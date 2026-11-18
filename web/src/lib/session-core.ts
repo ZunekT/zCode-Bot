@@ -1,7 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-/** Podpis i odczyt sesji (bez zależności od Next – używane też w proxy.ts). */
-
 const secret = () => {
   const s = process.env.SESSION_SECRET;
   if (!s || s.length < 32) throw new Error('SESSION_SECRET musi mieć min. 32 znaki');

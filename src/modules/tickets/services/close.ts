@@ -32,10 +32,6 @@ export interface CloseResult {
   transcriptUrl: string | null;
 }
 
-/**
- * Zamyka ticket: transkrypt → kanał transkryptów, DM do klienta z oceną,
- * kanał do archiwum (albo usunięcie, gdy archiwum nie ma lub jest pełne).
- */
 export async function closeTicket(
   client: ZxClient,
   ticketId: number,
@@ -156,7 +152,6 @@ export async function closeTicket(
   return result;
 }
 
-/** Przywraca zarchiwizowany ticket do kategorii ticketów. */
 export async function reopenTicket(
   client: ZxClient,
   guild: Guild,
@@ -216,7 +211,6 @@ export async function reopenTicket(
   return result;
 }
 
-/** Usuwa kanał zarchiwizowanego ticketu (zapis w bazie i transkrypt zostają). */
 export async function deleteTicketChannel(
   client: ZxClient,
   ticketId: number,
@@ -229,7 +223,6 @@ export async function deleteTicketChannel(
   await channel?.delete(`Usunięcie ticketu ${ticketNo(ticketId)} przez ${staffId}`);
 }
 
-/** Wywoływane, gdy kanał ticketu zostanie usunięty ręcznie. */
 export async function onTicketChannelDeleted(channelId: string): Promise<void> {
   ticketChannels.delete(channelId);
   const ticket = await prisma.ticket.findUnique({ where: { channelId } });

@@ -3,10 +3,6 @@ import path from 'node:path';
 
 const brandingDir = path.resolve(process.cwd(), 'assets', 'branding');
 
-/**
- * Baner zxCode do paneli (1200×400, ~25 KB – lekki, bo panel z select menu jest odświeżany po każdym wyborze).
- * W panelu: .banner(BANNER_URL)
- */
 export function bannerFile(): AttachmentBuilder {
   return new AttachmentBuilder(path.join(brandingDir, 'banner-panel.jpg'), { name: 'banner.jpg' });
 }

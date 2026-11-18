@@ -6,7 +6,6 @@ import { put } from '@/lib/client';
 import { pln } from '@/lib/money';
 import { useToast } from './Toast';
 
-/** Limit kwartalny: kliknij, żeby zmienić. */
 export function LimitEditor({ limit }: { limit: number }) {
   const router = useRouter();
   const toast = useToast();

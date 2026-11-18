@@ -6,12 +6,6 @@ import { createLogger } from '../utils/logger.js';
 
 const log = createLogger('http:site');
 
-/**
- * Publiczne dane dla strony zxcode.pl (wizytówka): statystyki, oferta, portfolio, opinie, FAQ.
- * Tylko to, co i tak jest publiczne na serwerze Discord – bez kwot zleceń i danych klientów
- * (z opinii: nick i avatar autora, jak na kanale opinii).
- */
-
 const CACHE_MS = 5 * 60_000;
 let cache: { at: number; data: unknown } | null = null;
 
@@ -115,7 +109,6 @@ export function publicSiteRoutes(app: FastifyInstance, client: ZxClient) {
     }
   });
 
-  /** Zdjęcie z portfolio (bajty z bazy). */
   app.get('/internal/public/portfolio/images/:id', async (request, reply) => {
     const id = Number((request.params as { id: string }).id);
     if (!Number.isSafeInteger(id)) return reply.code(404).send({ error: 'Nie znaleziono.' });

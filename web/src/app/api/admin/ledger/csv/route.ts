@@ -3,7 +3,6 @@ import { getSession } from '@/lib/session';
 
 const csv = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
 
-/** Ewidencja sprzedaży za kwartał – CSV (separator ;, przecinek dziesiętny – otwiera się w Excelu). */
 export async function GET(request: Request) {
   const session = await getSession();
   if (!session) return new Response('Zaloguj się.', { status: 401 });

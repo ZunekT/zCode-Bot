@@ -8,7 +8,6 @@ const LINE_1 = ['Boty', 'Discord,'];
 const LINE_2 = ['które', 'pracują', 'za', 'Ciebie'];
 const d = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties;
 
-/** Hero – HTML z serwera, animacje wejścia w CSS; jedyna wyspa to pasek postępu w podglądzie. */
 export function Hero({ rating, reviews, avatars }: { rating: number | null; reviews: number; avatars: string[] }) {
   return (
     <section className="hero2">

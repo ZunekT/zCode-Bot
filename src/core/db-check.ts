@@ -5,7 +5,6 @@ import { createLogger } from '../utils/logger.js';
 
 const log = createLogger('db-check');
 
-/** Sprawdza, czy wszystkie migracje z prisma/migrations są wykonane. Zwraca listę brakujących. */
 export async function findPendingMigrations(): Promise<string[]> {
   const dir = path.resolve(process.cwd(), 'prisma', 'migrations');
   const names = (await readdir(dir, { withFileTypes: true }).catch(() => []))
@@ -23,7 +22,6 @@ export async function findPendingMigrations(): Promise<string[]> {
   return names.filter((n) => !applied.has(n)).sort();
 }
 
-/** Zatrzymuje start, jeśli baza nie jest zaktualizowana – zamiast błędów przy pierwszej komendzie. */
 export async function assertDatabaseUpToDate(): Promise<void> {
   const pending = await findPendingMigrations();
   if (pending.length === 0) return;

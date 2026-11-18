@@ -1,7 +1,6 @@
 import { Colors, type ColorName } from '../config/constants.js';
 import type { EmojiName } from './emojis.js';
 
-/** Typ komunikatu -> kolor akcentu i domyślna emotka. */
 export const Tone = {
   info: { color: Colors.info, emoji: 'notification' },
   success: { color: Colors.success, emoji: 'order_complete' },

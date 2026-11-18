@@ -5,7 +5,6 @@ import { createLogger } from '../utils/logger.js';
 
 const log = createLogger('errors');
 
-/** Błąd, którego treść można pokazać użytkownikowi. */
 export class UserError extends Error {
   constructor(
     message: string,
@@ -16,7 +15,6 @@ export class UserError extends Error {
   }
 }
 
-/** Odpowiada niezależnie od tego, czy interakcja była już potwierdzona. */
 export async function safeReply(interaction: RepliableInteraction, payload: V2Payload): Promise<void> {
   try {
     if (interaction.deferred && !interaction.replied) {

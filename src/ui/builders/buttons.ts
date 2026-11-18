@@ -10,7 +10,6 @@ const styles: Record<Style, ButtonStyle> = {
   danger: ButtonStyle.Danger,
 };
 
-/** button('ticket:close:42', 'Zamknij', { style: 'danger', emoji: 'lock' }) */
 export function button(
   customId: string,
   label: string,

@@ -5,11 +5,8 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type Reac
 export interface Option {
   value: string;
   label: string;
-  /** Nagłówek grupy (np. kategoria kanałów). */
   group?: string | null;
-  /** Kolorowa kropka (np. kolor roli). */
   color?: string;
-  /** Prefiks, np. „#” dla kanałów. */
   prefix?: string;
   hint?: string;
   disabled?: boolean;
@@ -21,7 +18,6 @@ interface Common {
   id?: string;
   ariaLabel?: string;
   disabled?: boolean;
-  /** Pokaż wyszukiwarkę (domyślnie przy > 7 opcjach). */
   searchable?: boolean;
   size?: 'sm' | 'md';
   className?: string;
@@ -31,10 +27,6 @@ type Multi = Common & { multiple: true; value: string[]; onChange: (v: string[])
 
 const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
 
-/**
- * Lista wyboru: popover ze szkła, wyszukiwarka, grupy, kolory, klawiatura (↑↓ Enter Esc Home End),
- * wybór wielu (z chipami), otwieranie w górę, gdy brak miejsca. Opcje renderowane tylko po otwarciu.
- */
 export function Select(props: Single | Multi) {
   const { options, placeholder = 'Wybierz…', id, ariaLabel, disabled, size = 'md', className = '' } = props;
   const [open, setOpen] = useState(false);

@@ -14,7 +14,6 @@ const dateFmt = new Intl.DateTimeFormat('pl-PL', {
   timeZone: 'Europe/Warsaw',
 });
 
-/** Bardzo prosty markdown Discorda -> HTML (po escapowaniu). */
 function markdown(raw: string, message: Message): string {
   let s = esc(raw);
   s = s.replace(/```(?:\w+)?\n?([\s\S]*?)```/g, (_m, code: string) => `<pre>${code}</pre>`);
@@ -50,7 +49,6 @@ function markdown(raw: string, message: Message): string {
   return s.replace(/\n/g, '<br>');
 }
 
-/** Spłaszcza Components v2 (Container, Section, TextDisplay…) do HTML. */
 function componentsHtml(nodes: unknown[], message: Message): string {
   let out = '';
   for (const node of nodes as { type: number; [k: string]: unknown }[]) {
@@ -115,7 +113,6 @@ function messageHtml(m: Message): string {
 </div>`;
 }
 
-/** Pobiera całą historię kanału (od najstarszych). */
 export async function fetchAllMessages(channel: TextChannel): Promise<Message[]> {
   const all: Message[] = [];
   let before: Snowflake | undefined;

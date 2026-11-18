@@ -1,12 +1,10 @@
 import { ORDER_PREFIX } from '../config/constants.js';
 import { zonedDate, zonedParts } from './time.js';
 
-/** 42 -> "ZX-0042" */
 export function formatOrderId(id: number): string {
   return `${ORDER_PREFIX}-${String(id).padStart(4, '0')}`;
 }
 
-/** "ZX-0042" | "zx42" | "42" -> 42 */
 export function parseOrderId(input: string): number | null {
   const match = input.trim().match(new RegExp(`^(?:${ORDER_PREFIX}-?)?0*(\\d+)$`, 'i'));
   if (!match?.[1]) return null;
@@ -14,7 +12,6 @@ export function parseOrderId(input: string): number | null {
   return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
-/** Numer ticketu do nazwy kanału: 42 -> "0042" */
 export function padNumber(n: number, length = 4): string {
   return String(n).padStart(length, '0');
 }
@@ -32,12 +29,10 @@ export function formatMoney(amount: number | string | { toString(): string }, cu
 
 type TimestampStyle = 't' | 'T' | 'd' | 'D' | 'f' | 'F' | 'R';
 
-/** Znacznik czasu Discorda, który każdy widzi w swojej strefie. */
 export function discordTime(date: Date, style: TimestampStyle = 'f'): string {
   return `<t:${Math.floor(date.getTime() / 1000)}:${style}>`;
 }
 
-/** Bezpieczny slug do nazwy kanału. */
 export function slugify(input: string, max = 20): string {
   return (
     input
@@ -52,12 +47,10 @@ export function slugify(input: string, max = 20): string {
   );
 }
 
-/** Skraca tekst do limitu z wielokropkiem. */
 export function truncate(text: string, max: number): string {
   return text.length <= max ? text : `${text.slice(0, max - 1)}…`;
 }
 
-/** Pasek postępu z bloków: progressBar(3, 5) -> "▰▰▰▱▱ 60%" */
 export function progressBar(value: number, total: number, size = 10): string {
   const ratio = total <= 0 ? 0 : Math.min(1, Math.max(0, value / total));
   const filled = Math.round(ratio * size);
@@ -73,7 +66,6 @@ export function formatDuration(ms: number): string {
   return parts.length ? parts.join(' ') : `${s % 60}s`;
 }
 
-/** "500" | "500,50" | "1 200 zł" | "99.9" -> 500.5 itd.; null gdy nie da się odczytać. */
 export function parseMoney(input: string): number | null {
   const cleaned = input.replace(/zł|pln|\s/gi, '').replace(',', '.');
   if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
@@ -81,10 +73,6 @@ export function parseMoney(input: string): number | null {
   return Number.isFinite(value) && value >= 0 && value < 1_000_000 ? Math.round(value * 100) / 100 : null;
 }
 
-/**
- * Data po polsku: "24.12.2026", "24.12" (najbliższy taki dzień), "+14" (za 14 dni).
- * Zwraca koniec dnia (23:59 w strefie serwera) albo null.
- */
 export function parseDate(input: string, now = new Date()): Date | null {
   const s = input.trim();
   const today = zonedParts(now);
@@ -102,5 +90,4 @@ export function parseDate(input: string, now = new Date()): Date | null {
   return date;
 }
 
-/** Zaokrąglenie do groszy (operacje na kwotach z bazy). */
 export const cents = (v: number) => Math.round(v * 100) / 100;

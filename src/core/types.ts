@@ -12,7 +12,6 @@ import type {
 import type { GuildConfig } from '../generated/prisma/client.js';
 import type { ZxClient } from '../client.js';
 
-/** Kto może użyć komendy / przycisku. */
 export type AccessLevel = 'everyone' | 'staff' | 'admin';
 
 export interface Context {
@@ -23,9 +22,7 @@ export interface Context {
 interface CommandBase {
   data: { name: string; toJSON(): RESTPostAPIApplicationCommandsJSONBody };
   access?: AccessLevel;
-  /** Cooldown w sekundach (per użytkownik). */
   cooldown?: number;
-  /** Czy działa w trybie serwisowym (domyślnie tylko dla adminów). */
   allowInMaintenance?: boolean;
 }
 
@@ -47,10 +44,6 @@ export interface MessageContextCommand extends CommandBase {
 
 export type Command = SlashCommand | UserContextCommand | MessageContextCommand;
 
-/**
- * Handler komponentów. customId ma format `modul:akcja:arg1:arg2…`,
- * a `id` handlera to `modul:akcja`. Argumenty trafiają do `args`.
- */
 interface ComponentBase {
   id: string;
   access?: AccessLevel;
@@ -72,10 +65,6 @@ export interface ModalHandler extends ComponentBase {
   run(interaction: ModalSubmitInteraction<'cached'>, args: string[], ctx: Context): Promise<unknown>;
 }
 
-/**
- * Handlery działające także w wiadomościach prywatnych (np. ocena ticketu w DM).
- * Interakcja nie musi pochodzić z serwera, więc nie ma `member` ani sprawdzania uprawnień.
- */
 export interface DmButtonHandler extends Omit<ComponentBase, 'access'> {
   type: 'dmButton';
   run(interaction: ButtonInteraction, args: string[], ctx: Context): Promise<unknown>;
@@ -104,18 +93,14 @@ export type AnyEventHandler = { [K in keyof ClientEvents]: EventHandler<K> }[key
 
 export interface ScheduledJob {
   name: string;
-  /** Co ile ms uruchamiać. */
   intervalMs: number;
-  /** Uruchom od razu po starcie. */
   runOnStart?: boolean;
   run(client: ZxClient): Promise<unknown>;
 }
 
 export interface BotModule {
   name: string;
-  /** Opis widoczny w /config moduly. */
   description: string;
-  /** Czy moduł można wyłączyć w /config (core/admin nie). */
   toggleable?: boolean;
   commands?: Command[];
   components?: ComponentHandler[];
@@ -124,7 +109,6 @@ export interface BotModule {
   onReady?(client: ZxClient): Promise<void>;
 }
 
-/** Helpery dające inferencję typów przy definiowaniu. */
 export const defineModule = (m: BotModule) => m;
 export const defineCommand = (c: SlashCommand) => c;
 export const defineComponent = <T extends ComponentHandler>(c: T) => c;

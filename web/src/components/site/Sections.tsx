@@ -32,7 +32,6 @@ export function SectionHead({
   );
 }
 
-/** Nagłówek podstrony (z tłem jak w hero). */
 export function PageHero({ kicker, title, lead, children }: { kicker: string; title: React.ReactNode; lead?: string; children?: React.ReactNode }) {
   return (
     <section className="page-hero">

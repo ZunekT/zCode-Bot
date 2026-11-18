@@ -13,7 +13,6 @@ import { closeTicket } from './services/close.js';
 const log = createLogger('tickets:jobs');
 const HOUR = 3_600_000;
 
-/** Klient czeka na odpowiedź obsługi dłużej niż ticketSlaHours → ping obsługi (raz). */
 async function checkSla(client: ZxClient) {
   const config = await getConfig();
   const now = Date.now();
@@ -45,11 +44,6 @@ async function checkSla(client: ZxClient) {
   }
 }
 
-/**
- * Obsługa odpisała, a klient milczy:
- *  1) po ticketAutoCloseHours – ostrzeżenie z przyciskiem „Zostaw otwarty”,
- *  2) po kolejnych min(24h, ticketAutoCloseHours) bez reakcji – zamknięcie.
- */
 async function checkAutoClose(client: ZxClient) {
   const config = await getConfig();
   const now = Date.now();

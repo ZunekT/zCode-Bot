@@ -6,7 +6,6 @@ import { discordTime, formatDuration, truncate } from '../../../utils/format.js'
 import { isIgnored, sendLog } from '../service.js';
 
 const DAY = 86_400_000;
-/** Konto młodsze niż tyle dni jest oznaczane w logu wejścia. */
 const NEW_ACCOUNT_DAYS = 7;
 
 export async function onMemberAdd(client: ZxClient, member: GuildMember): Promise<void> {
@@ -67,7 +66,6 @@ export async function onMemberRemove(
   );
 }
 
-/** Boosty (pseudonimy, role i wyciszenia idą przez audit log – tam wiadomo, kto je zmienił). */
 export async function onMemberUpdate(
   client: ZxClient,
   before: GuildMember | PartialGuildMember,

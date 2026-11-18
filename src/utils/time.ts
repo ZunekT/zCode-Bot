@@ -19,7 +19,6 @@ export interface ZonedParts {
   minute: number;
 }
 
-/** Data/godzina „na zegarku” w strefie serwera. */
 export function zonedParts(date: Date): ZonedParts {
   const p = Object.fromEntries(partsFmt.formatToParts(date).map((x) => [x.type, x.value]));
   return {
@@ -31,14 +30,12 @@ export function zonedParts(date: Date): ZonedParts {
   };
 }
 
-/** Przesunięcie strefy względem UTC w ms dla danej chwili (np. +1h zimą, +2h latem). */
 function offsetAt(date: Date): number {
   const z = zonedParts(date);
   const asUtc = Date.UTC(z.year, z.month, z.day, z.hour, z.minute);
   return asUtc - Math.floor(date.getTime() / 60_000) * 60_000;
 }
 
-/** Chwila odpowiadająca godzinie „na zegarku” w strefie serwera (z obsługą zmiany czasu). */
 export function zonedDate(year: number, month: number, day: number, hour = 0, minute = 0): Date {
   const guess = Date.UTC(year, month, day, hour, minute);
   let result = guess - offsetAt(new Date(guess));
@@ -46,7 +43,6 @@ export function zonedDate(year: number, month: number, day: number, hour = 0, mi
   return new Date(result);
 }
 
-/** Klucz dnia RRRR-MM-DD w strefie serwera. */
 export function dayKey(date = new Date()): string {
   const z = zonedParts(date);
   return `${z.year}-${String(z.month + 1).padStart(2, '0')}-${String(z.day).padStart(2, '0')}`;
@@ -62,12 +58,6 @@ const UNITS: Record<string, number> = {
   min: 60_000,
 };
 
-/**
- * Kiedy? Po polsku:
- *  • „30m”, „2h”, „1h30m”, „3d”, „2 dni”
- *  • „18:00” (dziś albo jutro, jeśli już minęła), „jutro 10:00”, „dziś 18:30”, „pojutrze 9”
- *  • „24.12 18:00”, „24.12.2026 18:00”, „24.12” (9:00)
- */
 export function parseWhen(input: string, now = new Date()): Date | null {
   const s = input
     .trim()

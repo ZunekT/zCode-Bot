@@ -1,15 +1,5 @@
 'use strict';
 
-/**
- * zxcode-sdk
- *
- * Bot Discord deklaruje swoje moduły i ustawienia, a klient edytuje je w panelu zxcode.pl.
- * Zmiany trafiają do bota na żywo (bez restartu). Do tego: uprawnienia komend według ról,
- * profil i status bota z panelu oraz monitoring (heartbeat).
- *
- * Zero zależności – Node.js 18+ (wbudowany fetch), discord.js v14.
- */
-
 const { EventEmitter } = require('node:events');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -34,33 +24,21 @@ function makeField(type, opts = {}) {
   return { __zxField: true, type, ...opts };
 }
 
-/**
- * Konstruktory pól. Każde przyjmuje { label, description?, default?, required? } i opcje swojego typu.
- */
 const field = {
-  /** Przełącznik tak/nie. */
   toggle: (o) => makeField('boolean', o),
-  /** Krótki tekst (domyślnie do 2000 znaków). */
   text: (o) => makeField('text', o),
-  /** Długi tekst, np. treść wiadomości. */
   textarea: (o) => makeField('textarea', o),
-  /** Liczba: { min?, max?, integer? }. */
   number: (o) => makeField('number', o),
-  /** Wybór z listy: { options: [{ value, label }] lub ['a', 'b'], multiple? }. */
   select: (o) =>
     makeField('select', {
       ...o,
       options: (o?.options ?? []).map((x) => (typeof x === 'string' ? { value: x, label: x } : x)),
     }),
-  /** Kanał serwera: { types?: ['text', 'voice', 'category', 'announcement', 'forum', 'stage'], multiple? }. */
   channel: (o) => makeField('channel', { ...o, channelTypes: o?.types ?? o?.channelTypes }),
-  /** Rola serwera: { multiple? }. */
   role: (o) => makeField('role', o),
-  /** Kolor w formacie #rrggbb. */
   color: (o) => makeField('color', o),
 };
 
-/** { klucz: { label, fields: { pole: field.x() } } } -> format schematu wysyłany do serwera. */
 function buildSchema(modules) {
   const out = [];
   for (const [key, mod] of Object.entries(modules ?? {})) {
@@ -119,7 +97,6 @@ class ZxCode extends EventEmitter {
     this.debug = options.debug === true;
     this.cacheFile = options.cacheFile === false ? null : (options.cacheFile ?? path.join(process.cwd(), '.zxcode-cache.json'));
 
-    /** @type {Map<string, { values: object, permissions: object, revision: number }>} */
     this.configs = new Map();
     this.profile = {};
     this.profileRevision = 0;
@@ -144,10 +121,6 @@ class ZxCode extends EventEmitter {
 
   // ───────────── Publiczne API ─────────────
 
-  /**
-   * Wartość ustawienia: zx.get(guildId, 'tickety.kanal').
-   * Gdy w panelu nic nie ustawiono – wartość domyślna z definicji pola.
-   */
   get(guildId, pathStr) {
     const [mod, key] = String(pathStr).split('.');
     const def = this._modulesByKey.get(mod);
@@ -159,7 +132,6 @@ class ZxCode extends EventEmitter {
     return values[key] === undefined ? (fieldDef.default ?? (fieldDef.multiple ? [] : null)) : values[key];
   }
 
-  /** Wszystkie ustawienia modułu z wartościami domyślnymi: zx.module(guildId, 'tickety'). */
   module(guildId, mod) {
     const def = this._modulesByKey.get(mod);
     if (!def) throw new Error(`zxcode-sdk: nieznany moduł „${mod}”`);
@@ -169,15 +141,10 @@ class ZxCode extends EventEmitter {
     return out;
   }
 
-  /** Czy moduł jest włączony na serwerze (moduły bez przełącznika zawsze true). */
   enabled(guildId, mod) {
     return this.get(guildId, `${mod}.enabled`);
   }
 
-  /**
-   * Czy członek serwera może użyć komendy (uprawnienia ustawione w panelu).
-   * Brak reguły = komenda dostępna. Administrator serwera zawsze ma dostęp.
-   */
   can(member, commandName) {
     if (!member?.guild) return true;
     const rule = this.configs.get(member.guild.id)?.permissions?.[commandName];
@@ -187,11 +154,6 @@ class ZxCode extends EventEmitter {
     return rule.roles.some((id) => (roles?.has ? roles.has(id) : Array.isArray(member.roles) && member.roles.includes(id)));
   }
 
-  /**
-   * Strażnik komendy: zwraca true, gdy można ją wykonać. W przeciwnym razie odpowiada
-   * prywatną wiadomością i zwraca false.
-   *   if (!(await zx.guard(interaction))) return;
-   */
   async guard(interaction, message = this.denyMessage) {
     if (!interaction?.inGuild?.() || !interaction.commandName) return true;
     if (this.can(interaction.member, interaction.commandName)) return true;
@@ -205,16 +167,11 @@ class ZxCode extends EventEmitter {
     return false;
   }
 
-  /**
-   * Zgłasza ustawienia od strony bota (np. zmienione komendą na Discordzie), żeby panel je pokazał.
-   * values: { moduł: { pole: wartość } } – zmieniane tylko podane pola, null czyści pole.
-   */
   async set(guildId, values) {
     const res = await this._request('PUT', `/sdk/v1/config/${guildId}`, { values });
     return res;
   }
 
-  /** Zatrzymuje SDK (rozłącza się z panelem). */
   stop() {
     this.stopped = true;
     this._abort?.abort();
@@ -396,7 +353,6 @@ class ZxCode extends EventEmitter {
     }
   }
 
-  /** Strumień SSE ze zmianami na żywo. */
   async _listen() {
     this._abort = new AbortController();
     const res = await fetch(`${this.url}/sdk/v1/events`, {
@@ -468,7 +424,6 @@ class ZxCode extends EventEmitter {
     });
   }
 
-  /** Zmiany kanałów/ról zbieramy przez kilka sekund i wysyłamy razem. */
   _queueGuild(guildId) {
     this._pendingGuilds.add(guildId);
     if (this._guildTimer) return;
@@ -483,7 +438,6 @@ class ZxCode extends EventEmitter {
     this._guildTimer.unref?.();
   }
 
-  /** Ostatnie ustawienia zapisane lokalnie – bot działa z nimi, gdy panel jest niedostępny. */
   _loadCache() {
     if (!this.cacheFile) return;
     try {
@@ -507,10 +461,6 @@ class ZxCode extends EventEmitter {
   }
 }
 
-/**
- * Podłącza bota do panelu zxCode.
- *   const zx = zxcode(client, { modules: { … } });
- */
 function zxcode(client, options) {
   return new ZxCode(client, options);
 }

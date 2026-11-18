@@ -56,15 +56,10 @@ const asCategory = (value: string | undefined): TicketCategory => {
   return value as TicketCategory;
 };
 
-/** Panel pomocy z banerem (przy edycji podmieniamy załącznik, żeby nie dublować pliku). */
 export function publicPanelPayload() {
   return { ...v2Message(publicPanel(), { files: [bannerFile()] }), attachments: [] };
 }
 
-/**
- * Select menu w Discordzie „zapamiętuje” wybraną opcję i nie pozwala wybrać jej drugi raz.
- * Po każdym wyborze odświeżamy wiadomość, żeby menu wróciło do stanu początkowego.
- */
 async function resetPublicPanel(interaction: AnySelectMenuInteraction) {
   await interaction.message
     .edit(publicPanelPayload())
@@ -98,7 +93,6 @@ const ephemeralPicker = (
   menu: StringSelectMenuBuilder | UserSelectMenuBuilder,
 ) => v2(card({ tone: 'info', emoji, title, timestamp: false }).select(menu), { ephemeral: true });
 
-/** Wykonanie akcji z select menu panelu ticketu. */
 async function runAction(
   interaction: StringSelectMenuInteraction<'cached'>,
   action: ControlAction,

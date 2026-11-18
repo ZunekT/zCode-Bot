@@ -1,14 +1,10 @@
 'use client';
 
-/**
- * Interaktywne „wyspy” strony publicznej – małe, bez bibliotek animacji.
- */
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** Jeden obserwator dla wszystkich [data-reveal] na stronie (też po zmianie podstrony). */
 export function RevealObserver() {
   const pathname = usePathname();
   useEffect(() => {
@@ -40,7 +36,6 @@ export function RevealObserver() {
   return null;
 }
 
-/** Czy element jest na ekranie (do wstrzymywania pętli w tle). */
 export function useOnScreen<T extends Element>(margin = '100px') {
   const ref = useRef<T>(null);
   const [on, setOn] = useState(false);
@@ -54,7 +49,6 @@ export function useOnScreen<T extends Element>(margin = '100px') {
   return [ref, on] as const;
 }
 
-/** Pętla co `ms`, tylko gdy element jest widoczny i karta aktywna. */
 export function useTicker(ms: number, active: boolean) {
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -65,7 +59,6 @@ export function useTicker(ms: number, active: boolean) {
   return tick;
 }
 
-/** Licznik od 0 do wartości (requestAnimationFrame), gdy pojawi się na ekranie. */
 export function CountUp({ to, decimals = 0, suffix = '' }: { to: number; decimals?: number; suffix?: string }) {
   const fmt = (v: number) =>
     v.toLocaleString('pl-PL', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
@@ -98,7 +91,6 @@ export function CountUp({ to, decimals = 0, suffix = '' }: { to: number; decimal
   );
 }
 
-/** Karta z poświatą za kursorem (zmienne CSS, bez re-renderów). */
 export function Spotlight({ children, className = '' }: { children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   return (
@@ -117,7 +109,6 @@ export function Spotlight({ children, className = '' }: { children: ReactNode; c
   );
 }
 
-/** Akordeon FAQ: animacja CSS (grid 0fr → 1fr), treść zawsze w HTML (SEO, wyszukiwanie w stronie). */
 export function FaqList({
   items,
   firstOpen = true,
@@ -149,7 +140,6 @@ export function FaqList({
   );
 }
 
-/** Przełączniki „same się klikają” w kafelku Panel ustawień. */
 export function LiveSwitches() {
   const [ref, on] = useOnScreen<HTMLDivElement>();
   const tick = useTicker(1500, on);
@@ -168,7 +158,6 @@ export function LiveSwitches() {
 
 const CHANNELS = ['# powitania', '# ogloszenia', '# lobby'];
 
-/** Makieta panelu w oknie przeglądarki – zmienia się sama, gdy jest widoczna. */
 export function PanelMock() {
   const [ref, on] = useOnScreen<HTMLDivElement>();
   const tick = useTicker(1800, on);
@@ -242,7 +231,6 @@ export function PanelMock() {
 
 const PROGRESS = [35, 60, 85, 100];
 
-/** Pasek postępu zlecenia w podglądzie Discorda (hero). */
 export function OrderProgress() {
   const [ref, on] = useOnScreen<HTMLDivElement>();
   const tick = useTicker(2200, on);
@@ -267,7 +255,6 @@ export function OrderProgress() {
   );
 }
 
-/** Menu mobilne nawigacji (otwieranie klasą CSS). */
 export function useScrolled(threshold = 16) {
   const [s, setS] = useState(false);
   useEffect(() => {

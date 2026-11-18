@@ -1,11 +1,6 @@
 import { env } from '../../config/env.js';
 import { UserError } from '../../core/errors.js';
 
-/**
- * Klient REST API Mathost (https://mathost.eu/api/docs) – tylko to, czego potrzebuje zarządzanie VPS.
- * Klucz z MATHOST_API_KEY; nigdy nie trafia do logów ani odpowiedzi.
- */
-
 const BASE = 'https://mathost.eu/api';
 const TIMEOUT_MS = 15_000;
 
@@ -126,7 +121,6 @@ export const mathost = {
   services: () => call<MathostService[]>('GET', '/account/services'),
   vps: (id: number) => call<VpsInfo>('GET', `/account/services/vps/${id}`),
   live: (id: number) => call<VpsLive>('GET', `/account/services/vps/${id}/live`),
-  /** Dane RRD: hour (co minutę), day, week, month. */
   history: (id: number, timeframe: 'hour' | 'day' | 'week' | 'month') =>
     call<RrdPoint[]>('GET', `/account/services/vps/${id}/stats/${timeframe}`),
   backups: (id: number) => call<VpsBackup[]>('GET', `/account/services/vps/${id}/backups`),
@@ -136,7 +130,6 @@ export const mathost = {
 
 let detectedId: number | null = null;
 
-/** ID VPS: z MATHOST_VPS_ID albo jedyny VPS na koncie. */
 export async function vpsId(): Promise<number> {
   if (env.MATHOST_VPS_ID) return env.MATHOST_VPS_ID;
   if (detectedId) return detectedId;

@@ -283,7 +283,6 @@ const verifyCommand = defineCommand({
   },
 });
 
-/** Krok captchy zakończony sukcesem – nadanie roli i karta powitalna. */
 async function finish(interaction: ModalSubmitInteraction<'cached'>, client: ZxClient) {
   const config = await getConfig();
   await grantAccess(client, interaction.member, config);

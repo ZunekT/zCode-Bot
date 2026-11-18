@@ -28,7 +28,6 @@ async function bump(field: 'messages' | 'joins' | 'leaves') {
     .exec();
 }
 
-/** Przepisuje liczniki dzisiaj/wczoraj z Redis do bazy (Redis jest źródłem dla bieżących dni). */
 async function flush(client: ZxClient) {
   const guild = client.guilds.cache.get(env.GUILD_ID);
   for (const day of [dayKey(new Date(Date.now() - DAY)), dayKey()]) {

@@ -10,7 +10,6 @@ import { Modal } from './ui/Modal';
 
 const CDN = /^https:\/\/(cdn|media)\.discordapp\.(com|net)\//;
 
-/** Rozmowa w tickecie + odpowiedź z panelu (bot wysyła ją na kanał) + zamknięcie. */
 export function TicketChat({ id, open, messages }: { id: number; open: boolean; messages: TicketDetails['messages'] }) {
   const router = useRouter();
   const toast = useToast();

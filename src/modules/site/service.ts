@@ -2,11 +2,6 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { UserError } from '../../core/errors.js';
 import { prisma } from '../../db/prisma.js';
 
-/**
- * Tryb „Start wkrótce” strony zxcode.pl: dopóki strona nie jest uruchomiona, pełną stronę widzą tylko
- * właściciel i osoby z listy podglądu (po zalogowaniu przez Discord). Domyślnie strona jest ukryta.
- */
-
 const KEY = 'access';
 const MAX_PREVIEW = 50;
 

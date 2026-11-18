@@ -3,7 +3,6 @@ import type { TicketCategory } from '../../generated/prisma/client.js';
 import { Form } from '../../ui/builders/modal.js';
 import { CATEGORIES } from './constants.js';
 
-/** Pole formularza zapisane w Ticket.formData (kolejność = kolejność wyświetlania). */
 export interface FormAnswer {
   label: string;
   value: string;
@@ -33,7 +32,6 @@ const DEADLINES = [
 const labelOf = (list: { value: string; label: string }[], value: string | undefined) =>
   list.find((o) => o.value === value)?.label ?? value ?? '—';
 
-/** prefill – wstępnie wypełnione pola formularza zamówienia (np. z cennika). */
 export function ticketForm(category: TicketCategory, prefill: { name?: string; description?: string } = {}) {
   const def = CATEGORIES[category];
   const form = new Form(`ticket:create:${category}`, def.label);
@@ -139,7 +137,6 @@ function select(i: ModalSubmitInteraction, id: string): string | undefined {
   }
 }
 
-/** Odczytuje odpowiedzi z modala danej kategorii. */
 export function parseTicketForm(category: TicketCategory, i: ModalSubmitInteraction): ParsedForm {
   const a = (label: string, value: string): FormAnswer | null => (value ? { label, value } : null);
   const clean = (list: (FormAnswer | null)[]) => list.filter((x): x is FormAnswer => x !== null);
@@ -196,7 +193,6 @@ export function parseTicketForm(category: TicketCategory, i: ModalSubmitInteract
   }
 }
 
-/** Bezpieczny odczyt formData z bazy. */
 export function answersOf(formData: unknown): FormAnswer[] {
   if (!Array.isArray(formData)) return [];
   return formData.filter(

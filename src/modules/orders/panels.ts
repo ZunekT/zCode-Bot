@@ -38,12 +38,6 @@ const statusText = (s: OrderStatus) => ORDER_STATUSES[s].label;
 const plainMoney = (v: number | null, currency = 'PLN') =>
   v === null ? 'do wyceny' : formatMoney(v, currency);
 
-/**
- * Postęp zlecenia:
- *   **Etap 4/7 · W realizacji**
- *   ▰▰▰▰▰▰▰▰▱▱▱▱▱▱ 57%
- *   -# Wycena › Akceptacja › Płatność › **Realizacja** › Testy › Dostarczone › Koniec
- */
 export function timeline(status: OrderStatus): string {
   if (status === 'CANCELLED') return '**Zlecenie anulowane**';
   const current = ORDER_STATUSES[status].step;
@@ -53,7 +47,6 @@ export function timeline(status: OrderStatus): string {
   return `**Etap ${current}/7 · ${ORDER_STATUSES[status].label}**\n${progressBar(current, 7, 14)}\n-# ${steps.join(' › ')}`;
 }
 
-/** Rozliczenie jako wyrównana tabelka. */
 export function financeTable(order: Order & { payments: Pick<Payment, 'amount'>[] }): string {
   const t = totalsOf(order);
   const c = order.currency;
@@ -71,7 +64,6 @@ export function financeTable(order: Order & { payments: Pick<Payment, 'amount'>[
   return tableBlock(rows, { separatorBefore: [rows.length - 1] });
 }
 
-/** Checklista: zrobione na zielono (+ [x]), reszta zwykłym tekstem ([ ]). */
 export function tasksBlock(tasks: Pick<OrderTask, 'done' | 'content'>[]): string {
   return diffBlock(
     tasks.map((x) => [x.done ? '+' : ' ', `[${x.done ? 'x' : ' '}] ${x.content}`] as [DiffSign, string]),
@@ -100,7 +92,6 @@ export function actionSelect(order: Order): StringSelectMenuBuilder {
     );
 }
 
-/** Główny panel zlecenia. */
 export function orderPanel(order: FullOrder, avatarUrl: string, interactive = true): Panel {
   const t = totalsOf(order);
   const done = order.tasks.filter((x) => x.done).length;
@@ -159,7 +150,6 @@ export function orderPanel(order: FullOrder, avatarUrl: string, interactive = tr
     .footer('Każdą zmianę statusu dostaniesz też w wiadomości prywatnej');
 }
 
-/** Karta zmiany statusu (kanał + DM). */
 export function statusChangeCard(
   order: Order,
   from: OrderStatus | null,

@@ -11,7 +11,6 @@ export const redis = new Redis(env.REDIS_URL, {
 
 redis.on('error', (err) => log.error('Błąd połączenia z Redis', err));
 
-/** Klucze trzymamy w jednym miejscu, żeby nie było literówek. */
 export const RedisKeys = {
   guildConfig: (guildId: string) => `zx:config:${guildId}`,
   cooldown: (command: string, userId: string) => `zx:cd:${command}:${userId}`,

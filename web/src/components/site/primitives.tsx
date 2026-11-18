@@ -1,11 +1,5 @@
-/**
- * Klocki strony publicznej – bez bibliotek animacji. Animacje to CSS (transform/opacity),
- * a pojawianie się przy przewijaniu obsługuje jeden wspólny IntersectionObserver (RevealObserver).
- * Komponenty tutaj są serwerowe; interaktywne „wyspy” są w islands.tsx.
- */
 import type { CSSProperties, ReactNode } from 'react';
 
-/** Element pojawiający się przy przewinięciu (klasa .in dodawana przez RevealObserver). */
 export function Reveal({
   children,
   delay = 0,
@@ -28,7 +22,6 @@ export function Reveal({
   );
 }
 
-/** Nieskończony pasek – animacja CSS na kompozytorze (bez JS). */
 export function Marquee({
   children,
   speed = 40,

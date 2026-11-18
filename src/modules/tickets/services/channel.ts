@@ -27,10 +27,6 @@ const MEMBER_ALLOW = [
 const STAFF_ALLOW = [...MEMBER_ALLOW, P.ManageMessages];
 const BOT_ALLOW = [...STAFF_ALLOW, P.ManageChannels];
 
-/**
- * Uprawnienia kanału ticketu.
- * active = klient i dodane osoby widzą kanał; archived = tylko obsługa (bez pisania).
- */
 export function ticketOverwrites(
   guild: Guild,
   ticket: Pick<Ticket, 'userId' | 'participants'>,
@@ -82,7 +78,6 @@ export async function getTicketTextChannel(client: ZxClient, ticket: Ticket): Pr
   return channel?.type === ChannelType.GuildText ? channel : null;
 }
 
-/** Wysyła wpis na kanał logów (jeśli ustawiony). */
 export async function logTicket(client: ZxClient, config: GuildConfig, panel: Panel): Promise<void> {
   const channel = await getSendableChannel(client, config.logChannelId);
   await channel?.send(v2Message(panel)).catch(() => undefined);

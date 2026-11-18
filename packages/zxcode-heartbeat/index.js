@@ -1,11 +1,5 @@
 'use strict';
 
-/**
- * zxcode-heartbeat
- * Bot klienta co minutę zgłasza się do monitoringu zxCode.
- * Brak zgłoszenia przez 3 minuty = alert dla obsługi i DM do klienta.
- */
-
 const URL_RE = /^https?:\/\/[^\s/]+(?:\/[^\s]*)?\/heartbeat\/[a-f0-9]{48}$/i;
 const MIN_INTERVAL = 15_000;
 const DEFAULT_INTERVAL = 60_000;
@@ -22,13 +16,6 @@ function readVersion() {
   }
 }
 
-/**
- * Podłącza heartbeat do klienta discord.js.
- *
- * @param {import('discord.js').Client} client
- * @param {{ url?: string, version?: string, interval?: number, debug?: boolean, onError?: (err: Error) => void }} [options]
- * @returns {{ beat: () => Promise<boolean>, stop: () => void, readonly running: boolean }}
- */
 function heartbeat(client, options = {}) {
   if (!client || typeof client.once !== 'function') {
     throw new TypeError('zxcode-heartbeat: pierwszym argumentem musi być klient discord.js');
@@ -53,7 +40,6 @@ function heartbeat(client, options = {}) {
   const isConnected = () =>
     typeof client.isReady === 'function' ? client.isReady() && client.ws?.status === WS_READY : false;
 
-  /** Jedno zgłoszenie. Zwraca true, gdy serwer je przyjął. */
   async function beat() {
     // Zgłaszamy się tylko, gdy bot jest naprawdę połączony z Discordem – sam działający proces to za mało.
     if (!isConnected()) {

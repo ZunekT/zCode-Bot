@@ -1,4 +1,3 @@
-/** Stałe pytania FAQ (strona /faq i podgląd na stronie głównej). Pytania z bota trafiają do grupy „Inne”. */
 export const FAQ_GROUPS: { title: string; items: { id: string; question: string; answer: string }[] }[] = [
   {
     title: 'Zamówienie i płatności',

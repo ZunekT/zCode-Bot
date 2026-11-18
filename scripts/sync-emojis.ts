@@ -1,9 +1,3 @@
-/**
- * Wgrywa paczkę emotek (assets/emojis/*.png) jako Application Emojis.
- * Pomija emotki, które już istnieją. Dodaj --force, żeby podmienić istniejące.
- *
- * npm run emojis:sync [-- --force]
- */
 import 'dotenv/config';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';

@@ -19,7 +19,6 @@ export const SECTION_KEYS = ['added', 'changed', 'fixed', 'removed'] as const;
 export type SectionKey = (typeof SECTION_KEYS)[number];
 export type Sections = Record<SectionKey, string[]>;
 
-/** Prefiks linii w bloku ```diff: „+” zielony, „-” czerwony, „~” i „*” neutralne. */
 export const SECTIONS: Record<SectionKey, { label: string; sign: DiffSign }> = {
   added: { label: 'Dodano', sign: '+' },
   changed: { label: 'Zmieniono', sign: '~' },
@@ -40,7 +39,6 @@ export function sectionsOf(entry: Pick<ChangelogEntry, 'sections'>): Sections {
   return out;
 }
 
-/** Linie z formularza -> lista punktów (usuwa punktory). */
 export const toLines = (raw: string) =>
   raw
     .split('\n')
@@ -50,7 +48,6 @@ export const toLines = (raw: string) =>
 
 export const fromLines = (lines: string[]) => lines.map((l) => `- ${l}`).join('\n');
 
-/** Karta wersji (kanał changelogu, DM do subskrybentów, podgląd). */
 export function changelogPanel(
   entry: ChangelogEntry,
   opts: { subscribeButton?: boolean; pingRoleId?: string | null } = {},
@@ -89,7 +86,6 @@ export function changelogPanel(
   );
 }
 
-/** Podgląd szkicu z przyciskami dla obsługi. */
 export function draftPayload(entry: ChangelogEntry, notice?: string) {
   const controls = card({
     tone: entry.status === 'PUBLISHED' ? 'success' : 'info',
@@ -114,7 +110,6 @@ export async function getProject(name: string): Promise<ChangelogProject> {
   return p;
 }
 
-/** Publikacja: kanał projektu (ping roli), potem DM do subskrybentów w tle. */
 export async function publishChangelog(
   client: ZxClient,
   id: number,

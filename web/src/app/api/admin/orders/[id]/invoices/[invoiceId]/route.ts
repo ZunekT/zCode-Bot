@@ -1,7 +1,6 @@
 import { internalRaw } from '@/lib/api';
 import { getSession } from '@/lib/session';
 
-/** Proforma w panelu admina (właściciela sprawdza bot). */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string; invoiceId: string }> }) {
   const session = await getSession();
   if (!session) return new Response('Zaloguj się.', { status: 401 });

@@ -10,10 +10,6 @@ export type SdkEvent =
 
 type Listener = (event: SdkEvent) => void;
 
-/**
- * Połączenia na żywo z botami: strumienie SSE (boty klientów przez HTTP)
- * i słuchacze w procesie (sam bot zxCode).
- */
 class SdkHub {
   private streams = new Map<number, Set<ServerResponse>>();
   private listeners = new Map<number, Set<Listener>>();
@@ -58,7 +54,6 @@ class SdkHub {
     }
   }
 
-  /** Zamyka wszystkie strumienie bota (np. po zmianie klucza). */
   closeStreams(botId: number): void {
     for (const res of this.streams.get(botId) ?? []) {
       try {
@@ -71,7 +66,6 @@ class SdkHub {
     this.streams.delete(botId);
   }
 
-  /** Komentarz SSE co 25 s – utrzymuje połączenie przez proxy (Caddy, Cloudflare). */
   keepAlive(): void {
     for (const set of this.streams.values()) {
       for (const res of set) {

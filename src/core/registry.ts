@@ -9,10 +9,6 @@ export function collectCommandData(modules: BotModule[]): RESTPostAPIApplication
   return modules.flatMap((m) => (m.commands ?? []).map((c) => c.data.toJSON()));
 }
 
-/**
- * Rejestruje komendy jako komendy serwerowe (guild) – zmiany widać od razu.
- * Bot działa tylko na serwerze zxCode, więc komendy globalne nie są potrzebne.
- */
 export async function deployGuildCommands(modules: BotModule[]): Promise<number> {
   const body = collectCommandData(modules);
   const rest = new REST().setToken(env.DISCORD_TOKEN);

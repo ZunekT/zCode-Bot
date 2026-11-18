@@ -13,7 +13,6 @@ import { selfBotId } from './self.js';
 
 const SDK_URL = () => env.PUBLIC_URL?.replace(/\/$/, '') ?? `http://ADRES-SERWERA:${env.HTTP_PORT}`;
 
-/** Instrukcja dla bota klienta – pokazywana razem z kluczem (tylko raz). */
 function setupText(key: string) {
   return (
     '**1.** W bocie: `npm install zxcode-sdk`\n' +

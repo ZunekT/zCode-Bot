@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, type ReactNode } from 'react';
 
-/** Okno dialogowe: szkło, wejście ze sprężystym skalowaniem, Escape i klik w tło zamykają. */
 export function Modal({
   open,
   onClose,

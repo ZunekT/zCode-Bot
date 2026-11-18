@@ -2,7 +2,6 @@ import { v2 } from '../builders/payload.js';
 import type { ToneName } from '../theme.js';
 import { card } from './card.js';
 
-/** Krótki komunikat (domyślnie ephemeral): sukces, błąd, info. */
 export function notice(tone: ToneName, title: string, description?: string, ephemeral = true) {
   return v2(card({ tone, title, description, timestamp: false }), { ephemeral });
 }

@@ -24,7 +24,6 @@ import { ticketChannels } from './store.js';
 
 const log = createLogger('tickets:create');
 
-/** Sprawdzenia przed pokazaniem formularza i przed utworzeniem kanału. */
 export async function assertCanOpen(
   member: GuildMember,
   category: TicketCategory,
@@ -59,7 +58,6 @@ export async function assertCanOpen(
   }
 }
 
-/** Najprostsze dopasowanie słów kluczowych FAQ do treści formularza. */
 async function suggestFaq(text: string): Promise<FaqArticle[]> {
   const articles = await prisma.faqArticle.findMany();
   const haystack = text.toLowerCase();

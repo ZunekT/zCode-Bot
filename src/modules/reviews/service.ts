@@ -37,7 +37,6 @@ export function reviewRequestPanel(order: Pick<Order, 'id' | 'title'>) {
   }).select(ratingSelect(order.id));
 }
 
-/** Prośba o opinię w DM po zakończeniu zlecenia. */
 export async function requestReview(client: ZxClient, order: Order): Promise<void> {
   const existing = await prisma.review.findUnique({ where: { orderId: order.id } });
   if (existing) return;
@@ -49,7 +48,6 @@ export async function requestReview(client: ZxClient, order: Order): Promise<voi
   }
 }
 
-/** Publiczna karta opinii (kanał opinii). */
 export function publicReviewCard(
   review: Review,
   order: Pick<Order, 'id' | 'title'> | null,
@@ -72,7 +70,6 @@ export function publicReviewCard(
   });
 }
 
-/** Karta do akceptacji przez obsługę. */
 export function approvalCard(review: Review, order: Pick<Order, 'id' | 'title'> | null, avatarUrl?: string) {
   return card({
     tone: 'warning',
@@ -106,7 +103,6 @@ export async function sendForApproval(
     .catch((err) => log.warn('Nie udało się wysłać opinii do akceptacji', err));
 }
 
-/** Średnia i liczba zatwierdzonych opinii (np. do stopki cennika). */
 export async function reviewStats(): Promise<{ avg: number | null; count: number }> {
   const agg = await prisma.review.aggregate({
     where: { approved: true },

@@ -17,11 +17,6 @@ import { card } from '../ui/components/card.js';
 import { formatOrderId } from '../utils/format.js';
 import { invoiceHtml } from './client-orders.js';
 
-/**
- * Dodatkowe funkcje panelu administracyjnego: ewidencja sprzedaży z limitem kwartalnym,
- * tickety (podgląd, odpowiedź, zamknięcie), tworzenie/edycja zleceń, proformy, dziennik zmian.
- */
-
 type OwnerCheck = (params: unknown, reply: FastifyReply) => Promise<string | null>;
 
 const names = new Map<string, { name: string; avatar: string | null; at: number }>();
@@ -43,10 +38,6 @@ const channelUrl = (id: string | null) => (id ? `https://discord.com/channels/${
 
 // ───────────────────────────── Ewidencja i limit ─────────────────────────────
 
-/**
- * Domyślny limit kwartalny działalności nierejestrowanej: 225% płacy minimalnej
- * (2026: 4806 zł → 10 813,50 zł). Do zmiany w panelu, gdy zmieni się płaca minimalna.
- */
 const DEFAULT_QUARTER_LIMIT = 10813.5;
 
 async function ledgerSettings() {
@@ -72,7 +63,6 @@ const TICKET_STATUS: Record<TicketStatus, string> = {
   ARCHIVED: 'Zarchiwizowany',
 };
 
-/** Tekst z wiadomości Components v2 (bot) – zbiera treści TextDisplay. */
 function componentText(components: readonly unknown[]): string {
   const out: string[] = [];
   const walk = (
@@ -494,7 +484,6 @@ export function adminMoreRoutes(app: FastifyInstance, client: ZxClient, ownerChe
     }
   });
 
-  /** Wybór klienta przy nowym zleceniu: znani klienci (zlecenia, tickety, profile). */
   app.get(`${base}/people`, async (request, reply) => {
     try {
       if (!(await ownerCheck(request.params, reply))) return;

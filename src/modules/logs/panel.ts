@@ -12,7 +12,6 @@ import { e, emojiComponent } from '../../ui/emojis.js';
 import { logChannelsOf } from './service.js';
 import { LOG_TYPES, LOG_TYPE_KEYS, type LogType } from './types.js';
 
-/** Główny panel /logi. */
 export function logsPanel(config: GuildConfig, notice?: string): Panel {
   const channels = logChannelsOf(config);
   const active = LOG_TYPE_KEYS.filter((t) => channels[t]).length;
@@ -76,7 +75,6 @@ export function logsPanel(config: GuildConfig, notice?: string): Panel {
   return panel;
 }
 
-/** Wybór kanału dla jednego typu (albo wszystkich). */
 export function channelPicker(config: GuildConfig, type: LogType | 'all'): Panel {
   const current = type === 'all' ? undefined : logChannelsOf(config)[type];
   const def = type === 'all' ? null : LOG_TYPES[type];

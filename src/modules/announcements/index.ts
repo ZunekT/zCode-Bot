@@ -58,7 +58,6 @@ async function getAnnouncement(id: number): Promise<Announcement> {
   return a;
 }
 
-/** Edytor: podgląd ogłoszenia + panel sterowania pod nim. */
 async function editorPayload(client: ZxClient, a: Announcement, notice?: string) {
   const config = await getConfig();
   const { panel: preview, files } = await renderAnnouncement(client, a);

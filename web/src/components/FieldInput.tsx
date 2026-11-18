@@ -12,7 +12,6 @@ const KIND_LABEL: Record<string, string> = {
   category: 'kategoria',
 };
 
-/** Kanały do wyboru, pogrupowane jak na Discordzie (kategorie → kanały). */
 function channelGroups(channels: GuildChannel[], types?: string[]) {
   const allowed = (c: GuildChannel) => !types?.length || types.includes(c.type);
   const byPos = (a: GuildChannel, b: GuildChannel) => (a.position ?? 0) - (b.position ?? 0);
@@ -31,8 +30,6 @@ function channelGroups(channels: GuildChannel[], types?: string[]) {
   return groups;
 }
 
-
-/** Kanały jako opcje listy wyboru: pogrupowane po kategoriach, jak na Discordzie. */
 export function channelOptions(channels: GuildChannel[], types?: string[]): Option[] {
   const out: Option[] = [];
   for (const g of channelGroups(channels, types)) {
@@ -49,7 +46,6 @@ export function channelOptions(channels: GuildChannel[], types?: string[]): Opti
   return out;
 }
 
-/** Role od najwyższej, z kolorem; bez ról zarządzanych przez integracje. */
 export function roleOptions(roles: GuildRole[]): Option[] {
   return [...roles]
     .filter((r) => !r.managed)

@@ -13,7 +13,6 @@ type Show = (ok: boolean, text: string) => void;
 const Ctx = createContext<Show | null>(null);
 let seq = 0;
 
-/** Stos powiadomień dla całego panelu (prawy dolny róg, pasek czasu, zamykanie kliknięciem). */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [list, setList] = useState<ToastMsg[]>([]);
   const remove = useCallback((id: number) => setList((l) => l.filter((t) => t.id !== id)), []);
@@ -41,7 +40,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/** Zgodne z dotychczasowym API: { show, node } (node nie jest już potrzebny). */
 export function useToast() {
   const show = useContext(Ctx);
   return { show: show ?? (() => undefined), node: null as ReactNode };

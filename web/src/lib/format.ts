@@ -1,4 +1,3 @@
-/** „5 min temu”, „wczoraj” itd. */
 export function timeAgo(iso: string | null | undefined): string {
   if (!iso) return 'nigdy';
   const s = Math.round((Date.now() - new Date(iso).getTime()) / 1000);

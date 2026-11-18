@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { pln } from '@/lib/money';
 
-/** Przychód z wpłat w ostatnich 12 miesiącach – słupki jednej serii, podpowiedź po najechaniu / fokusie. */
 export function RevenueChart({ data }: { data: { month: string; amount: number }[] }) {
   const [hover, setHover] = useState<number | null>(null);
   const W = 720;

@@ -5,10 +5,6 @@ import { UserError } from '../../../core/errors.js';
 import { isStaff } from '../../../core/permissions.js';
 import { ACTIVE_STATUSES } from '../constants.js';
 
-/**
- * Mapa kanał → ticket dla aktywnych ticketów, żeby event messageCreate
- * nie pytał bazy przy każdej wiadomości na serwerze.
- */
 const activeChannels = new Map<string, number>();
 
 export const ticketChannels = {
@@ -33,7 +29,6 @@ export async function getTicket(id: number): Promise<Ticket> {
   return ticket;
 }
 
-/** Ticket powiązany z kanałem, w którym użyto komendy. */
 export async function requireTicketChannel(channelId: string | null): Promise<Ticket> {
   const ticket = channelId ? await prisma.ticket.findUnique({ where: { channelId } }) : null;
   if (!ticket) throw new UserError('Tej komendy można użyć tylko w kanale ticketu.');
@@ -42,11 +37,9 @@ export async function requireTicketChannel(channelId: string | null): Promise<Ti
 
 export const isActive = (t: Ticket) => ACTIVE_STATUSES.includes(t.status);
 
-/** Właściciel lub osoba dodana do ticketu. */
 export const isParticipant = (t: Ticket, userId: string) =>
   t.userId === userId || t.participants.includes(userId);
 
-/** Właściciel albo obsługa – może zamknąć ticket. */
 export function canClose(t: Ticket, member: GuildMember, config: GuildConfig): boolean {
   return t.userId === member.id || isStaff(member, config);
 }

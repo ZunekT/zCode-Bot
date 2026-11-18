@@ -30,7 +30,6 @@ const ADMIN: NavItem[] = [
 
 const isActive = (path: string, it: NavItem) => (it.exact ? path === it.href : path === it.href || path.startsWith(`${it.href}/`));
 
-/** Pasek postępu u góry przy przechodzeniu między stronami. */
 function RouteProgress() {
   const pathname = usePathname();
   const search = useSearchParams();

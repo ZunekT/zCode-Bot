@@ -9,11 +9,6 @@ import { addPayment, getOrder, setDoneTasks, setOrderStatus } from '../modules/o
 import { sendError } from '../modules/sdk/routes.js';
 import { formatOrderId } from '../utils/format.js';
 
-/**
- * Panel administracyjny na stronie (tylko właściciel): przegląd biznesu, zlecenia, klienci.
- * Zmiany idą przez te same funkcje co na Discordzie (powiadomienia, panel w tickecie, audyt).
- */
-
 type OwnerCheck = (params: unknown, reply: FastifyReply) => Promise<string | null>;
 
 const users = new Map<string, { name: string; avatar: string | null; at: number }>();

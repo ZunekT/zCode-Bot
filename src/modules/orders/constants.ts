@@ -7,9 +7,7 @@ export interface StatusDef {
   short: string;
   emoji: EmojiName;
   tone: ToneName;
-  /** Pozycja na osi postępu (0 = poza osią). */
   step: number;
-  /** Co zobaczy klient w DM po zmianie na ten status. */
   clientText: string;
 }
 
@@ -95,7 +93,6 @@ export const ACTIVE_ORDER_STATUSES: OrderStatus[] = STATUS_ORDER.filter(
   (s) => s !== 'COMPLETED' && s !== 'CANCELLED',
 );
 
-/** Akcje w menu panelu zlecenia (tylko obsługa). */
 export const ORDER_ACTIONS = {
   status: { label: 'Zmień status', description: 'Przesuń zlecenie na kolejny etap', emoji: 'checklist' },
   edit: {
@@ -124,7 +121,5 @@ export const ORDER_ACTIONS = {
 
 export type OrderAction = keyof typeof ORDER_ACTIONS;
 
-/** Ile zakończonych zleceń daje rolę „Stały klient”. */
 export const LOYAL_CLIENT_ORDERS = 3;
-/** Domyślny termin płatności proformy (dni). */
 export const DEFAULT_INVOICE_DAYS = 7;

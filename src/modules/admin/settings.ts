@@ -10,7 +10,6 @@ export interface SettingDef {
   emoji: EmojiName;
 }
 
-/** Kanały ustawiane przez /config kanal */
 export const CHANNEL_SETTINGS = {
   logi: { field: 'logChannelId', label: 'Logi ticketów', emoji: 'database' },
   audyt: { field: 'auditChannelId', label: 'Audyt (akcje adminów)', emoji: 'shield_check' },
@@ -21,13 +20,11 @@ export const CHANNEL_SETTINGS = {
   transkrypty: { field: 'transcriptChannelId', label: 'Transkrypty ticketów', emoji: 'documentation' },
 } as const satisfies Record<string, SettingDef>;
 
-/** Kategorie ustawiane przez /config kategoria */
 export const CATEGORY_SETTINGS = {
   tickety: { field: 'ticketCategoryId', label: 'Kategoria ticketów', emoji: 'ticket' },
   archiwum: { field: 'archiveCategoryId', label: 'Archiwum ticketów', emoji: 'package' },
 } as const satisfies Record<string, SettingDef>;
 
-/** Role ustawiane przez /config rola */
 export const ROLE_SETTINGS = {
   obsluga: { field: 'staffRoleId', label: 'Obsługa', emoji: 'support' },
   admin: { field: 'adminRoleId', label: 'Administracja', emoji: 'crown' },

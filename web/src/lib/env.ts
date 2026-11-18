@@ -6,7 +6,6 @@ function required(name: string): string {
   return v;
 }
 
-/** Konfiguracja strony – czytana leniwie, żeby build działał bez sekretów. */
 export const env = {
   get siteUrl() {
     return (process.env.SITE_URL ?? 'http://localhost:3001').replace(/\/$/, '');

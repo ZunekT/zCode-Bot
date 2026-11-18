@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation';
 import { env } from './env';
 import type { BotDetails, GuildSettings, PublicBot } from './types';
 
-/** Błąd z API bota z kodem HTTP i (opcjonalnie) listą błędów pól. */
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -35,7 +34,6 @@ export async function internal<T>(method: string, path: string, body?: unknown):
   return data;
 }
 
-/** Surowa odpowiedź (np. HTML proformy) – tylko po stronie serwera strony. */
 export async function internalRaw(path: string): Promise<Response | null> {
   try {
     const res = await fetch(`${env.internalUrl}${path}`, {
@@ -51,7 +49,6 @@ export async function internalRaw(path: string): Promise<Response | null> {
 
 const user = (userId: string) => `/internal/users/${userId}`;
 
-/** „Nie znaleziono bota” (cudzy lub nieistniejący) → strona 404. */
 async function orNotFound<T>(p: Promise<T>): Promise<T> {
   try {
     return await p;
@@ -291,7 +288,6 @@ export const api = {
   siteAccess: (userId: string) => internal<SiteAccessData>('GET', `${user(userId)}/admin/site`),
   saveSiteAccess: (userId: string, body: { launched?: boolean; previewUsers?: string[] }) =>
     internal<{ launched: boolean; previewUsers: string[] }>('PUT', `${user(userId)}/admin/site`, body),
-  /** Jedno zapytanie na żądanie (layout i strona korzystają z tego samego wyniku). */
   me: cache((userId: string) =>
     internal<{ owner: boolean; vps: boolean }>('GET', `${user(userId)}/me`).catch(() => ({ owner: false, vps: false })),
   ),

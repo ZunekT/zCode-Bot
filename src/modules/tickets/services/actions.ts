@@ -16,7 +16,6 @@ import { isActive } from './store.js';
 const avatar = (m: GuildMember) => m.displayAvatarURL({ size: 128 });
 const prio = (p: TicketPriority) => `\`${PRIORITIES[p].label}\``;
 
-/** Karta zdarzenia w kanale ticketu. */
 export async function channelNotice(
   channel: TextChannel | null,
   panel: Panel,
@@ -38,7 +37,6 @@ function assertActive(ticket: Ticket | null): asserts ticket is Ticket {
   if (!isActive(ticket)) throw new UserError('Ten ticket jest zamknięty.');
 }
 
-/** Przejmij / zwolnij ticket. Cudzy ticket może zwolnić tylko administracja. */
 export async function toggleClaim(
   client: ZxClient,
   ticketId: number,
@@ -234,7 +232,6 @@ export async function removeParticipant(
   });
 }
 
-/** Ping klienta z prośbą o odpowiedź (z cooldownem na ticket). */
 export async function remindClient(client: ZxClient, ticketId: number, actor: GuildMember): Promise<void> {
   const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
   assertActive(ticket);
@@ -261,7 +258,6 @@ export async function addNote(ticketId: number, authorId: string, content: strin
   await prisma.ticketNote.create({ data: { ticketId, authorId, content: content.slice(0, 1000) } });
 }
 
-/** Klient lub obsługa potwierdza, że sprawa jest aktualna – zeruje ostrzeżenie o auto-zamknięciu. */
 export async function keepOpen(ticketId: number): Promise<void> {
   const now = new Date();
   await prisma.ticket.update({

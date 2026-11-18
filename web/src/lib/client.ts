@@ -9,7 +9,6 @@ export interface SaveResult<T> {
   errors?: ValidationError[];
 }
 
-/** Zapis z panelu do API strony (cookie sesji idzie automatycznie). */
 export const put = <T,>(url: string, body: unknown) => send<T>('PUT', url, body);
 export const post = <T,>(url: string, body: unknown) => send<T>('POST', url, body);
 

@@ -25,11 +25,6 @@ import { isOwner, issues, snapshot } from '../modules/vps/service.js';
 
 const log = createLogger('http:internal');
 
-/**
- * Wewnętrzne API dla strony zxcode.pl. Nasłuchuje na osobnym porcie, NIE wystawianym na zewnątrz
- * (tylko sieć Dockera). Strona weryfikuje sesję Discord i podaje ID użytkownika w ścieżce;
- * bot sprawdza, czy użytkownik jest właścicielem bota.
- */
 export async function startInternalServer(client: ZxClient): Promise<FastifyInstance | null> {
   const secret = env.INTERNAL_API_SECRET;
   if (!secret) {
@@ -56,7 +51,6 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
 
   app.get('/internal/health', async () => ({ ok: true, discord: client.isReady() }));
 
-  /** Boty użytkownika (właściciela). */
   app.get('/internal/users/:userId/bots', async (request, reply) => {
     try {
       const { userId } = userParam(request.params);
@@ -71,7 +65,6 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
     }
   });
 
-  /** Szczegóły bota: schemat, komendy, serwery, profil, monitoring. */
   app.get('/internal/users/:userId/bots/:botId', async (request, reply) => {
     try {
       const { userId, botId } = userParam(request.params);
@@ -105,7 +98,6 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
     }
   });
 
-  /** Ustawienia bota na konkretnym serwerze + kanały i role do wyboru. */
   app.get('/internal/users/:userId/bots/:botId/guilds/:guildId', async (request, reply) => {
     try {
       const { userId, botId } = userParam(request.params);
@@ -173,7 +165,6 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
 
   // ───────────── Dostęp do strony (tryb „Start wkrótce”) ─────────────
 
-  /** Pytane przez stronę przy każdym wejściu (z cache po obu stronach). */
   app.get('/internal/site/access', async (request, reply) => {
     try {
       const user = (request.query as { user?: string }).user;
@@ -259,7 +250,6 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
     }
   });
 
-  /** Zwraca false (i 404) dla każdego poza właścicielem – strona nie zdradza, że panel istnieje. */
   const ownerOnly = async (
     request: { params: unknown },
     reply: { code(n: number): { send(b: unknown): unknown } },

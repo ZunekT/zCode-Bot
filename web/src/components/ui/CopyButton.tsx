@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 
-/** Kopiuje tekst do schowka z krótkim potwierdzeniem. */
 export function CopyButton({ text, label = 'Kopiuj' }: { text: string; label?: string }) {
   const [ok, setOk] = useState(false);
   return (

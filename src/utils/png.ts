@@ -1,7 +1,5 @@
 import { deflateSync } from 'node:zlib';
 
-/** Minimalne płótno RGB + koder PNG w czystym JS (bez natywnych bibliotek – działa też na Termuxie). */
-
 export type RGB = [number, number, number];
 
 export class Canvas {

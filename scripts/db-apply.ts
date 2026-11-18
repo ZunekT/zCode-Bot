@@ -1,10 +1,3 @@
-/**
- * Wgrywa brakujące migracje z prisma/migrations bez silnika Prisma (np. na Termuxie/Androidzie).
- * Zapisuje je w tabeli _prisma_migrations dokładnie tak jak `prisma migrate deploy`,
- * więc później na serwerze można bez problemu przejść na zwykłe `npm run db:deploy`.
- *
- * npm run db:apply
- */
 import 'dotenv/config';
 import { createHash, randomUUID } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';

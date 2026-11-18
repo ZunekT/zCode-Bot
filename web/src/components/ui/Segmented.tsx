@@ -10,10 +10,6 @@ interface Item {
   count?: number;
 }
 
-/**
- * Przełącznik segmentowy / zakładki z przesuwanym wskaźnikiem (transform, bez re-layoutu).
- * Z `href` – linki (nawigacja), bez – przyciski (onChange).
- */
 export function Segmented({
   items,
   value,

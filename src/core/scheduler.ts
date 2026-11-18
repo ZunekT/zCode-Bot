@@ -6,7 +6,6 @@ import type { BotModule } from './types.js';
 const log = createLogger('scheduler');
 const timers: NodeJS.Timeout[] = [];
 
-/** Uruchamia zadania cykliczne modułów. Zadanie nie startuje, dopóki poprzednie się nie skończy. */
 export function startScheduler(client: ZxClient, modules: BotModule[]): void {
   for (const module of modules) {
     for (const job of module.jobs ?? []) {

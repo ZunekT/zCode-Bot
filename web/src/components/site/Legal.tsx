@@ -2,14 +2,12 @@ import type { ReactNode } from 'react';
 import { company, isPlaceholder } from '@/lib/company';
 import { PageHero } from './Sections';
 
-/** Dana firmy; brakująca (placeholder) wyróżniona na żółto, żeby było widać, co uzupełnić. */
 export function C({ k }: { k: keyof typeof company }) {
   const v = company[k];
   if (!v) return <span className="missing">[{k}]</span>;
   return isPlaceholder(v) ? <span className="missing">{v}</span> : <>{v}</>;
 }
 
-/** „, adres” – tylko gdy adres jest ustawiony. */
 export function Addr() {
   return company.address ? <>, {company.address}</> : null;
 }

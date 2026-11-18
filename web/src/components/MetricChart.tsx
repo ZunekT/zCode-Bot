@@ -2,10 +2,6 @@
 
 import { useRef, useState } from 'react';
 
-/**
- * Wykres liniowy jednej serii w procentach (0–100): linia 2px, delikatne wypełnienie,
- * recesywna siatka, krzyżyk i podpowiedź po najechaniu (także klawiaturą: strzałki).
- */
 export function MetricChart({
   label,
   points,

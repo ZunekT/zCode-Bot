@@ -17,10 +17,6 @@ export const BADGES = {
 
 export type BadgeKey = keyof typeof BADGES;
 
-/**
- * Po zakończeniu zlecenia: rola „Klient” (1+ zleceń) i „Stały klient” (LOYAL_CLIENT_ORDERS+),
- * odznaki w profilu. Zwraca listę nowo nadanych ról (do powiadomienia).
- */
 export async function syncClientRoles(client: ZxClient, userId: string): Promise<string[]> {
   const config = await getConfig();
   const [completed, reviews] = await Promise.all([

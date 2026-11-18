@@ -10,11 +10,6 @@ import { totalsOf } from '../modules/orders/panels.js';
 import { sendError } from '../modules/sdk/routes.js';
 import { formatOrderId } from '../utils/format.js';
 
-/**
- * Zlecenia klienta w panelu na stronie (tylko jego własne): postęp, zadania, płatności, proformy.
- * Bez notatek wewnętrznych i bez danych innych klientów.
- */
-
 const STEPS = STATUS_ORDER.filter((s) => ORDER_STATUSES[s].step > 0).map((s) => ({
   status: s,
   label: ORDER_STATUSES[s].short,
@@ -29,7 +24,6 @@ const userId = (params: unknown) => {
   return userId;
 };
 
-/** Proforma jako HTML – wspólne dla klienta i administracji. */
 export async function invoiceHtml(
   client: ZxClient,
   invoice: Invoice,

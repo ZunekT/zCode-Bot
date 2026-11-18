@@ -36,7 +36,6 @@ const allItems = () =>
 const fileName = (img: PortfolioImage, i: number) =>
   `p${img.itemId}-${i + 1}.${img.contentType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'png'}`;
 
-/** Karta realizacji z galerią (zdjęcia z bazy jako załączniki). */
 function itemPage(items: ItemWithImages[], page: number) {
   const item = items[page]!;
   const files = item.images.map(

@@ -14,7 +14,6 @@ export function logChannelsOf(config: GuildConfig): Partial<Record<LogType, stri
   return (config.logChannels ?? {}) as Partial<Record<LogType, string>>;
 }
 
-/** Czy zdarzenie z tego kanału (albo jego kategorii / wątku) ma być pominięte. */
 export function isIgnored(config: GuildConfig, channel: GuildBasedChannel | null | undefined): boolean {
   if (!channel) return false;
   const ignored = config.logIgnoredChannels;
@@ -27,10 +26,6 @@ export function isLogChannel(config: GuildConfig, channelId: string | null | und
   return !!channelId && Object.values(logChannelsOf(config)).includes(channelId);
 }
 
-/**
- * Wysyła kartę logu na kanał przypisany do typu.
- * Brak kanału dla typu = ten typ logów jest wyłączony.
- */
 export async function sendLog(
   client: ZxClient,
   type: LogType,

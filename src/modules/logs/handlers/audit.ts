@@ -21,7 +21,6 @@ interface ActionMeta {
 
 const A = AuditLogEvent;
 
-/** Obsługiwane zdarzenia dziennika. Reszta jest pomijana. */
 const ACTIONS: Partial<Record<AuditLogEvent, ActionMeta>> = {
   [A.GuildUpdate]: {
     type: 'server',
@@ -308,7 +307,6 @@ const KEY_LABELS: Record<string, string> = {
   $remove: 'Odebrane role',
 };
 
-/** Klucze pomijane – techniczne albo bez wartości dla człowieka. */
 const SKIP_KEYS = new Set([
   'id',
   'flags',

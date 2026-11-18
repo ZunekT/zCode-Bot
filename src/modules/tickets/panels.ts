@@ -19,7 +19,6 @@ import { answersOf } from './forms.js';
 
 export const ticketNo = (id: number) => `#${padNumber(id)}`;
 
-/** Kolor akcentu panelu ticketu zależny od priorytetu. */
 const PRIORITY_ACCENT = {
   LOW: Colors.success,
   NORMAL: Colors.brand,
@@ -192,7 +191,6 @@ export function closedPanel(
   return panel;
 }
 
-/** Podsumowanie zamknięcia (kanał transkryptów i logi). */
 export function closeSummaryCard(ticket: Ticket, ownerAvatar?: string) {
   const def = CATEGORIES[ticket.category];
   return card({
@@ -266,7 +264,6 @@ export function ratedDmPanel(ticket: Ticket): Panel {
   });
 }
 
-/** Ocena na kanale logów / alertów. */
 export function ratingLogCard(ticket: Ticket, avatarUrl?: string) {
   const rating = ticket.rating ?? 0;
   return card({

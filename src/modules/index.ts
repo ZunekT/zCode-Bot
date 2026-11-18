@@ -19,10 +19,6 @@ import { ticketsModule } from './tickets/index.js';
 import { verificationModule } from './verification/index.js';
 import { vpsModule } from './vps/index.js';
 
-/**
- * Lista wszystkich modułów bota. Nowy moduł = nowy katalog w src/modules + wpis tutaj.
- * Kolejność ma znaczenie tylko dla logów przy starcie.
- */
 export const modules: BotModule[] = [
   systemModule,
   adminModule,

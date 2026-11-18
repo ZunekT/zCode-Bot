@@ -5,7 +5,6 @@ export interface CategoryDef {
   label: string;
   description: string;
   emoji: EmojiName;
-  /** Przedrostek nazwy kanału, np. zamowienie-0042-nick. */
   channelPrefix: string;
 }
 
@@ -59,27 +58,19 @@ export const STATUS_LABELS: Record<TicketStatus, string> = {
   ARCHIVED: 'W archiwum',
 };
 
-/** Statusy, w których ticket jest „żywy”. */
 export const ACTIVE_STATUSES: TicketStatus[] = ['OPEN', 'CLAIMED', 'WAITING_CLIENT'];
 
 export const LIMITS = {
-  /** Maks. otwartych ticketów jednego użytkownika. */
   perUser: 3,
-  /** Maks. otwartych ticketów jednego użytkownika w jednej kategorii. */
   perUserPerCategory: 1,
-  /** Cooldown na tworzenie ticketu (s). */
   createCooldown: 30,
-  /** Ile maksymalnie wiadomości trafia do transkryptu. */
   transcriptMessages: 5000,
-  /** Maksymalny czas ostrzeżenia przed auto-zamknięciem (h). */
   closeWarningHours: 24,
-  /** Opóźnienie usunięcia kanału, gdy nie ma archiwum (s). */
   deleteDelaySeconds: 10,
 };
 
 export const CHECK_INTERVAL_MS = 5 * 60 * 1000;
 
-/** Akcje w select menu panelu ticketu. staff = tylko obsługa. */
 export const CONTROL_ACTIONS = {
   claim: { label: 'Przejmij ticket', description: 'Zajmij się tą sprawą', emoji: 'user_crown', staff: true },
   unclaim: {
@@ -129,5 +120,4 @@ export const CONTROL_ACTIONS = {
 
 export type ControlAction = keyof typeof CONTROL_ACTIONS;
 
-/** Jak często można przypominać klientowi (s). */
 export const REMIND_COOLDOWN = 30 * 60;

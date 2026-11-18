@@ -4,10 +4,6 @@ import { ApiError } from './api';
 import { env } from './env';
 import { getSession, type Session } from './session';
 
-/**
- * Wspólna obsługa zapisu z panelu: sesja + ochrona CSRF (nagłówek Origin musi być naszą stroną)
- * i przekazanie błędów walidacji z API bota.
- */
 export async function guarded(
   request: Request,
   fn: (session: Session, body: unknown) => Promise<unknown>,

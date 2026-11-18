@@ -64,7 +64,6 @@ async function nameAutocomplete(interaction: AutocompleteInteraction) {
   return interaction.respond(rows.map((r) => ({ name: `${r.code} (${discountLabel(r)})`, value: r.code })));
 }
 
-/** Przykładowy cennik do edycji – żeby panel nie był pusty na start. */
 async function seedDefaults(): Promise<{ packages: number; items: number }> {
   const pkgs = [
     {

@@ -39,7 +39,6 @@ async function findBot(name: string) {
   return bot;
 }
 
-/** Instrukcja dla bota klienta – pakiet npm zxcode-heartbeat. */
 const heartbeatHelp = (token: string) =>
   (env.PUBLIC_URL ? '' : '-# Ustaw `PUBLIC_URL` w .env, żeby link miał prawdziwy adres serwera.\n') +
   '**1.** W bocie klienta: `npm install zxcode-heartbeat`\n' +

@@ -13,12 +13,10 @@ export interface AuditEntry {
   action: string;
   actorId: string;
   targetId?: string;
-  /** Krótki opis do kanału audytu. */
   summary: string;
   details?: Prisma.InputJsonValue;
 }
 
-/** Zapisuje akcję administracyjną w bazie i wysyła ją na kanał audytu (jeśli ustawiony). */
 export async function audit(client: ZxClient, entry: AuditEntry): Promise<void> {
   try {
     const row = await prisma.auditLog.create({

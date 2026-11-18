@@ -33,10 +33,6 @@ export async function recordEvent(userId: string, result: VerificationResult): P
   await prisma.verificationEvent.create({ data: { userId, result } }).catch(() => undefined);
 }
 
-/**
- * Sprawdzenia przed weryfikacją. Rzuca UserError z czytelnym powodem.
- * Zapisuje zablokowane próby, żeby były widoczne w statystykach.
- */
 export async function assertCanVerify(
   client: ZxClient,
   member: GuildMember,
@@ -92,7 +88,6 @@ export async function assertCanVerify(
   }
 }
 
-/** Nowy kod captcha dla użytkownika (zachowuje licznik prób). */
 export async function issueCaptcha(userId: string): Promise<string> {
   const code = randomCode();
   const prev = await redis.hget(keys.captcha(userId), 'attempts');
@@ -110,7 +105,6 @@ export type CheckResult =
   | { ok: false; reason: 'wrong'; left: number }
   | { ok: false; reason: 'blocked' };
 
-/** Sprawdza wpisany kod. Po MAX_ATTEMPTS błędach blokuje na FAIL_BLOCK sekund. */
 export async function checkCaptcha(userId: string, input: string): Promise<CheckResult> {
   const key = keys.captcha(userId);
   const data = await redis.hgetall(key);
@@ -130,7 +124,6 @@ export async function checkCaptcha(userId: string, input: string): Promise<Check
   return { ok: false, reason: 'wrong', left: MAX_ATTEMPTS - attempts };
 }
 
-/** Nadaje rolę zweryfikowanego (i zdejmuje „niezweryfikowany”). */
 export async function grantAccess(
   client: ZxClient,
   member: GuildMember,
@@ -186,10 +179,6 @@ export async function grantAccess(
 
 const recentJoins: number[] = [];
 
-/**
- * Liczy wejścia w oknie czasowym. Po przekroczeniu progu włącza blokadę weryfikacji
- * i wysyła alert do obsługi z przyciskiem odblokowania.
- */
 export async function trackJoin(client: ZxClient, config: GuildConfig): Promise<void> {
   if (!config.antiRaidEnabled || config.verificationLockdown) return;
   const now = Date.now();
@@ -229,5 +218,4 @@ export async function trackJoin(client: ZxClient, config: GuildConfig): Promise<
   await sendLog(client, 'moderation', panel);
 }
 
-/** Do testów. */
 export const _resetRaidCounter = () => (recentJoins.length = 0);

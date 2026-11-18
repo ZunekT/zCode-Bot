@@ -4,7 +4,6 @@ import type { BotModule } from './types.js';
 
 const log = createLogger('loader');
 
-/** Rejestruje moduły: komendy, handlery komponentów i eventy. */
 export function loadModules(client: ZxClient, modules: BotModule[]): void {
   for (const module of modules) {
     if (client.modules.has(module.name))

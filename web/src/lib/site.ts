@@ -18,7 +18,6 @@ export interface SiteData {
   faq: { id: number; question: string; answer: string }[];
 }
 
-/** Dane wizytówki z bota (cache 5 min). Gdy bot nie odpowiada – strona działa na treściach statycznych. */
 const EMPTY: SiteData = {
   stats: { ordersCompleted: 0, clients: 0, rating: null, reviews: 0, members: null, botsMonitored: 0, uptime: null },
   packages: [],

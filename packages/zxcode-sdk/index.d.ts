@@ -4,9 +4,7 @@ import type { ChatInputCommandInteraction, Client, GuildMember } from 'discord.j
 export type ChannelKind = 'text' | 'voice' | 'category' | 'announcement' | 'forum' | 'stage';
 
 interface BaseField<T> {
-  /** Nazwa pola w panelu. */
   label: string;
-  /** Podpowiedź pod polem w panelu. */
   description?: string;
   default?: T;
   required?: boolean;
@@ -29,32 +27,21 @@ export declare const field: {
 };
 
 export interface ModuleDef {
-  /** Nazwa modułu w panelu. */
   label: string;
   description?: string;
-  /** Moduł ma przełącznik włącz/wyłącz. */
   toggle?: boolean;
-  /** Stan przełącznika, gdy nic nie ustawiono (domyślnie true). */
   defaultEnabled?: boolean;
   fields: Record<string, FieldDef>;
 }
 
 export interface ZxCodeOptions {
-  /** Klucz z /sdk dodaj. Domyślnie process.env.ZXCODE_KEY. */
   key?: string;
-  /** Adres serwera zxCode. Domyślnie process.env.ZXCODE_URL albo https://bot.zxcode.pl. */
   url?: string;
-  /** Wersja bota (na tablicy statusu). Domyślnie z package.json. */
   version?: string;
-  /** Moduły i ich ustawienia edytowane w panelu. */
   modules?: Record<string, ModuleDef>;
-  /** Dodatkowe komendy do uprawnień (oprócz zarejestrowanych w Discordzie). */
   commands?: (string | { name: string; description?: string })[];
-  /** Czy stosować status/aktywność ustawione w panelu (domyślnie true). */
   presence?: boolean;
-  /** Komunikat przy braku uprawnień w zx.guard(). */
   denyMessage?: string;
-  /** Plik z ostatnimi ustawieniami (offline). false = wyłącz. */
   cacheFile?: string | false;
   debug?: boolean;
 }
@@ -68,17 +55,11 @@ export interface ChangeEvent {
 
 export declare class ZxCode extends EventEmitter {
   readonly connected: boolean;
-  /** Wartość ustawienia: zx.get(guildId, 'tickety.kanal'). */
   get<T = unknown>(guildId: string, path: string): T;
-  /** Wszystkie ustawienia modułu z wartościami domyślnymi. */
   module<T extends Record<string, unknown> = Record<string, unknown>>(guildId: string, module: string): T & { enabled?: boolean };
-  /** Czy moduł jest włączony na serwerze. */
   enabled(guildId: string, module: string): boolean;
-  /** Czy członek może użyć komendy (uprawnienia z panelu). */
   can(member: GuildMember | null | undefined, commandName: string): boolean;
-  /** Sprawdza uprawnienia i odpowiada prywatnie przy braku dostępu. */
   guard(interaction: ChatInputCommandInteraction, message?: string): Promise<boolean>;
-  /** Zgłasza ustawienia od strony bota (pokażą się w panelu). */
   set(guildId: string, values: Record<string, Record<string, unknown>>): Promise<{ revision: number }>;
   stop(): void;
 

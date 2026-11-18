@@ -7,10 +7,6 @@ const LIGHT: RGB = [140, 205, 255];
 const GRID: RGB = [40, 50, 66];
 const WHITE: RGB = [235, 240, 248];
 
-/**
- * Wykres słupkowy (np. wiadomości dziennie) + biała linia drugiej serii (np. wejścia),
- * każda seria w swojej skali. Ostatni słupek (dziś) jest jaśniejszy.
- */
 export function barChart(bars: number[], line: number[] = [], width = 640, height = 200): Buffer {
   const c = new Canvas(width, height);
   for (let y = 0; y < height; y++) {
@@ -46,7 +42,6 @@ export function barChart(bars: number[], line: number[] = [], width = 640, heigh
 }
 
 const SPARK = '▁▂▃▄▅▆▇█';
-/** Mini-wykres tekstowy: sparkline([1,5,3]) -> "▁█▄" */
 export function sparkline(values: number[]): string {
   const max = Math.max(...values, 1);
   return values

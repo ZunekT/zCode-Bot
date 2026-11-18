@@ -10,7 +10,6 @@ import { useToast } from './Toast';
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
-/** Wartość wyświetlana: zapisana albo domyślna z definicji pola. */
 function shown(field: SchemaField, stored: Record<string, unknown> | undefined) {
   const v = stored?.[field.key];
   if (v !== undefined) return v;

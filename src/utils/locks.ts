@@ -1,9 +1,5 @@
 import { redis, RedisKeys } from '../db/redis.js';
 
-/**
- * Krótka blokada przeciw podwójnemu kliknięciu przycisku / równoległemu wykonaniu.
- * Zwraca funkcję zwalniającą albo null, jeśli blokada jest zajęta.
- */
 export async function acquireLock(name: string, ttlSeconds = 10): Promise<(() => Promise<void>) | null> {
   const key = RedisKeys.lock(name);
   const token = `${process.pid}:${Date.now()}:${Math.random()}`;
@@ -20,7 +16,6 @@ export async function acquireLock(name: string, ttlSeconds = 10): Promise<(() =>
   };
 }
 
-/** Wykonuje fn pod blokadą; zwraca null, jeśli blokada była zajęta. */
 export async function withLock<T>(name: string, fn: () => Promise<T>, ttlSeconds = 10): Promise<T | null> {
   const release = await acquireLock(name, ttlSeconds);
   if (!release) return null;
@@ -31,7 +26,6 @@ export async function withLock<T>(name: string, fn: () => Promise<T>, ttlSeconds
   }
 }
 
-/** Cooldown komendy. Zwraca liczbę sekund do końca albo 0, jeśli można wykonać. */
 export async function checkCooldown(command: string, userId: string, seconds: number): Promise<number> {
   const key = RedisKeys.cooldown(command, userId);
   const ok = await redis.set(key, '1', 'EX', seconds, 'NX');
