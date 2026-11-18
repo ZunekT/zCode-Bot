@@ -19,7 +19,7 @@ export async function onMemberAdd(client: ZxClient, member: GuildMember): Promis
       tone: fresh ? 'warning' : 'success',
       emoji: 'user_add',
       title: member.user.bot ? 'Dodano bota' : 'Nowy członek',
-      description: `<@${member.id}> dołączył(a) do serwera${fresh ? `\n⚠️ **Nowe konto** – założone ${formatDuration(age)} temu` : ''}`,
+      description: `<@${member.id}> dołączył(a) do serwera${fresh ? `\n**Uwaga:** nowe konto, założone ${formatDuration(age)} temu` : ''}`,
       thumbnail: member.displayAvatarURL({ size: 128 }),
       fields: [
         { emoji: 'user', label: 'Użytkownik', value: `${member.user.username} (\`${member.id}\`)` },
@@ -84,7 +84,7 @@ export async function onMemberUpdate(
       emoji: 'rocket',
       title: is ? 'Nowy boost serwera!' : 'Boost zakończony',
       description: is
-        ? `<@${after.id}> wspiera serwer boostem 💜`
+        ? `<@${after.id}> wspiera serwer boostem. Dziękujemy!`
         : `<@${after.id}> przestał(a) boostować serwer.`,
       thumbnail: after.displayAvatarURL({ size: 128 }),
       fields: [
@@ -110,7 +110,7 @@ export async function onVoiceStateUpdate(
     join: {
       tone: 'success',
       title: 'Dołączenie do kanału głosowego',
-      text: `<@${member.id}> ➜ <#${after.channelId}>`,
+      text: `<@${member.id}> → <#${after.channelId}>`,
     },
     leave: {
       tone: 'neutral',
@@ -120,7 +120,7 @@ export async function onVoiceStateUpdate(
     move: {
       tone: 'info',
       title: 'Zmiana kanału głosowego',
-      text: `<@${member.id}>: <#${before.channelId}> ➜ <#${after.channelId}>`,
+      text: `<@${member.id}>: <#${before.channelId}> → <#${after.channelId}>`,
     },
   } as const;
 

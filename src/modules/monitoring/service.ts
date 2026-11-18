@@ -7,8 +7,8 @@ import { getSendableChannel } from '../../core/channels.js';
 import { getConfig, updateConfig } from '../../core/config-service.js';
 import { Panel } from '../../ui/builders/container.js';
 import { v2Message } from '../../ui/builders/payload.js';
-import { card } from '../../ui/components/card.js';
-import { e } from '../../ui/emojis.js';
+import { card, diffBlock, type DiffSign } from '../../ui/components/card.js';
+import type { EmojiName } from '../../ui/emojis.js';
 import { discordTime, formatDuration, truncate } from '../../utils/format.js';
 import { createLogger } from '../../utils/logger.js';
 
@@ -21,10 +21,10 @@ export const HEARTBEAT_TIMEOUT_MS = 3 * 60_000;
 const HTTP_TIMEOUT_MS = 10_000;
 
 export const MODES = {
-  http: { label: 'HTTP (adres health-check)', icon: '🌐' },
-  heartbeat: { label: 'Heartbeat (bot sam się zgłasza)', icon: '💓' },
-  presence: { label: 'Status online na Discordzie', icon: '🟢' },
-} as const;
+  http: { label: 'HTTP (adres health-check)', emoji: 'server' },
+  heartbeat: { label: 'Heartbeat (bot sam się zgłasza)', emoji: 'lightning' },
+  presence: { label: 'Status online na Discordzie', emoji: 'discord' },
+} as const satisfies Record<string, { label: string; emoji: EmojiName }>;
 export type Mode = keyof typeof MODES;
 
 export const newHeartbeatToken = () => randomBytes(24).toString('hex');
@@ -98,7 +98,7 @@ async function alert(client: ZxClient, bot: MonitoredBot, down: boolean, result:
   const panel = card({
     tone: down ? 'error' : 'success',
     emoji: down ? 'shield_x' : 'verified',
-    title: down ? `🔴 ${bot.name} nie działa` : `🟢 ${bot.name} znowu działa`,
+    title: down ? `${bot.name} nie działa` : `${bot.name} znowu działa`,
     description: down
       ? `${config.staffRoleId ? `<@&${config.staffRoleId}> ` : ''}Monitoring wykrył awarię.`
       : undefined,
@@ -167,35 +167,33 @@ export async function processBot(client: ZxClient, bot: MonitoredBot): Promise<b
   return goesDown || goesUp;
 }
 
-/** Tablica statusu (publiczna). */
+/**
+ * Tablica statusu (publiczna) – blok ```diff: działające boty na zielono, awarie na czerwono.
+ *   + Bot RP           online    99,98%   v1.4.2   120 ms
+ *   - Heartbeat Bot    offline   od 12m
+ */
 export function statusBoard(bots: MonitoredBot[]): Panel {
-  const panel = new Panel({ tone: bots.some((b) => !b.online) ? 'warning' : 'success' }).title(
-    'server',
-    'Status botów zxCode',
-  );
-  if (!bots.length) return panel.text('-# Brak monitorowanych botów.');
   const allOk = bots.every((b) => b.online);
-  panel
-    .text(
-      allOk
-        ? `${e('verified')} **Wszystkie systemy działają**`
-        : `${e('shield_x')} **Część botów ma problemy** – pracujemy nad tym.`,
-    )
-    .separator();
+  const panel = new Panel({ tone: allOk ? 'success' : 'error' }).title('server', 'Status botów zxCode');
+  if (!bots.length) return panel.text('-# Brak monitorowanych botów.');
   panel.text(
-    bots
-      .map((b) => {
-        const details = [
-          `uptime ${uptime(b)}`,
-          b.lastResponseMs !== null && b.mode === 'http' ? `${b.lastResponseMs} ms` : null,
-          b.version ? `v${b.version.replace(/^v/, '')}` : null,
-          !b.online && b.lastDownAt ? `nie działa od ${discordTime(b.lastDownAt, 'R')}` : null,
-        ].filter(Boolean);
-        return `${b.online ? '🟢' : '🔴'} **${b.name}**\n-# ${details.join(' • ')}`;
-      })
-      .join('\n'),
+    allOk ? '**Wszystkie systemy działają.**' : '**Część botów ma problemy** – już nad tym pracujemy.',
   );
-  return panel.footer(`Sprawdzane co minutę • ostatnia aktualizacja ${discordTime(new Date(), 'T')}`);
+
+  const nameW = Math.min(24, Math.max(...bots.map((b) => b.name.length)));
+  const rows = bots.map((b): [DiffSign, string] => {
+    const cols = [
+      truncate(b.name, nameW).padEnd(nameW),
+      (b.online ? 'online' : 'offline').padEnd(8),
+      uptime(b).padEnd(8),
+      b.version ? `v${b.version.replace(/^v/, '')}` : '',
+      b.online && b.mode === 'http' && b.lastResponseMs !== null ? `${b.lastResponseMs} ms` : '',
+      !b.online && b.lastDownAt ? `od ${formatDuration(Date.now() - b.lastDownAt.getTime())}` : '',
+    ];
+    return [b.online ? '+' : '-', cols.filter(Boolean).join('  ').trimEnd()];
+  });
+  panel.text(diffBlock(rows));
+  return panel.footer(`Sprawdzane co minutę · aktualizacja ${discordTime(new Date(), 'T')}`);
 }
 
 let runs = 0;

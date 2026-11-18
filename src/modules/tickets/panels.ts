@@ -4,7 +4,7 @@ import { Colors } from '../../config/constants.js';
 import { Panel } from '../../ui/builders/container.js';
 import { button, linkButton } from '../../ui/builders/buttons.js';
 import { BANNER_URL } from '../../ui/assets.js';
-import { card, quote, stars } from '../../ui/components/card.js';
+import { badge, card, quote, stars } from '../../ui/components/card.js';
 import { e, emojiComponent } from '../../ui/emojis.js';
 import { discordTime, formatDuration, padNumber, truncate } from '../../utils/format.js';
 import {
@@ -27,15 +27,15 @@ const PRIORITY_ACCENT = {
   URGENT: Colors.error,
 } as const;
 
-const statusLine = (t: Ticket) => STATUS_LABELS[t.status];
-const priorityLine = (t: Ticket) => `${PRIORITIES[t.priority].icon} ${PRIORITIES[t.priority].label}`;
+const statusLine = (t: Ticket) => badge(STATUS_LABELS[t.status]);
+const priorityLine = (t: Ticket) => badge(PRIORITIES[t.priority].label);
 
 // ───────────────────────────── Panel „Centrum pomocy” ─────────────────────────────
 
 export function categorySelect(): StringSelectMenuBuilder {
   return new StringSelectMenuBuilder()
     .setCustomId('ticket:category')
-    .setPlaceholder('📩 Wybierz kategorię zgłoszenia…')
+    .setPlaceholder('Wybierz kategorię zgłoszenia…')
     .addOptions(
       CATEGORY_KEYS.map((key) =>
         new StringSelectMenuOptionBuilder()
@@ -57,16 +57,17 @@ export function publicPanel(): Panel {
     )
     .separator()
     .text(
-      `### ${e('checklist')} Jak to działa?\n` +
-        `**1.** Wybierz kategorię z listy poniżej\n` +
-        `**2.** Wypełnij krótki formularz (możesz dodać pliki)\n` +
-        `**3.** Rozmawiaj z nami na prywatnym kanale`,
+      `### Jak to działa?\n` +
+        `\`1\` Wybierz kategorię z listy poniżej\n` +
+        `\`2\` Wypełnij krótki formularz – możesz dodać pliki\n` +
+        `\`3\` Rozmawiaj z nami na prywatnym kanale`,
     )
     .separator()
     .text(
-      CATEGORY_KEYS.map(
-        (k) => `${e(CATEGORIES[k].emoji)} **${CATEGORIES[k].label}** – ${CATEGORIES[k].description}`,
-      ).join('\n'),
+      `### Kategorie\n` +
+        CATEGORY_KEYS.map(
+          (k) => `${e(CATEGORIES[k].emoji)} **${CATEGORIES[k].label}**\n-# ${CATEGORIES[k].description}`,
+        ).join('\n'),
     )
     .select(categorySelect())
     .footer('Jeden ticket na kategorię • Nigdy nie podawaj haseł ani tokenów botów');
@@ -87,7 +88,7 @@ export function actionSelect(ticket: Ticket): StringSelectMenuBuilder {
   ];
   return new StringSelectMenuBuilder()
     .setCustomId(`ticket:action:${ticket.id}`)
-    .setPlaceholder('⚙️ Zarządzaj ticketem…')
+    .setPlaceholder('Zarządzaj ticketem…')
     .addOptions(
       actions.map((a) => {
         const def = CONTROL_ACTIONS[a];
@@ -126,18 +127,17 @@ export function controlPanel(
     .separator()
     .text(
       [
-        `${e('notification')} **Status:** ${statusLine(ticket)}`,
-        `${e('lightning')} **Priorytet:** ${priorityLine(ticket)}`,
-        `${e('user_crown')} **Obsługa:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : '_czeka na przejęcie_'}`,
-        `${e('calendar')} **Otwarty:** ${discordTime(ticket.openedAt, 'f')} (${discordTime(ticket.openedAt, 'R')})`,
+        `**Status:** ${statusLine(ticket)}  ·  **Priorytet:** ${priorityLine(ticket)}`,
+        `**Obsługa:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : '_czeka na przejęcie_'}`,
+        `**Otwarty:** ${discordTime(ticket.openedAt, 'f')} · ${discordTime(ticket.openedAt, 'R')}`,
         ...(ticket.participants.length
-          ? [`${e('users')} **Dodani:** ${ticket.participants.map((id) => `<@${id}>`).join(', ')}`]
+          ? [`**Dodani:** ${ticket.participants.map((id) => `<@${id}>`).join(', ')}`]
           : []),
       ].join('\n'),
     )
     .separator();
 
-  if (answers.length) panel.text(`### ${e('documentation')} Formularz`);
+  if (answers.length) panel.text('### Formularz');
   // „>>>” cytuje do końca bloku tekstu, więc każda odpowiedź to osobny TextDisplay.
   for (const a of answers) panel.text(`**${a.label}**\n>>> ${truncate(a.value, perAnswer)}`);
 
@@ -145,7 +145,7 @@ export function controlPanel(
     panel
       .separator()
       .text(
-        `### ${e('idea')} Może to pomoże, zanim odpowiemy\n` +
+        `### Może to pomoże, zanim odpowiemy\n` +
           opts.faq
             .map((f) => `**${f.title}**\n-# ${truncate(f.content.replace(/\s+/g, ' '), 140)}`)
             .join('\n') +
@@ -221,12 +221,12 @@ export function ratingSelect(ticketId: number): StringSelectMenuBuilder {
   const labels = ['Bardzo źle', 'Słabo', 'Przeciętnie', 'Dobrze', 'Rewelacja'];
   return new StringSelectMenuBuilder()
     .setCustomId(`ticket:rate:${ticketId}`)
-    .setPlaceholder('⭐ Oceń obsługę…')
+    .setPlaceholder('Oceń obsługę…')
     .addOptions(
       [5, 4, 3, 2, 1].map((n) =>
         new StringSelectMenuOptionBuilder()
           .setValue(String(n))
-          .setLabel(`${'★'.repeat(n)}${'☆'.repeat(5 - n)}  ${labels[n - 1]}`)
+          .setLabel(`${labels[n - 1]} · ${n}/5`)
           .setDescription(n === 5 ? 'Wszystko super!' : n === 1 ? 'Coś poszło bardzo nie tak' : `${n} z 5`)
           .setEmoji(emojiComponent('star')),
       ),

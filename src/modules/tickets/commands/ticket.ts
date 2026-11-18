@@ -67,7 +67,7 @@ export const ticketCommand = defineCommand({
             .setRequired(true)
             .addChoices(
               ...(Object.keys(PRIORITIES) as TicketPriority[]).map((p) => ({
-                name: `${PRIORITIES[p].icon} ${PRIORITIES[p].label}`,
+                name: PRIORITIES[p].label,
                 value: p,
               })),
             ),
@@ -155,9 +155,7 @@ export const ticketCommand = defineCommand({
         const priority = interaction.options.getString('poziom', true) as TicketPriority;
         const updated = await setPriority(client, ticket.id, priority, member);
         await refreshControlPanel(client, updated);
-        return interaction.reply(
-          success('Zapisano', `Priorytet: ${PRIORITIES[priority].icon} **${PRIORITIES[priority].label}**`),
-        );
+        return interaction.reply(success('Zapisano', `Priorytet: \`${PRIORITIES[priority].label}\``));
       }
 
       case 'lista': {
@@ -175,14 +173,14 @@ export const ticketCommand = defineCommand({
           .slice(0, 25)
           .map(
             (t) =>
-              `${PRIORITIES[t.priority].icon} ${e(CATEGORIES[t.category].emoji)} **${ticketNo(t.id)}** <#${t.channelId}> • <@${t.userId}>` +
-              ` • ${t.claimedBy ? `<@${t.claimedBy}>` : '**wolny**'}` +
-              (waiting(t) ? ` • ⏳ czeka od ${discordTime(t.lastClientMsgAt!, 'R')}` : ''),
+              `${e(CATEGORIES[t.category].emoji)} **${ticketNo(t.id)}** \`${PRIORITIES[t.priority].label}\` <#${t.channelId}>\n` +
+              `-# klient <@${t.userId}> · ${t.claimedBy ? `obsługa <@${t.claimedBy}>` : '**nikt nie przejął**'}` +
+              (waiting(t) ? ` · czeka od ${discordTime(t.lastClientMsgAt!, 'R')}` : ''),
           );
 
         const panel = new Panel({ tone: 'brand' })
           .title('ticket', `Otwarte tickety (${tickets.length})`)
-          .text(lines.join('\n') || 'Brak otwartych ticketów 🎉');
+          .text(lines.join('\n') || 'Brak otwartych ticketów.');
         if (tickets.length > 25) panel.footer(`Pokazano 25 z ${tickets.length}`);
         return interaction.reply(v2(panel, { ephemeral: true }));
       }

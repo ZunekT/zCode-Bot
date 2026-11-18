@@ -98,7 +98,7 @@ export async function onRelease(client: ZxClient, payload: ReleasePayload): Prom
     const channel =
       (await getSendableChannel(client, config.staffAlertChannelId)) ??
       (await getSendableChannel(client, config.logChannelId));
-    await channel?.send(draftPayload(entry, `📦 Nowy release **${repo}** – sprawdź i opublikuj.`));
+    await channel?.send(draftPayload(entry, `Nowy release **${repo}** – sprawdź i opublikuj.`));
     log.info(`Szkic changelogu z GitHuba: ${project.name} ${version}`);
   } catch (err) {
     log.warn(`Nie udało się utworzyć szkicu z release ${repo}@${version}`, err);

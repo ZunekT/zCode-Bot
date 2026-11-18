@@ -26,7 +26,7 @@ const schema = z.object({
 const parsed = schema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error('❌ Nieprawidłowa konfiguracja środowiska (.env):');
+  console.error('Nieprawidłowa konfiguracja środowiska (.env):');
   for (const issue of parsed.error.issues) {
     console.error(`  • ${issue.path.join('.')}: ${issue.message}`);
   }

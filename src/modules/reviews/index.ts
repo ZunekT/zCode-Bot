@@ -76,7 +76,7 @@ const reviewsCommand = defineCommand({
       panel
         .separator()
         .text(
-          `${'⭐'.repeat(r.rating)} **${r.order?.title ?? 'Projekt'}** – <@${r.userId}>\n> ${truncate(r.content.replace(/\n/g, ' '), 250)}`,
+          `${stars(r.rating)}\n**${r.order?.title ?? 'Projekt'}** – <@${r.userId}>\n> ${truncate(r.content.replace(/\n/g, ' '), 250)}`,
         );
     }
     return interaction.reply(v2(panel, { ephemeral: true }));
@@ -100,10 +100,7 @@ export const reviewsModule = defineModule({
         if (order.review) throw new UserError('To zlecenie ma już Twoją opinię.', 'Już ocenione');
         if (!(rating >= 1 && rating <= 5)) throw new UserError('Nieprawidłowa ocena.');
         await interaction.showModal(
-          new Form(
-            `review:submit:${orderId}:${rating}`,
-            `Opinia: ${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}`,
-          )
+          new Form(`review:submit:${orderId}:${rating}`, `Twoja opinia: ${rating}/5`)
             .info(`Zlecenie **${formatOrderId(orderId)}** – ${order.title}`)
             .text({
               id: 'content',
@@ -180,7 +177,7 @@ export const reviewsModule = defineModule({
         await audit(client, {
           action: 'review.approve',
           actorId: interaction.user.id,
-          summary: `Opublikowano opinię ${'⭐'.repeat(review.rating)} od <@${review.userId}>`,
+          summary: `Opublikowano opinię ${review.rating}/5 od <@${review.userId}>`,
         });
         await interaction.update(
           v2Message(

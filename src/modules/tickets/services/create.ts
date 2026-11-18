@@ -115,7 +115,7 @@ export async function createTicket(
     try {
       const def = CATEGORIES[category];
       const channel = await interaction.guild.channels.create({
-        name: `${def.channelIcon}・${padNumber(ticket.id)}-${slugify(member.user.username, 16)}`,
+        name: `${def.channelPrefix}-${padNumber(ticket.id)}-${slugify(member.user.username, 16)}`,
         type: ChannelType.GuildText,
         parent: parent.id,
         topic: `Ticket ${ticketNo(ticket.id)} • ${def.label} • ${member.user.username} (${member.id})`,

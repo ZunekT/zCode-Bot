@@ -19,7 +19,10 @@ function lines(config: GuildConfig, defs: Record<string, SettingDef>, mention: (
 export function configPanel(client: ZxClient, config: GuildConfig): Panel {
   const modules = [...client.modules.values()]
     .filter((m) => m.toggleable !== false)
-    .map((m) => `${isModuleEnabled(config, m.name) ? '🟢' : '🔴'} \`${m.name}\` – ${m.description}`)
+    .map(
+      (m) =>
+        `\`${isModuleEnabled(config, m.name) ? 'włączony ' : 'wyłączony'}\` **${m.name}** – ${m.description}`,
+    )
     .join('\n');
 
   return new Panel({ tone: config.maintenance ? 'warning' : 'brand' })

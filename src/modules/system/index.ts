@@ -4,6 +4,7 @@ import { prisma } from '../../db/prisma.js';
 import { redis } from '../../db/redis.js';
 import { defineCommand, defineEvent, defineModule } from '../../core/types.js';
 import { Panel } from '../../ui/builders/container.js';
+import { tableBlock } from '../../ui/components/card.js';
 import { v2 } from '../../ui/builders/payload.js';
 import { discordTime, formatDuration } from '../../utils/format.js';
 
@@ -13,7 +14,7 @@ async function measure(fn: () => Promise<unknown>): Promise<string> {
     await fn();
     return `${Math.round(performance.now() - start)} ms`;
   } catch {
-    return '❌ niedostępna';
+    return 'niedostępna';
   }
 }
 
@@ -32,19 +33,15 @@ const ping = defineCommand({
 
     const panel = new Panel({ tone: 'brand' })
       .title('bot', `${BRAND_NAME} Bot • Status`)
-      .separator()
-      .list([
-        { emoji: 'lightning', label: 'Gateway:', value: `${client.ws.ping} ms` },
-        { emoji: 'database', label: 'Baza danych:', value: db },
-        { emoji: 'server', label: 'Redis:', value: cache },
-        {
-          emoji: 'calendar',
-          label: 'Uptime:',
-          value: formatDuration(Date.now() - client.startedAt.getTime()),
-        },
-        { emoji: 'desktop', label: 'Pamięć:', value: `${memory} MB` },
-      ])
-      .separator()
+      .text(
+        tableBlock([
+          ['Gateway', `${client.ws.ping} ms`],
+          ['Baza danych', db],
+          ['Redis', cache],
+          ['Uptime', formatDuration(Date.now() - client.startedAt.getTime())],
+          ['Pamięć', `${memory} MB`],
+        ]),
+      )
       .footer(`v${BOT_VERSION} • discord.js ${djsVersion} • start ${discordTime(client.startedAt, 'R')}`);
 
     return interaction.reply(v2(panel, { ephemeral: true }));

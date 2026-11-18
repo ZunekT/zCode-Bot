@@ -29,7 +29,7 @@ async function botAutocomplete(interaction: AutocompleteInteraction) {
     take: 25,
   });
   await interaction.respond(
-    bots.map((b) => ({ name: `${b.online ? '🟢' : '🔴'} ${b.name}`, value: b.name })),
+    bots.map((b) => ({ name: `${b.name} (${b.online ? 'online' : 'offline'})`, value: b.name })),
   );
 }
 
@@ -64,7 +64,7 @@ const monitoringCommand = defineCommand({
             .setRequired(true)
             .addChoices(
               ...(Object.keys(MODES) as Mode[]).map((m) => ({
-                name: `${MODES[m].icon} ${MODES[m].label}`,
+                name: MODES[m].label,
                 value: m,
               })),
             ),
@@ -162,7 +162,7 @@ const monitoringCommand = defineCommand({
               ? heartbeatHelp(bot.heartbeatToken!)
               : 'Pierwsze sprawdzenie w ciągu minuty.',
           fields: [
-            { emoji: 'tools', label: 'Tryb', value: `${MODES[mode].icon} ${MODES[mode].label}` },
+            { emoji: 'tools', label: 'Tryb', value: MODES[mode].label },
             { emoji: 'user', label: 'Klient', value: bot.ownerId ? `<@${bot.ownerId}>` : null },
           ],
           timestamp: false,
@@ -181,7 +181,7 @@ const monitoringCommand = defineCommand({
             bots
               .map(
                 (b) =>
-                  `${b.online ? '🟢' : '🔴'} **${b.name}** ${MODES[b.mode as Mode]?.icon ?? ''} • uptime ${uptime(b)}${b.ownerId ? ` • <@${b.ownerId}>` : ''}\n-# ${[
+                  `**${b.name}** \`${b.online ? 'online' : 'offline'}\` \`${MODES[b.mode as Mode]?.label.split(' ')[0] ?? b.mode}\` · uptime ${uptime(b)}${b.ownerId ? ` · <@${b.ownerId}>` : ''}\n-# ${[
                     b.healthUrl ? truncate(b.healthUrl, 60) : null,
                     b.lastCheckAt
                       ? `sprawdzono ${discordTime(b.lastCheckAt, 'R')}`
@@ -250,7 +250,7 @@ const monitoringCommand = defineCommand({
         card({
           tone: result.ok ? 'success' : 'error',
           emoji: 'server',
-          title: `${result.ok ? '🟢' : '🔴'} ${bot.name}`,
+          title: `${bot.name}: ${result.ok ? 'działa' : 'nie działa'}`,
           fields: [
             {
               emoji: 'lightning',

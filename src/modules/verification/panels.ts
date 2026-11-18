@@ -9,8 +9,8 @@ import { renderCaptcha } from './captcha.js';
 import { CAPTCHA_TTL, MAX_ATTEMPTS } from './service.js';
 
 export const MODE_LABELS: Record<string, string> = {
-  captcha: '🔐 Captcha (kod z obrazka)',
-  button: '👆 Jedno kliknięcie',
+  captcha: 'Captcha (kod z obrazka)',
+  button: 'Jedno kliknięcie',
 };
 
 /** Publiczny panel weryfikacji. */
@@ -23,9 +23,7 @@ export function verificationPanel(config: GuildConfig, rulesChannelId?: string |
   return new Panel({ tone: 'brand' })
     .banner(BANNER_URL)
     .title('shield_check', 'Weryfikacja')
-    .text(
-      'Witaj na serwerze **zxCode**! Zanim zobaczysz resztę kanałów, potwierdź, że jesteś człowiekiem. 🙂',
-    )
+    .text('Witaj na serwerze **zxCode**! Zanim zobaczysz resztę kanałów, potwierdź, że jesteś człowiekiem.')
     .separator()
     .text(`### ${e('checklist')} Jak to działa?\n${steps}`)
     .separator()
@@ -65,7 +63,7 @@ export function verifiedCard(guildName: string) {
     tone: 'success',
     emoji: 'verified',
     title: `Witaj na ${guildName}!`,
-    description: 'Weryfikacja zakończona – masz już pełny dostęp do serwera. Miłego pobytu! 🎉',
+    description: 'Weryfikacja zakończona – masz już pełny dostęp do serwera. Miłego pobytu!',
     timestamp: false,
   });
 }

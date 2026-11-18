@@ -59,7 +59,7 @@ const logsCommand = defineCommand({
           tone: 'success',
           title: 'Wysłano testowe wpisy',
           description: active
-            .map((t) => `${e(LOG_TYPES[t].emoji)} ${LOG_TYPES[t].label} ➜ <#${channels[t]}>`)
+            .map((t) => `${e(LOG_TYPES[t].emoji)} ${LOG_TYPES[t].label} → <#${channels[t]}>`)
             .join('\n'),
           timestamp: false,
         }),
@@ -113,11 +113,9 @@ export const logsModule = defineModule({
           action: 'logs.channel',
           actorId: interaction.user.id,
           targetId: channel.id,
-          summary: `Logi **${label}** ➜ <#${channel.id}>`,
+          summary: `Logi **${label}** → <#${channel.id}>`,
         });
-        await interaction.update(
-          v2Message(logsPanel(updated, `${e('order_complete')} **${label}** ➜ <#${channel.id}>`)),
-        );
+        await interaction.update(v2Message(logsPanel(updated, `Zapisano: **${label}** → <#${channel.id}>`)));
       },
     }),
     defineComponent({

@@ -16,8 +16,8 @@ import { githubEvents } from '../../http/github-events.js';
 import { pageButtons } from '../../ui/builders/paginator.js';
 import { Form } from '../../ui/builders/modal.js';
 import { v2, v2Message } from '../../ui/builders/payload.js';
-import { card } from '../../ui/components/card.js';
-import { e } from '../../ui/emojis.js';
+import { card, diffBlock, type DiffSign } from '../../ui/components/card.js';
+import { e, type EmojiName } from '../../ui/emojis.js';
 import { discordTime, truncate } from '../../utils/format.js';
 import { onRelease } from './github.js';
 import {
@@ -36,10 +36,10 @@ import {
   type Sections,
 } from './service.js';
 
-const ROADMAP: Record<RoadmapStatus, { label: string; icon: string }> = {
-  PLANNED: { label: 'W planach', icon: '🗓️' },
-  IN_PROGRESS: { label: 'W trakcie', icon: '🛠️' },
-  DONE: { label: 'Gotowe', icon: '✅' },
+const ROADMAP: Record<RoadmapStatus, { label: string; emoji: EmojiName; sign: DiffSign }> = {
+  PLANNED: { label: 'W planach', emoji: 'calendar', sign: ' ' },
+  IN_PROGRESS: { label: 'W trakcie', emoji: 'tools', sign: '~' },
+  DONE: { label: 'Gotowe', emoji: 'verified', sign: '+' },
 };
 
 async function projectAutocomplete(interaction: AutocompleteInteraction) {
@@ -53,7 +53,7 @@ async function projectAutocomplete(interaction: AutocompleteInteraction) {
     });
     return interaction.respond(
       rows.map((r) => ({
-        name: truncate(`${ROADMAP[r.status].icon} ${r.project}: ${r.title}`, 100),
+        name: truncate(`${r.project}: ${r.title} (${ROADMAP[r.status].label})`, 100),
         value: String(r.id),
       })),
     );
@@ -76,7 +76,7 @@ function entryModal(customId: string, title: string, s: Sections, description?: 
   for (const k of SECTION_KEYS) {
     form.text({
       id: k,
-      label: `${SECTIONS[k].icon} ${SECTIONS[k].label}`,
+      label: `${SECTIONS[k].sign} ${SECTIONS[k].label}`,
       description: 'Każda zmiana w nowej linii',
       paragraph: true,
       required: false,
@@ -220,7 +220,7 @@ const changelogCommand = defineCommand({
         panel.select(
           new StringSelectMenuBuilder()
             .setCustomId('changelog:open')
-            .setPlaceholder('✏️ Otwórz szkic…')
+            .setPlaceholder('Otwórz szkic…')
             .addOptions(
               drafts.map((d) =>
                 new StringSelectMenuOptionBuilder()
@@ -384,7 +384,7 @@ const roadmapCommand = defineCommand({
             .setRequired(true)
             .addChoices(
               ...(Object.keys(ROADMAP) as RoadmapStatus[]).map((k) => ({
-                name: `${ROADMAP[k].icon} ${ROADMAP[k].label}`,
+                name: ROADMAP[k].label,
                 value: k,
               })),
             ),
@@ -422,7 +422,16 @@ const roadmapCommand = defineCommand({
         panel
           .separator(false)
           .text(
-            `### ${ROADMAP[status].icon} ${ROADMAP[status].label}\n${list.map((i) => `${status === 'DONE' ? `~~${i.title}~~` : i.title}${project ? '' : ` -# ${i.project}`}`).join('\n')}`,
+            `### ${e(ROADMAP[status].emoji)} ${ROADMAP[status].label}\n` +
+              diffBlock(
+                list.map(
+                  (i) =>
+                    [ROADMAP[status].sign, project ? i.title : `${i.title}  (${i.project})`] as [
+                      DiffSign,
+                      string,
+                    ],
+                ),
+              ),
           );
       }
       return interaction.reply(v2(panel, { ephemeral: true }));
@@ -441,7 +450,7 @@ const roadmapCommand = defineCommand({
             tone: 'success',
             emoji: 'calendar',
             title: 'Dodano do roadmapy',
-            description: `${ROADMAP.PLANNED.icon} **${item.title}** • ${project}`,
+            description: `**${item.title}** · ${project} · \`${ROADMAP.PLANNED.label}\``,
             timestamp: false,
           }),
           { ephemeral: true },
@@ -465,8 +474,8 @@ const roadmapCommand = defineCommand({
       v2(
         card({
           tone: 'success',
-          title: `${ROADMAP[status].icon} ${item.title}`,
-          description: `Status: **${ROADMAP[status].label}**`,
+          title: item.title,
+          description: `Status: \`${ROADMAP[status].label}\``,
           timestamp: false,
         }),
         { ephemeral: true },
@@ -505,7 +514,7 @@ export const changelogModule = defineModule({
           authorId: interaction.user.id,
         });
         await interaction.reply({
-          ...draftPayload(entry, '📝 Szkic zapisany – tak będzie wyglądał wpis.'),
+          ...draftPayload(entry, 'Szkic zapisany – tak będzie wyglądał wpis.'),
           flags: ['IsComponentsV2', 'Ephemeral'],
         });
       },
@@ -530,7 +539,7 @@ export const changelogModule = defineModule({
         await interaction.deferUpdate();
         const entry = await publishChangelog(client, Number(args[0]), interaction.user.id);
         await interaction.editReply(
-          draftPayload(entry, `🚀 Opublikowano na <#${entry.channelId}>. Subskrybenci dostają DM.`),
+          draftPayload(entry, `Opublikowano na <#${entry.channelId}>. Subskrybenci dostają DM.`),
         );
       },
     }),
@@ -563,7 +572,7 @@ export const changelogModule = defineModule({
             sections: readSections((id) => interaction.fields.getTextInputValue(id)) as never,
           },
         });
-        const payload = draftPayload(entry, '✏️ Zapisano zmiany.');
+        const payload = draftPayload(entry, 'Zapisano zmiany.');
         if (interaction.isFromMessage()) await interaction.update(payload);
         else await interaction.reply({ ...payload, flags: ['IsComponentsV2', 'Ephemeral'] });
       },

@@ -278,6 +278,7 @@ Na koniec dopisz moduł do `src/modules/index.ts`. Router sam sprawdzi, czy modu
 ### Zasady
 
 - **Components v2:** wiadomość z flagą `IsComponentsV2` nie może mieć `content` ani `embeds`, cały tekst idzie przez `Panel.text()`. Odpowiedzi buduj przez `v2()`, wiadomości na kanał i edycje przez `v2Message()`.
+- **Wygląd:** wszystkie komunikaty buduj przez `card()` (ikona z paczki tylko w nagłówku, pola `**Etykieta:** wartość`, kolor paska = charakter zdarzenia). **Bez standardowych emotek Discorda.** Statusy jako znaczniki `badge('W obsłudze')`, listy zmian w `diffBlock()` (`+` zielone, `-` czerwone), kwoty i liczby w `tableBlock()`, treści użytkowników w `codeBlock()`.
 - **Emotki** tylko przez `e('nazwa')` / `emojiComponent('nazwa')`, nigdy przez ID wpisane na sztywno.
 - **customId:** `modul:akcja:arg1:arg2` (limit 100 znaków).
 - **Błędy dla użytkownika:** `throw new UserError('…')` pokaże czytelny komunikat ephemeral.

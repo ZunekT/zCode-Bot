@@ -43,7 +43,7 @@ const profileCommand = defineCommand({
       emoji: badges.includes('loyal') ? 'client_crown' : 'user',
       title: `Profil: ${member?.displayName ?? user.username}`,
       description: badges.length
-        ? badges.map((b) => `${BADGES[b].icon} **${BADGES[b].label}**`).join('  ')
+        ? badges.map((b) => `${e(BADGES[b].emoji)} **${BADGES[b].label}**`).join('   ')
         : '-# Brak odznak – pierwsze zlecenie odblokuje odznakę Klienta',
       thumbnail: user.displayAvatarURL({ size: 256 }),
       fields: [
@@ -53,7 +53,7 @@ const profileCommand = defineCommand({
           emoji: 'star',
           label: 'Opinie',
           value: reviews.length
-            ? `${reviews.length} (śr. ${(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)} ⭐)`
+            ? `${reviews.length} (śr. ${(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)} / 5)`
             : null,
         },
         // Wydana kwota tylko dla właściciela profilu i obsługi.
@@ -83,7 +83,8 @@ const profileCommand = defineCommand({
           `### ${e('package')} ${self || staff ? 'Ostatnie zlecenia' : 'Zrealizowane projekty'}\n` +
             visible
               .map(
-                (o) => `${ORDER_STATUSES[o.status].icon} **${formatOrderId(o.id)}** ${truncate(o.title, 60)}`,
+                (o) =>
+                  `**${formatOrderId(o.id)}** \`${ORDER_STATUSES[o.status].label}\` ${truncate(o.title, 60)}`,
               )
               .join('\n'),
         );

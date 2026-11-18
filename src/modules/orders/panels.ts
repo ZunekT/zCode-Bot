@@ -3,7 +3,7 @@ import type { Invoice, Order, OrderStatus, OrderTask, Payment } from '../../gene
 import { Colors } from '../../config/constants.js';
 import { Panel } from '../../ui/builders/container.js';
 import { button } from '../../ui/builders/buttons.js';
-import { card, change } from '../../ui/components/card.js';
+import { card, change, codeBlock, diffBlock, tableBlock, type DiffSign } from '../../ui/components/card.js';
 import { e, emojiComponent } from '../../ui/emojis.js';
 import { discordTime, formatMoney, formatOrderId, progressBar, truncate } from '../../utils/format.js';
 import { ORDER_ACTIONS, ORDER_STATUSES, STATUS_ORDER, type OrderAction } from './constants.js';
@@ -34,26 +34,61 @@ export function totalsOf(
   };
 }
 
-const money = (v: number | null, currency = 'PLN') => (v === null ? '_do wyceny_' : formatMoney(v, currency));
-const statusText = (s: OrderStatus) => `${ORDER_STATUSES[s].icon} ${ORDER_STATUSES[s].label}`;
+const statusText = (s: OrderStatus) => ORDER_STATUSES[s].label;
+const plainMoney = (v: number | null, currency = 'PLN') =>
+  v === null ? 'do wyceny' : formatMoney(v, currency);
 
-/** Oś postępu: ✅ Wycena › ✅ Akceptacja › ▶ **Płatność** › ▫ Realizacja … */
+/**
+ * Postęp zlecenia:
+ *   **Etap 4/7 · W realizacji**
+ *   ▰▰▰▰▰▰▰▰▱▱▱▱▱▱ 57%
+ *   -# Wycena › Akceptacja › Płatność › **Realizacja** › Testy › Dostarczone › Koniec
+ */
 export function timeline(status: OrderStatus): string {
-  if (status === 'CANCELLED') return `${ORDER_STATUSES.CANCELLED.icon} **Zlecenie anulowane**`;
+  if (status === 'CANCELLED') return '**Zlecenie anulowane**';
   const current = ORDER_STATUSES[status].step;
-  const steps = STATUS_ORDER.filter((s) => ORDER_STATUSES[s].step > 0).map((s) => {
-    const def = ORDER_STATUSES[s];
-    if (def.step < current || status === 'COMPLETED') return `✅ ${def.short}`;
-    if (def.step === current) return `▶️ **${def.short}**`;
-    return `▫️ ${def.short}`;
-  });
-  return `${steps.join(' › ')}\n${progressBar(current, 7, 14)}`;
+  const steps = STATUS_ORDER.filter((s) => ORDER_STATUSES[s].step > 0).map((s) =>
+    ORDER_STATUSES[s].step === current ? `**${ORDER_STATUSES[s].short}**` : ORDER_STATUSES[s].short,
+  );
+  return `**Etap ${current}/7 · ${ORDER_STATUSES[status].label}**\n${progressBar(current, 7, 14)}\n-# ${steps.join(' › ')}`;
 }
+
+/** Rozliczenie jako wyrównana tabelka. */
+export function financeTable(order: Order & { payments: Pick<Payment, 'amount'>[] }): string {
+  const t = totalsOf(order);
+  const c = order.currency;
+  if (t.price === null) return codeBlock('Cena          do wyceny');
+  const rows: [string, string][] = [['Cena', formatMoney(t.price, c)]];
+  if (t.discount)
+    rows.push(
+      [`Rabat ${order.discountCode ?? ''}`.trim(), `-${formatMoney(t.discount, c)}`],
+      ['Po rabacie', formatMoney(t.total ?? 0, c)],
+    );
+  rows.push(
+    ['Wpłacono', formatMoney(t.paid, c)],
+    ['Do zapłaty', t.due !== null && t.due > 0 ? formatMoney(t.due, c) : 'opłacone'],
+  );
+  return tableBlock(rows, { separatorBefore: [rows.length - 1] });
+}
+
+/** Checklista: zrobione na zielono (+ [x]), reszta zwykłym tekstem ([ ]). */
+export function tasksBlock(tasks: Pick<OrderTask, 'done' | 'content'>[]): string {
+  return diffBlock(
+    tasks.map((x) => [x.done ? '+' : ' ', `[${x.done ? 'x' : ' '}] ${x.content}`] as [DiffSign, string]),
+  );
+}
+
+const INVOICE_STATUS = {
+  ISSUED: 'czeka',
+  PAID: 'opłacona',
+  OVERDUE: 'po terminie',
+  CANCELLED: 'anulowana',
+} as const;
 
 export function actionSelect(order: Order): StringSelectMenuBuilder {
   return new StringSelectMenuBuilder()
     .setCustomId(`order:action:${order.id}`)
-    .setPlaceholder('⚙️ Zarządzaj zleceniem… (obsługa)')
+    .setPlaceholder('Zarządzaj zleceniem… (obsługa)')
     .addOptions(
       (Object.keys(ORDER_ACTIONS) as OrderAction[]).map((a) =>
         new StringSelectMenuOptionBuilder()
@@ -68,7 +103,6 @@ export function actionSelect(order: Order): StringSelectMenuBuilder {
 /** Główny panel zlecenia. */
 export function orderPanel(order: FullOrder, avatarUrl: string, interactive = true): Panel {
   const t = totalsOf(order);
-  const def = ORDER_STATUSES[order.status];
   const done = order.tasks.filter((x) => x.done).length;
   const accent =
     order.status === 'CANCELLED'
@@ -83,43 +117,38 @@ export function orderPanel(order: FullOrder, avatarUrl: string, interactive = tr
       avatarUrl,
     )
     .separator()
-    .text(`${e(def.emoji)} **Status:** ${statusText(order.status)}\n${timeline(order.status)}`)
+    .text(timeline(order.status))
     .separator()
     .text(
-      [
-        `${e('coins')} **Cena:** ${money(t.price, order.currency)}${t.discount ? ` – rabat \`${order.discountCode}\` (−${formatMoney(t.discount, order.currency)}) = **${money(t.total, order.currency)}**` : ''}`,
-        `${e('money')} **Wpłacono:** ${formatMoney(t.paid, order.currency)}${t.due !== null ? ` • **Do zapłaty:** ${t.due > 0 ? formatMoney(t.due, order.currency) : '✅ opłacone'}` : ''}`,
-        `${e('calendar')} **Termin:** ${order.deadline ? `${discordTime(order.deadline, 'D')} (${discordTime(order.deadline, 'R')})` : '_do ustalenia_'}`,
-        ...(order.repoUrl ? [`${e('git_branch')} **Repozytorium:** ${order.repoUrl}`] : []),
-        ...(order.invoices.length
-          ? [
-              `${e('invoice')} **Proformy:** ${order.invoices.map((i) => `\`${i.number}\` ${i.status === 'PAID' ? '✅' : i.status === 'OVERDUE' ? '⚠️' : '⏳'}`).join(', ')}`,
-            ]
-          : []),
-      ].join('\n'),
+      `### Rozliczenie\n${financeTable(order)}` +
+        [
+          `**Termin:** ${order.deadline ? `${discordTime(order.deadline, 'D')} · ${discordTime(order.deadline, 'R')}` : 'do ustalenia'}`,
+          ...(order.repoUrl ? [`**Repozytorium:** ${order.repoUrl}`] : []),
+          ...(order.invoices.length
+            ? [
+                `**Proformy:** ${order.invoices.map((i) => `\`${i.number}\` ${INVOICE_STATUS[i.status]}`).join(' · ')}`,
+              ]
+            : []),
+        ].join('\n'),
     );
 
   if (order.tasks.length) {
+    // Bez nagłówka liczba pozycji mogłaby rozsadzić limit tekstu – przycinamy listę, nie blok.
+    const shown = order.tasks.slice(0, 25);
     panel
       .separator()
       .text(
-        `### ${e('checklist')} Zadania (${done}/${order.tasks.length})\n${progressBar(done, order.tasks.length, 10)}\n` +
-          truncate(
-            order.tasks
-              .map((x) => `${x.done ? '✅' : '▫️'} ${x.done ? `~~${x.content}~~` : x.content}`)
-              .join('\n'),
-            1500,
-          ),
+        `### Zadania · ${done}/${order.tasks.length}\n${progressBar(done, order.tasks.length, 10)}\n` +
+          tasksBlock(shown.map((x) => ({ ...x, content: truncate(x.content, 60) }))),
       );
   }
-  if (order.description)
-    panel.separator().text(`### ${e('documentation')} Opis\n>>> ${truncate(order.description, 800)}`);
+  if (order.description) panel.separator().text(`### Zakres prac\n>>> ${truncate(order.description, 800)}`);
 
   if (!interactive) return panel.footer('Podgląd • panel z akcjami znajdziesz w tickecie zlecenia');
   panel.separator();
   if (order.status === 'QUOTE' && order.price !== null) {
     panel.buttons(
-      button(`order:accept:${order.id}`, `Akceptuję wycenę (${money(t.total, order.currency)})`, {
+      button(`order:accept:${order.id}`, `Akceptuję wycenę (${plainMoney(t.total, order.currency)})`, {
         style: 'success',
         emoji: 'verified',
       }),
@@ -160,7 +189,7 @@ export function orderListLines(orders: (Order & { payments: Payment[] })[]): str
   return orders
     .map((o) => {
       const t = totalsOf(o);
-      return `${ORDER_STATUSES[o.status].icon} **${formatOrderId(o.id)}** ${truncate(o.title, 50)} • <@${o.userId}> • ${money(t.total, o.currency)}${t.due && t.due > 0 && o.status !== 'CANCELLED' ? ` (do zapłaty ${formatMoney(t.due, o.currency)})` : ''}`;
+      return `**${formatOrderId(o.id)}** \`${ORDER_STATUSES[o.status].label}\` ${truncate(o.title, 50)}\n-# <@${o.userId}> · ${plainMoney(t.total, o.currency)}${t.due && t.due > 0 && o.status !== 'CANCELLED' ? ` · do zapłaty ${formatMoney(t.due, o.currency)}` : ''}`;
     })
     .join('\n');
 }

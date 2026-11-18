@@ -16,7 +16,7 @@ import { discountLabel, discountValue, findValidDiscount } from '../pricing/disc
 import { requestReview } from '../reviews/service.js';
 import { ORDER_STATUSES } from './constants.js';
 import { invoiceFileName, renderInvoice } from './invoice.js';
-import { orderPanel, statusChangeCard, totalsOf, type FullOrder } from './panels.js';
+import { financeTable, orderPanel, statusChangeCard, totalsOf, type FullOrder } from './panels.js';
 
 const log = createLogger('orders');
 
@@ -375,17 +375,12 @@ export async function addPayment(
     emoji: 'money',
     title: `Zaksięgowano wpłatę • ${formatOrderId(id)}`,
     description:
-      totals.due !== null && totals.due <= 0 ? '✅ **Zlecenie w pełni opłacone.** Dziękujemy!' : undefined,
+      totals.due !== null && totals.due <= 0 ? '**Zlecenie w pełni opłacone.** Dziękujemy!' : undefined,
     fields: [
-      { emoji: 'coins', label: 'Kwota', value: formatMoney(amount, order.currency) },
-      { emoji: 'money', label: 'Wpłacono łącznie', value: formatMoney(totals.paid, order.currency) },
-      {
-        emoji: 'payment_card',
-        label: 'Pozostało',
-        value: totals.due !== null && totals.due > 0 ? formatMoney(totals.due, order.currency) : null,
-      },
-      { emoji: 'documentation', label: 'Notatka', value: note },
+      { label: 'Kwota wpłaty', value: `**${formatMoney(amount, order.currency)}**` },
+      { label: 'Notatka', value: note },
     ],
+    body: financeTable(order),
   });
   await panelChannelNotice(client, order, panel, undefined, true);
   await notifyClient(client, order.userId, panel);

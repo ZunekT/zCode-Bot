@@ -10,9 +10,9 @@ import { LOYAL_CLIENT_ORDERS } from '../orders/constants.js';
 const log = createLogger('clients');
 
 export const BADGES = {
-  client: { label: 'Klient', icon: '🎖️' },
-  loyal: { label: 'Stały klient', icon: '👑' },
-  reviewer: { label: 'Recenzent', icon: '⭐' },
+  client: { label: 'Klient', emoji: 'client_badge' },
+  loyal: { label: 'Stały klient', emoji: 'client_crown' },
+  reviewer: { label: 'Recenzent', emoji: 'star' },
 } as const;
 
 export type BadgeKey = keyof typeof BADGES;

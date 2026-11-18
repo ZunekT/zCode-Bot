@@ -19,6 +19,7 @@ import { button, linkButton } from '../../ui/builders/buttons.js';
 import { Form } from '../../ui/builders/modal.js';
 import { v2, v2Message } from '../../ui/builders/payload.js';
 import { card } from '../../ui/components/card.js';
+import { emojiComponent } from '../../ui/emojis.js';
 import { discordTime, truncate } from '../../utils/format.js';
 import { parseWhen, WHEN_HINT } from '../../utils/time.js';
 import {
@@ -34,15 +35,15 @@ import {
 } from './service.js';
 
 const PING_OPTIONS = [
-  { value: 'none', label: 'Bez pingu', emoji: '🔕' },
-  { value: 'everyone', label: '@everyone', emoji: '📣' },
-  { value: 'here', label: '@here', emoji: '🟢' },
+  { value: 'none', label: 'Bez pingu', emoji: 'lock' as const },
+  { value: 'everyone', label: '@everyone', emoji: 'announcement' as const },
+  { value: 'here', label: '@here', emoji: 'users' as const },
 ];
 
 const STATUS = {
-  DRAFT: { label: '📝 Szkic', tone: 'info' },
-  SCHEDULED: { label: '⏰ Zaplanowane', tone: 'warning' },
-  PUBLISHED: { label: '✅ Opublikowane', tone: 'success' },
+  DRAFT: { label: 'Szkic', tone: 'info' },
+  SCHEDULED: { label: 'Zaplanowane', tone: 'warning' },
+  PUBLISHED: { label: 'Opublikowane', tone: 'success' },
 } as const;
 
 const idOf = (args: string[]) => {
@@ -70,8 +71,8 @@ async function editorPayload(client: ZxClient, a: Announcement, notice?: string)
     description:
       (notice ? `${notice}\n` : '') +
       (a.status === 'SCHEDULED' && a.publishAt
-        ? `${s.label} na **${discordTime(a.publishAt, 'f')}** (${discordTime(a.publishAt, 'R')})`
-        : s.label),
+        ? `\`${s.label}\` na **${discordTime(a.publishAt, 'f')}** · ${discordTime(a.publishAt, 'R')}`
+        : `\`${s.label}\``),
     fields: [
       {
         emoji: 'discord',
@@ -88,13 +89,13 @@ async function editorPayload(client: ZxClient, a: Announcement, notice?: string)
       .select(
         new StringSelectMenuBuilder()
           .setCustomId(`announce:ping:${a.id}`)
-          .setPlaceholder('🔔 Ping…')
+          .setPlaceholder('Ping…')
           .addOptions(
             PING_OPTIONS.map((o) =>
               new StringSelectMenuOptionBuilder()
                 .setValue(o.value)
                 .setLabel(o.label)
-                .setEmoji({ name: o.emoji })
+                .setEmoji(emojiComponent(o.emoji))
                 .setDefault((a.ping ?? 'none') === o.value),
             ),
           ),
@@ -114,7 +115,7 @@ async function editorPayload(client: ZxClient, a: Announcement, notice?: string)
         (() => {
           const ch = new ChannelSelectMenuBuilder()
             .setCustomId(`announce:channel:${a.id}`)
-            .setPlaceholder('📌 Kanał publikacji…')
+            .setPlaceholder('Kanał publikacji…')
             .setChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
             .setMinValues(1)
             .setMaxValues(1);
@@ -232,7 +233,7 @@ const announceCommand = defineCommand({
         ? rows
             .map(
               (r) =>
-                `${STATUS[r.status].label.split(' ')[0]} **#${r.id}** ${truncate(r.title, 60)} – ${discordTime(r.publishedAt ?? r.publishAt ?? r.createdAt, 'R')}`,
+                `**#${r.id}** ${truncate(r.title, 60)} \`${STATUS[r.status].label}\`\n-# ${discordTime(r.publishedAt ?? r.publishAt ?? r.createdAt, 'R')}`,
             )
             .join('\n')
         : 'Brak ogłoszeń. Utwórz pierwsze: `/ogloszenie nowe`.',
@@ -242,7 +243,7 @@ const announceCommand = defineCommand({
       panel.select(
         new StringSelectMenuBuilder()
           .setCustomId('announce:open')
-          .setPlaceholder('✏️ Otwórz w edytorze…')
+          .setPlaceholder('Otwórz w edytorze…')
           .addOptions(
             rows.map((r) =>
               new StringSelectMenuOptionBuilder()
@@ -279,7 +280,7 @@ export const announcementsModule = defineModule({
             authorId: interaction.user.id,
           },
         });
-        const payload = await editorPayload(client, a, '📝 Szkic zapisany – sprawdź podgląd i opublikuj.');
+        const payload = await editorPayload(client, a, 'Szkic zapisany – sprawdź podgląd i opublikuj.');
         await interaction.editReply(payload);
       },
     }),
@@ -349,7 +350,7 @@ export const announcementsModule = defineModule({
       async run(interaction, args, { client }) {
         await interaction.deferUpdate();
         const a = await publishAnnouncement(client, idOf(args), interaction.user.id);
-        await interaction.editReply(await editorPayload(client, a, `🚀 Opublikowano na <#${a.channelId}>!`));
+        await interaction.editReply(await editorPayload(client, a, `Opublikowano na <#${a.channelId}>.`));
       },
     }),
     defineComponent({
@@ -385,7 +386,7 @@ export const announcementsModule = defineModule({
           actorId: interaction.user.id,
           summary: `Zaplanowano ogłoszenie **${a.title}** na ${discordTime(when, 'f')}`,
         });
-        const payload = await editorPayload(client, a, `⏰ Zaplanowano na ${discordTime(when, 'f')}.`);
+        const payload = await editorPayload(client, a, `Zaplanowano na ${discordTime(when, 'f')}.`);
         if (interaction.isFromMessage()) await interaction.update(payload);
         else await interaction.reply({ ...payload, flags: ['IsComponentsV2', 'Ephemeral'] });
       },
@@ -434,7 +435,7 @@ export const announcementsModule = defineModule({
           await editorPayload(
             client,
             a,
-            a.status === 'PUBLISHED' ? '✏️ Zaktualizowano opublikowaną wiadomość.' : '✏️ Zapisano zmiany.',
+            a.status === 'PUBLISHED' ? 'Zaktualizowano opublikowaną wiadomość.' : 'Zapisano zmiany.',
           ),
         );
       },

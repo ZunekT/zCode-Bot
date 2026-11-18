@@ -14,7 +14,7 @@ import { getTicketTextChannel, logTicket } from './channel.js';
 import { isActive } from './store.js';
 
 const avatar = (m: GuildMember) => m.displayAvatarURL({ size: 128 });
-const prio = (p: TicketPriority) => `${PRIORITIES[p].icon} ${PRIORITIES[p].label}`;
+const prio = (p: TicketPriority) => `\`${PRIORITIES[p].label}\``;
 
 /** Karta zdarzenia w kanale ticketu. */
 export async function channelNotice(

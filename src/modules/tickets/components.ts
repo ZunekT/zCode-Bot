@@ -130,7 +130,7 @@ async function runAction(
             new StringSelectMenuOptionBuilder()
               .setValue(p)
               .setLabel(PRIORITIES[p].label)
-              .setEmoji({ name: PRIORITIES[p].icon })
+              .setEmoji(emojiComponent(PRIORITIES[p].emoji))
               .setDefault(p === ticket.priority),
           ),
         );
@@ -267,7 +267,7 @@ export const ticketComponents: ComponentHandler[] = [
           card({
             tone: 'success',
             title: 'Priorytet zmieniony',
-            description: `${PRIORITIES[value].icon} **${PRIORITIES[value].label}**`,
+            description: `Nowy priorytet: \`${PRIORITIES[value].label}\``,
             timestamp: false,
           }),
         ),
@@ -473,10 +473,7 @@ export const ticketComponents: ComponentHandler[] = [
       if (!(rating >= 1 && rating <= 5)) throw new UserError('Nieprawidłowa ocena.');
 
       await interaction.showModal(
-        new Form(
-          `ticket:rateSubmit:${id}:${rating}`,
-          `Twoja ocena: ${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}`,
-        )
+        new Form(`ticket:rateSubmit:${id}:${rating}`, `Twoja ocena: ${rating}/5`)
           .text({
             id: 'comment',
             label: 'Komentarz (opcjonalnie)',

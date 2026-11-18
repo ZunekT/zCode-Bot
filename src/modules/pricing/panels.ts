@@ -3,7 +3,7 @@ import type { DiscountCode, PricingItem, PricingPackage } from '../../generated/
 import { BANNER_URL } from '../../ui/assets.js';
 import { Panel } from '../../ui/builders/container.js';
 import { button } from '../../ui/builders/buttons.js';
-import { card } from '../../ui/components/card.js';
+import { card, tableBlock } from '../../ui/components/card.js';
 import { e } from '../../ui/emojis.js';
 import { cents, formatMoney, truncate } from '../../utils/format.js';
 import { discountLabel, discountValue } from './discounts.js';
@@ -28,16 +28,14 @@ export function pricingPanel(
     panel.separator().text('-# Cennik jest w przygotowaniu – zapytaj o wycenę w tickecie.');
   }
   packages.slice(0, 6).forEach((p, i) => {
-    panel.separator().sectionWithButton(
-      `### ${e(PACKAGE_EMOJIS[i % PACKAGE_EMOJIS.length]!)} ${p.name} — od ${formatMoney(Number(p.price))}\n${p.description}` +
-        (p.features.length
-          ? `\n${p.features
-              .slice(0, 8)
-              .map((f) => `${e('order_complete')} ${f}`)
-              .join('\n')}`
-          : ''),
-      button(`pricing:order:${p.id}`, 'Zamów', { style: i === 1 ? 'primary' : 'secondary', emoji: 'cart' }),
-    );
+    panel
+      .separator()
+      .sectionWithButton(
+        `### ${e(PACKAGE_EMOJIS[i % PACKAGE_EMOJIS.length]!)} ${p.name}\n` +
+          `**od ${formatMoney(Number(p.price))}** · ${p.description}` +
+          (p.features.length ? `\n-# ${p.features.slice(0, 8).join(' · ')}` : ''),
+        button(`pricing:order:${p.id}`, 'Zamów', { style: i === 1 ? 'primary' : 'secondary', emoji: 'cart' }),
+      );
   });
 
   panel.separator();
@@ -90,17 +88,20 @@ export function calculatorPanel(
     .separator()
     .text(
       chosen.length
-        ? `${chosen.map((i) => `${i.emoji ?? '▫️'} ${i.label} — ${formatMoney(Number(i.price))}`).join('\n')}\n` +
-            (discount
-              ? `${e('gift')} Rabat \`${state.code}\` (${discountLabel(dc!)}) — −${formatMoney(discount)}\n`
-              : '') +
-            `### Razem: ${discount ? `~~${formatMoney(sum)}~~ ` : ''}${formatMoney(total)}`
+        ? tableBlock(
+            [
+              ...chosen.map((i) => [truncate(i.label, 28), formatMoney(Number(i.price))] as [string, string]),
+              ...(discount ? [[`Rabat ${state.code}`, `-${formatMoney(discount)}`] as [string, string]] : []),
+              ['Razem', formatMoney(total)],
+            ],
+            { separatorBefore: [chosen.length] },
+          ) + (discount ? `\n-# Bez rabatu: ${formatMoney(sum)} · kod ${discountLabel(dc!)}` : '')
         : '-# Nic jeszcze nie wybrano.',
     )
     .select(
       new StringSelectMenuBuilder()
         .setCustomId('pricing:calcSelect')
-        .setPlaceholder('🧮 Wybierz funkcje bota…')
+        .setPlaceholder('Wybierz funkcje bota…')
         .setMinValues(0)
         .setMaxValues(Math.min(items.length, 25))
         .addOptions(
@@ -110,7 +111,6 @@ export function calculatorPanel(
               .setLabel(truncate(`${i.label} — ${formatMoney(Number(i.price))}`, 100))
               .setDefault(state.items.includes(i.key));
             if (i.description) opt.setDescription(truncate(i.description, 100));
-            if (i.emoji) opt.setEmoji({ name: i.emoji });
             return opt;
           }),
         ),

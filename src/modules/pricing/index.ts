@@ -102,56 +102,48 @@ async function seedDefaults(): Promise<{ packages: number; items: number }> {
       key: 'tickety',
       label: 'System ticketów',
       price: 80,
-      emoji: '🎫',
       description: 'Panel, kategorie, transkrypty',
     },
     {
       key: 'weryfikacja',
       label: 'Weryfikacja + captcha',
       price: 50,
-      emoji: '🛡️',
       description: 'Ochrona przed botami i rajdami',
     },
     {
       key: 'logi',
       label: 'Logi serwera',
       price: 60,
-      emoji: '🗄️',
       description: 'Wiadomości, członkowie, moderacja',
     },
     {
       key: 'ekonomia',
       label: 'Ekonomia i sklep',
       price: 120,
-      emoji: '💰',
       description: 'Waluta, sklep, ranking',
     },
     {
       key: 'poziomy',
       label: 'Poziomy i XP',
       price: 70,
-      emoji: '⚡',
       description: 'Levele, role za poziomy, karty',
     },
     {
       key: 'moderacja',
       label: 'Moderacja',
       price: 60,
-      emoji: '⛔',
       description: 'Warny, wyciszenia, automod',
     },
     {
       key: 'muzyka',
       label: 'Muzyka',
       price: 90,
-      emoji: '🎵',
       description: 'Odtwarzanie, kolejka, playlisty',
     },
     {
       key: 'dashboard',
       label: 'Panel WWW (dashboard)',
       price: 250,
-      emoji: '🖥️',
       description: 'Konfiguracja bota przez stronę',
     },
   ];
@@ -307,7 +299,6 @@ const pricingCommand = defineCommand({
         v2(
           card({
             tone: 'success',
-            emoji: 'coins',
             title: 'Dodano przykładowy cennik',
             description: `Pakiety: **${r.packages}**, pozycje kalkulatora: **${r.items}**.\nIstniejące wpisy nie zostały zmienione. Edytuj je: \`/cennik pakiet dodaj\`, \`/cennik pozycja dodaj\`.`,
             timestamp: false,
@@ -358,7 +349,6 @@ const pricingCommand = defineCommand({
             .text({ id: 'label', label: 'Nazwa funkcji', max: 60, placeholder: 'np. System ticketów' })
             .text({ id: 'price', label: 'Cena (zł)', max: 12 })
             .text({ id: 'description', label: 'Opis', required: false, max: 100 })
-            .text({ id: 'emoji', label: 'Emotka (opcjonalnie)', required: false, max: 8, placeholder: '🎫' })
             .build(),
         );
       }
@@ -384,7 +374,6 @@ const pricingCommand = defineCommand({
         v2(
           card({
             tone: 'client',
-            emoji: 'gift',
             title: `Kody rabatowe (${codes.length})`,
             description:
               codes
@@ -446,13 +435,11 @@ const pricingCommand = defineCommand({
       v2(
         card({
           tone: 'client',
-          emoji: 'gift',
           title: `Kod ${code} utworzony`,
           fields: [
             { emoji: 'coins', label: 'Rabat', value: discountLabel(dc) },
             { emoji: 'users', label: 'Limit użyć', value: dc.maxUses ? String(dc.maxUses) : 'bez limitu' },
             {
-              emoji: 'calendar',
               label: 'Ważny do',
               value: dc.expiresAt ? discordTime(dc.expiresAt, 'D') : 'bezterminowo',
             },
@@ -510,7 +497,7 @@ export const pricingModule = defineModule({
           items,
           state,
           dc,
-          `🎁 Kod \`${dc.code}\` aktywny: **${discountLabel(dc)}**`,
+          `Kod \`${dc.code}\` aktywny: **${discountLabel(dc)}**`,
         );
         if (interaction.isFromMessage()) await interaction.update(v2Message(payload));
         else await interaction.reply(v2(payload, { ephemeral: true }));
@@ -607,17 +594,12 @@ export const pricingModule = defineModule({
         const label = f.getTextInputValue('label').trim();
         const price = parseMoney(f.getTextInputValue('price'));
         if (price === null) throw new UserError('Nieprawidłowa cena.');
-        const emoji = f.getTextInputValue('emoji').trim();
-        // Discord odrzuci całe menu, jeśli emotka opcji jest nieprawidłowa.
-        if (emoji && !/^\p{Extended_Pictographic}(\uFE0F|\u200D\p{Extended_Pictographic})*$/u.test(emoji)) {
-          throw new UserError('Pole „Emotka” przyjmuje jedną zwykłą emotkę, np. 🎫.');
-        }
         const key = slugify(label, 30);
         const data = {
           label,
           price,
           description: f.getTextInputValue('description').trim() || null,
-          emoji: emoji || null,
+
           active: true,
         };
         await prisma.pricingItem.upsert({ where: { key }, create: { key, ...data }, update: data });

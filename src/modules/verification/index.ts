@@ -15,7 +15,7 @@ import { defineCommand, defineComponent, defineEvent, defineModule } from '../..
 import { bannerFile } from '../../ui/assets.js';
 import { Form } from '../../ui/builders/modal.js';
 import { v2, v2Message } from '../../ui/builders/payload.js';
-import { card } from '../../ui/components/card.js';
+import { card, codeBlock } from '../../ui/components/card.js';
 import { e } from '../../ui/emojis.js';
 import { createLogger } from '../../utils/logger.js';
 import { MODE_LABELS, captchaPayloadParts, verificationPanel, verifiedCard } from './panels.js';
@@ -66,8 +66,8 @@ function settingsCard(config: Awaited<ReturnType<typeof getConfig>>, title = 'Us
         emoji: 'shield_x',
         label: 'Ochrona przed rajdem',
         value: config.antiRaidEnabled
-          ? `✅ ${config.antiRaidJoins} wejść / ${config.antiRaidSeconds} s`
-          : '❌ wyłączona',
+          ? `włączona · ${config.antiRaidJoins} wejść / ${config.antiRaidSeconds} s`
+          : 'wyłączona',
       },
     ],
     timestamp: false,
@@ -260,12 +260,23 @@ const verifyCommand = defineCommand({
             _count: true,
           });
           const get = (r: string) => rows.find((x) => x.result === r)?._count ?? 0;
-          return `✅ ${get('PASSED') + get('MANUAL')} • ❌ ${get('FAILED')} • ⏳ ${get('BLOCKED_AGE')} • 🛑 ${get('BLOCKED_LOCKDOWN')}`;
+          return [get('PASSED') + get('MANUAL'), get('FAILED'), get('BLOCKED_AGE'), get('BLOCKED_LOCKDOWN')];
         };
+        const head = ['', 'OK', 'Błąd', 'Wiek', 'Blok.'];
+        const rows = [
+          ['Dziś', ...(await count(1))],
+          ['7 dni', ...(await count(7))],
+          ['30 dni', ...(await count(30))],
+        ].map((r) => r.map(String));
+        const table = [head, ...rows]
+          .map((r) => r.map((c, i) => (i === 0 ? c.padEnd(8) : c.padStart(6))).join(''))
+          .join('\n');
         const panel = settingsCard(config, 'Weryfikacja • statystyki')
           .separator()
-          .text(`**Dziś:** ${await count(1)}\n**7 dni:** ${await count(7)}\n**30 dni:** ${await count(30)}`)
-          .footer('✅ zweryfikowani • ❌ nieudane captche • ⏳ zbyt nowe konta • 🛑 blokada antyrajdowa');
+          .text(codeBlock(table))
+          .footer(
+            'OK – zweryfikowani · Błąd – nieudane captche · Wiek – zbyt nowe konta · Blok. – blokada antyrajdowa',
+          );
         return interaction.reply(v2(panel, { ephemeral: true }));
       }
     }

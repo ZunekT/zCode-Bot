@@ -238,7 +238,7 @@ export const configCommand = defineCommand({
         await audit(client, {
           action: 'config.module',
           actorId,
-          summary: `Moduł \`${name}\` → ${enabled ? '🟢 włączony' : '🔴 wyłączony'}`,
+          summary: `Moduł \`${name}\` → ${enabled ? '`włączony`' : '`wyłączony`'}`,
         });
         return interaction.reply(
           success('Zapisano', `Moduł \`${name}\` jest teraz ${enabled ? '**włączony**' : '**wyłączony**'}.`),

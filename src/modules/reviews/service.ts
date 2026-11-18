@@ -16,12 +16,12 @@ const log = createLogger('reviews');
 export function ratingSelect(orderId: number): StringSelectMenuBuilder {
   return new StringSelectMenuBuilder()
     .setCustomId(`review:rate:${orderId}`)
-    .setPlaceholder('⭐ Wybierz ocenę…')
+    .setPlaceholder('Wybierz ocenę…')
     .addOptions(
       [5, 4, 3, 2, 1].map((n) =>
         new StringSelectMenuOptionBuilder()
           .setValue(String(n))
-          .setLabel(`${'★'.repeat(n)}${'☆'.repeat(5 - n)}  ${RATING_LABELS[n]}`)
+          .setLabel(`${RATING_LABELS[n]} · ${n}/5`)
           .setEmoji(emojiComponent('star')),
       ),
     );
@@ -32,7 +32,7 @@ export function reviewRequestPanel(order: Pick<Order, 'id' | 'title'>) {
     tone: 'brand',
     emoji: 'star',
     title: `Jak oceniasz zlecenie ${formatOrderId(order.id)}?`,
-    description: `**${order.title}**\nTwoja opinia pojawi się na kanale opinii (po krótkiej weryfikacji) i pomoże innym w wyborze. Dziękujemy! 💙`,
+    description: `**${order.title}**\nTwoja opinia pojawi się na kanale opinii (po krótkiej weryfikacji) i pomoże innym w wyborze. Dziękujemy!`,
     timestamp: false,
   }).select(ratingSelect(order.id));
 }

@@ -27,7 +27,7 @@ export function logsPanel(config: GuildConfig, notice?: string): Panel {
     .text(
       LOG_TYPE_KEYS.map((t) => {
         const def = LOG_TYPES[t];
-        return `${e(def.emoji)} **${def.label}** ➜ ${channels[t] ? `<#${channels[t]}>` : '`wyłączone`'}\n-# ${def.description}`;
+        return `${e(def.emoji)} **${def.label}** → ${channels[t] ? `<#${channels[t]}>` : '`wyłączone`'}\n-# ${def.description}`;
       }).join('\n'),
     )
     .separator()
@@ -41,7 +41,7 @@ export function logsPanel(config: GuildConfig, notice?: string): Panel {
     .select(
       new StringSelectMenuBuilder()
         .setCustomId('logs:type')
-        .setPlaceholder('⚙️ Wybierz typ logów do ustawienia…')
+        .setPlaceholder('Wybierz typ logów do ustawienia…')
         .addOptions(
           new StringSelectMenuOptionBuilder()
             .setValue('all')
@@ -60,7 +60,7 @@ export function logsPanel(config: GuildConfig, notice?: string): Panel {
     .select(
       new ChannelSelectMenuBuilder()
         .setCustomId('logs:ignore')
-        .setPlaceholder('🙈 Kanały i kategorie pomijane w logach…')
+        .setPlaceholder('Kanały i kategorie pomijane w logach…')
         .setChannelTypes(
           ChannelType.GuildText,
           ChannelType.GuildVoice,
@@ -82,7 +82,7 @@ export function channelPicker(config: GuildConfig, type: LogType | 'all'): Panel
   const def = type === 'all' ? null : LOG_TYPES[type];
   const select = new ChannelSelectMenuBuilder()
     .setCustomId(`logs:set:${type}`)
-    .setPlaceholder('📌 Wybierz kanał…')
+    .setPlaceholder('Wybierz kanał…')
     .setChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
     .setMinValues(1)
     .setMaxValues(1);

@@ -34,7 +34,7 @@ async function orderAutocomplete(interaction: AutocompleteInteraction<'cached'>)
   const orders = await prisma.order.findMany({ where, orderBy: { updatedAt: 'desc' }, take: 25 });
   await interaction.respond(
     orders.map((o) => ({
-      name: truncate(`${ORDER_STATUSES[o.status].icon} ${formatOrderId(o.id)} – ${o.title}`, 100),
+      name: truncate(`${formatOrderId(o.id)} · ${ORDER_STATUSES[o.status].label} · ${o.title}`, 100),
       value: String(o.id),
     })),
   );
@@ -74,7 +74,7 @@ export const orderCommand = defineCommand({
             .setDescription('Filtr statusu (domyślnie aktywne)')
             .addChoices(
               ...STATUS_ORDER.map((st) => ({
-                name: `${ORDER_STATUSES[st].icon} ${ORDER_STATUSES[st].label}`,
+                name: ORDER_STATUSES[st].label,
                 value: st,
               })),
             ),
@@ -104,7 +104,7 @@ export const orderCommand = defineCommand({
             .setRequired(true)
             .addChoices(
               ...STATUS_ORDER.map((st) => ({
-                name: `${ORDER_STATUSES[st].icon} ${ORDER_STATUSES[st].label}`,
+                name: ORDER_STATUSES[st].label,
                 value: st,
               })),
             ),
@@ -163,7 +163,7 @@ export const orderCommand = defineCommand({
               title: `Twoje zlecenia (${orders.length})`,
               description: orders.length
                 ? orderListLines(orders)
-                : 'Nie masz jeszcze zleceń. Zamów bota przez panel ticketów! 🚀',
+                : 'Nie masz jeszcze zleceń. Zamów bota przez panel ticketów.',
               footer: 'Szczegóły: /zlecenie info',
               timestamp: false,
             }),
@@ -250,7 +250,7 @@ export const orderCommand = defineCommand({
           v2Message(
             card({
               tone: 'success',
-              title: `${formatOrderId(id)} • ${ORDER_STATUSES[to].icon} ${ORDER_STATUSES[to].label}`,
+              title: `${formatOrderId(id)} • ${ORDER_STATUSES[to].label}`,
               timestamp: false,
             }),
           ),
@@ -275,7 +275,7 @@ export const orderCommand = defineCommand({
               tone: 'success',
               title: `Wpłata ${formatMoney(amount)} • ${formatOrderId(id)}`,
               description:
-                t.due !== null && t.due > 0 ? `Pozostało: **${formatMoney(t.due)}**` : '✅ Opłacone',
+                t.due !== null && t.due > 0 ? `Pozostało: **${formatMoney(t.due)}**` : 'Opłacone w całości',
               timestamp: false,
             }),
           ),

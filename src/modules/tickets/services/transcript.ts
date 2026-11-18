@@ -103,7 +103,7 @@ function messageHtml(m: Message): string {
   for (const a of m.attachments.values()) {
     body += a.contentType?.startsWith('image/')
       ? `<a href="${esc(a.url)}" target="_blank"><img class="media" src="${esc(a.url)}" alt="${esc(a.name)}"></a>`
-      : `<div class="file">📎 <a href="${esc(a.url)}" target="_blank">${esc(a.name)}</a> (${Math.ceil(a.size / 1024)} KB)</div>`;
+      : `<div class="file">Plik: <a href="${esc(a.url)}" target="_blank">${esc(a.name)}</a> (${Math.ceil(a.size / 1024)} KB)</div>`;
   }
 
   return `<div class="msg">

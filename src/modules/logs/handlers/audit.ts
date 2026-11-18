@@ -1,7 +1,7 @@
 import { AuditLogEvent, type Guild, type GuildAuditLogsEntry } from 'discord.js';
 import type { ZxClient } from '../../../client.js';
 import { getConfig } from '../../../core/config-service.js';
-import { card, change } from '../../../ui/components/card.js';
+import { card, change, diffBlock, type DiffSign } from '../../../ui/components/card.js';
 import type { EmojiName } from '../../../ui/emojis.js';
 import type { ToneName } from '../../../ui/theme.js';
 import { discordTime, formatDuration, truncate } from '../../../utils/format.js';
@@ -323,7 +323,7 @@ const SKIP_KEYS = new Set([
 
 function plain(key: string, value: unknown): string {
   if (value === null || value === undefined || value === '') return '—';
-  if (typeof value === 'boolean') return value ? '✅ tak' : '❌ nie';
+  if (typeof value === 'boolean') return value ? 'tak' : 'nie';
   if (key === 'color' && typeof value === 'number') return `\`#${value.toString(16).padStart(6, '0')}\``;
   if (key.endsWith('channel_id') && typeof value === 'string') return `<#${value}>`;
   if (key === 'communication_disabled_until' && typeof value === 'string')
@@ -348,7 +348,7 @@ function formatChange(c: { key: string; old?: unknown; new?: unknown }): string 
     const bits = (v: unknown) => (typeof v === 'string' || typeof v === 'number' ? BigInt(v) : 0n);
     const { added, removed } = permissionDiff(bits(c.old), bits(c.new));
     if (!added.length && !removed.length) return null;
-    return `**${label}:**${added.length ? `\n➕ ${added.join(', ')}` : ''}${removed.length ? `\n➖ ${removed.join(', ')}` : ''}`;
+    return `**${label}:**\n${diffBlock([...added.map((x): [DiffSign, string] => ['+', x]), ...removed.map((x): [DiffSign, string] => ['-', x])])}`;
   }
   if (c.key === '$add' || c.key === '$remove') return `**${label}:** ${plain(c.key, c.new)}`;
   if (c.old === undefined) return `**${label}:** ${plain(c.key, c.new)}`;

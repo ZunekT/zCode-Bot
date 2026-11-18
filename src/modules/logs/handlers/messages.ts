@@ -11,7 +11,7 @@ import {
 import type { ZxClient } from '../../../client.js';
 import { getConfig } from '../../../core/config-service.js';
 import { linkButton } from '../../../ui/builders/buttons.js';
-import { card, quote } from '../../../ui/components/card.js';
+import { card, codeBlock, diffBlock } from '../../../ui/components/card.js';
 import { discordTime, truncate } from '../../../utils/format.js';
 import { isIgnored, isLogChannel, sendLog } from '../service.js';
 
@@ -54,7 +54,7 @@ export async function onMessageDelete(client: ZxClient, message: AnyMessage): Pr
       ],
       body: known
         ? message.content
-          ? quote(truncate(message.content, 1800))
+          ? codeBlock(truncate(message.content, 1800))
           : '-# (bez treści tekstowej)'
         : '-# Treść niedostępna – wiadomość wysłana przed uruchomieniem bota',
       footer: `ID wiadomości: ${message.id}`,
@@ -89,9 +89,12 @@ export async function onMessageUpdate(
         },
         { emoji: 'discord', label: 'Kanał', value: `<#${after.channelId}>` },
       ],
-      body:
-        `**Przed:**\n${before.partial ? '-# niedostępne (sprzed uruchomienia bota)' : before.content ? quote(truncate(before.content, 900)) : '-# (pusto)'}\n` +
-        `**Po:**\n${after.content ? quote(truncate(after.content, 900)) : '-# (pusto)'}`,
+      body: before.partial
+        ? `-# Poprzednia treść niedostępna (sprzed uruchomienia bota)\n${diffBlock([['+', truncate(after.content ?? '', 1500)]])}`
+        : diffBlock([
+            ['-', truncate(before.content || '(pusto)', 900)],
+            ['+', truncate(after.content || '(pusto)', 900)],
+          ]),
       footer: `ID wiadomości: ${after.id}`,
     }).buttons(linkButton(after.url, 'Przejdź do wiadomości', 'discord')),
   );

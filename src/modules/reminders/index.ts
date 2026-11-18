@@ -149,7 +149,7 @@ const listCommand = defineCommand({
       panel.select(
         new StringSelectMenuBuilder()
           .setCustomId('reminder:delete')
-          .setPlaceholder('🗑️ Usuń przypomnienia…')
+          .setPlaceholder('Usuń przypomnienia…')
           .setMinValues(1)
           .setMaxValues(list.length)
           .addOptions(

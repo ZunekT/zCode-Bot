@@ -177,10 +177,7 @@ export const orderComponents: ComponentHandler[] = [
       await interaction.deferUpdate();
       const order = await setOrderStatus(client, orderId(args), status, interaction.user.id);
       await interaction.editReply(
-        done(
-          `${formatOrderId(order.id)} • ${ORDER_STATUSES[status].icon} ${ORDER_STATUSES[status].label}`,
-          'Klient dostał powiadomienie.',
-        ),
+        done(`${formatOrderId(order.id)} • ${ORDER_STATUSES[status].label}`, 'Klient dostał powiadomienie.'),
       );
     },
   }),
@@ -275,7 +272,7 @@ export const orderComponents: ComponentHandler[] = [
           t.due !== null
             ? t.due > 0
               ? `Pozostało: **${formatMoney(t.due)}**`
-              : '✅ Zlecenie opłacone.'
+              : 'Zlecenie opłacone w całości.'
             : undefined,
         ),
       );

@@ -1,7 +1,7 @@
 import type { Ticket } from '../../generated/prisma/client.js';
 import { prisma } from '../../db/prisma.js';
 import { Panel } from '../../ui/builders/container.js';
-import { e } from '../../ui/emojis.js';
+import { tableBlock } from '../../ui/components/card.js';
 import { formatDuration } from '../../utils/format.js';
 import { ACTIVE_STATUSES, CATEGORIES, CATEGORY_KEYS } from './constants.js';
 
@@ -15,7 +15,7 @@ export const PERIODS = {
 export type PeriodKey = keyof typeof PERIODS;
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
-const stars = (n: number | null) => (n === null ? '—' : `${n.toFixed(2)} ⭐`);
+const stars = (n: number | null) => (n === null ? '—' : `${n.toFixed(2)} / 5`);
 
 export async function ticketStatsPanel(period: PeriodKey): Promise<Panel> {
   const { label, days } = PERIODS[period];
@@ -33,11 +33,6 @@ export async function ticketStatsPanel(period: PeriodKey): Promise<Panel> {
     .map((t) => t.firstStaffReplyAt!.getTime() - t.openedAt.getTime());
   const resolution = closed.map((t) => t.closedAt!.getTime() - t.openedAt.getTime());
 
-  const byCategory = CATEGORY_KEYS.map((c) => {
-    const n = tickets.filter((t) => t.category === c).length;
-    return n ? `${e(CATEGORIES[c].emoji)} ${CATEGORIES[c].label}: **${n}**` : null;
-  }).filter(Boolean);
-
   // Ranking obsługi wg przejętych ticketów
   const staff = new Map<string, Ticket[]>();
   for (const t of tickets) if (t.claimedBy) staff.set(t.claimedBy, [...(staff.get(t.claimedBy) ?? []), t]);
@@ -52,28 +47,23 @@ export async function ticketStatsPanel(period: PeriodKey): Promise<Panel> {
   const avgFirst = avg(firstResponse);
   const avgResolution = avg(resolution);
 
+  const catRows = CATEGORY_KEYS.map(
+    (c) => [CATEGORIES[c].label, String(tickets.filter((t) => t.category === c).length)] as [string, string],
+  ).filter(([, n]) => n !== '0');
+
   return new Panel({ tone: 'brand' })
     .title('checklist', `Statystyki ticketów • ${label}`)
-    .list([
-      { emoji: 'ticket', label: 'Utworzone:', value: String(tickets.length) },
-      { emoji: 'lock', label: 'Zamknięte:', value: String(closed.length) },
-      { emoji: 'unlock', label: 'Otwarte teraz:', value: String(openNow) },
-      {
-        emoji: 'lightning',
-        label: 'Średni czas 1. odpowiedzi:',
-        value: avgFirst === null ? '—' : formatDuration(avgFirst),
-      },
-      {
-        emoji: 'calendar',
-        label: 'Średni czas rozwiązania:',
-        value: avgResolution === null ? '—' : formatDuration(avgResolution),
-      },
-      { emoji: 'star', label: 'Średnia ocena:', value: `${stars(avg(ratings))} (${ratings.length} ocen)` },
-    ])
+    .text(
+      tableBlock([
+        ['Utworzone', String(tickets.length)],
+        ['Zamknięte', String(closed.length)],
+        ['Otwarte teraz', String(openNow)],
+        ['Śr. 1. odpowiedź', avgFirst === null ? '—' : formatDuration(avgFirst)],
+        ['Śr. rozwiązanie', avgResolution === null ? '—' : formatDuration(avgResolution)],
+        ['Śr. ocena', `${stars(avg(ratings))} (${ratings.length})`],
+      ]),
+    )
+    .text('### Kategorie\n' + (catRows.length ? tableBlock(catRows) : '-# Brak ticketów w tym okresie.'))
     .separator()
-    .title('cube', 'Kategorie', 3)
-    .text(byCategory.join('\n') || 'Brak ticketów w tym okresie.')
-    .separator()
-    .title('users', 'Obsługa', 3)
-    .text(ranking.join('\n') || 'Nikt jeszcze nie przejął ticketu.');
+    .text('### Obsługa\n' + (ranking.join('\n') || '-# Nikt jeszcze nie przejął ticketu.'));
 }

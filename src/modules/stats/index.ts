@@ -6,7 +6,7 @@ import { redis } from '../../db/redis.js';
 import { isAdmin } from '../../core/permissions.js';
 import { defineCommand, defineEvent, defineJob, defineModule } from '../../core/types.js';
 import { v2 } from '../../ui/builders/payload.js';
-import { card } from '../../ui/components/card.js';
+import { card, tableBlock } from '../../ui/components/card.js';
 import { e } from '../../ui/emojis.js';
 import { formatDuration, formatMoney } from '../../utils/format.js';
 import { createLogger } from '../../utils/logger.js';
@@ -133,27 +133,53 @@ const statsCommand = defineCommand({
     })
       .text(
         `### ${e('users')} Społeczność\n` +
-          `**Członkowie:** ${members} (${sum(joins) - sum(leaves) >= 0 ? '+' : ''}${sum(joins) - sum(leaves)}) • wejścia **${sum(joins)}**, wyjścia **${sum(leaves)}**\n` +
-          `\`${sparkline(joins)}\` wejścia dziennie\n` +
-          `**Wiadomości:** ${sum(messages).toLocaleString('pl-PL')} (śr. ${Math.round(sum(messages) / days)} / dzień)\n` +
-          `\`${sparkline(messages)}\` wiadomości dziennie\n` +
-          `**Weryfikacje:** ✅ ${verif('PASSED') + verif('MANUAL')} • ❌ ${verif('FAILED')} • ⛔ ${verif('BLOCKED_AGE') + verif('BLOCKED_LOCKDOWN')}`,
+          tableBlock([
+            [
+              'Członkowie',
+              `${members}  (${sum(joins) - sum(leaves) >= 0 ? '+' : ''}${sum(joins) - sum(leaves)})`,
+            ],
+            ['Wejścia / wyjścia', `${sum(joins)} / ${sum(leaves)}`],
+            [
+              'Wiadomości',
+              `${sum(messages).toLocaleString('pl-PL')}  (śr. ${Math.round(sum(messages) / days)}/dzień)`,
+            ],
+            [
+              'Weryfikacje',
+              `${verif('PASSED') + verif('MANUAL')} ok · ${verif('FAILED')} błędnych · ${verif('BLOCKED_AGE') + verif('BLOCKED_LOCKDOWN')} zablok.`,
+            ],
+          ]) +
+          `\n-# Wiadomości dziennie \`${sparkline(messages)}\`  ·  wejścia \`${sparkline(joins)}\``,
       )
       .banner('attachment://wykres.png', 'Wiadomości (słupki) i wejścia (linia) dziennie')
       .separator()
       .text(
         `### ${e('ticket')} Tickety\n` +
-          `**Nowe:** ${ticketsOpened} • **zamknięte:** ${ticketsClosed} • **otwarte teraz:** ${ticketsOpen}\n` +
-          `**Śr. czas 1. odpowiedzi:** ${firstResp === null ? '—' : formatDuration(firstResp)} • **ocena obsługi:** ${ratings.length ? `${avg(ratings)!.toFixed(2)} ⭐ (${ratings.length})` : '—'}`,
+          tableBlock([
+            ['Nowe', String(ticketsOpened)],
+            ['Zamknięte', String(ticketsClosed)],
+            ['Otwarte teraz', String(ticketsOpen)],
+            ['Śr. 1. odpowiedź', firstResp === null ? '—' : formatDuration(firstResp)],
+            ['Ocena obsługi', ratings.length ? `${avg(ratings)!.toFixed(2)} / 5  (${ratings.length})` : '—'],
+          ]),
       )
       .separator()
       .text(
         `### ${e('package')} Zlecenia\n` +
-          `**Nowe:** ${ordersNew} • **zakończone:** ${ordersDone} • **w toku:** ${activeOrders.length}\n` +
-          (showMoney
-            ? `**Wpłaty:** ${formatMoney(Number(payments._sum.amount ?? 0))} (${payments._count}) • **należności:** ${formatMoney(receivables)}\n`
-            : '') +
-          `**Opinie:** ${reviews._count ? `${(reviews._avg.rating ?? 0).toFixed(2)} ⭐ z ${reviews._count}` : '—'}`,
+          tableBlock([
+            ['Nowe', String(ordersNew)],
+            ['Zakończone', String(ordersDone)],
+            ['W toku', String(activeOrders.length)],
+            ...(showMoney
+              ? ([
+                  ['Wpłaty', `${formatMoney(Number(payments._sum.amount ?? 0))}  (${payments._count})`],
+                  ['Należności', formatMoney(receivables)],
+                ] as [string, string][])
+              : []),
+            [
+              'Opinie',
+              reviews._count ? `${(reviews._avg.rating ?? 0).toFixed(2)} / 5  (${reviews._count})` : '—',
+            ],
+          ]),
       );
     if (!showMoney) panel.footer('Kwoty widzi tylko administracja');
 

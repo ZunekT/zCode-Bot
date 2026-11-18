@@ -47,7 +47,7 @@ export async function assertCanVerify(
       'Weryfikacja nie jest skonfigurowana – administracja musi ustawić rolę: `/config rola typ:Zweryfikowany`.',
     );
   }
-  if (isVerified(member, config)) throw new UserError('Masz już dostęp do serwera. 🎉', 'Już zweryfikowano');
+  if (isVerified(member, config)) throw new UserError('Masz już dostęp do serwera.', 'Już zweryfikowano');
 
   if (config.verificationLockdown) {
     await recordEvent(member.id, 'BLOCKED_LOCKDOWN');

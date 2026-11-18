@@ -5,8 +5,8 @@ export interface CategoryDef {
   label: string;
   description: string;
   emoji: EmojiName;
-  /** Unicode na początku nazwy kanału (custom emoji nie działa w nazwach). */
-  channelIcon: string;
+  /** Przedrostek nazwy kanału, np. zamowienie-0042-nick. */
+  channelPrefix: string;
 }
 
 export const CATEGORIES: Record<TicketCategory, CategoryDef> = {
@@ -14,49 +14,49 @@ export const CATEGORIES: Record<TicketCategory, CategoryDef> = {
     label: 'Zamówienie bota',
     description: 'Chcesz zamówić bota lub nową funkcję',
     emoji: 'cart',
-    channelIcon: '🛒',
+    channelPrefix: 'zamowienie',
   },
   SUPPORT: {
     label: 'Wsparcie techniczne',
     description: 'Problem z botem, który od nas masz',
     emoji: 'support',
-    channelIcon: '🛠️',
+    channelPrefix: 'wsparcie',
   },
   PARTNERSHIP: {
     label: 'Współpraca',
     description: 'Partnerstwo, reklama, wspólny projekt',
     emoji: 'partnership',
-    channelIcon: '🤝',
+    channelPrefix: 'wspolpraca',
   },
   QUESTION: {
     label: 'Pytanie',
     description: 'Ceny, terminy, możliwości – zapytaj śmiało',
     emoji: 'idea',
-    channelIcon: '❓',
+    channelPrefix: 'pytanie',
   },
   COMPLAINT: {
     label: 'Reklamacja',
     description: 'Coś nie działa tak, jak było ustalone',
     emoji: 'shield_x',
-    channelIcon: '⚠️',
+    channelPrefix: 'reklamacja',
   },
 };
 
 export const CATEGORY_KEYS = Object.keys(CATEGORIES) as TicketCategory[];
 
-export const PRIORITIES: Record<TicketPriority, { label: string; icon: string }> = {
-  LOW: { label: 'Niski', icon: '🟢' },
-  NORMAL: { label: 'Normalny', icon: '🔵' },
-  HIGH: { label: 'Wysoki', icon: '🟠' },
-  URGENT: { label: 'Pilny', icon: '🔴' },
+export const PRIORITIES: Record<TicketPriority, { label: string; emoji: EmojiName }> = {
+  LOW: { label: 'Niski', emoji: 'cube' },
+  NORMAL: { label: 'Normalny', emoji: 'notification' },
+  HIGH: { label: 'Wysoki', emoji: 'lightning' },
+  URGENT: { label: 'Pilny', emoji: 'shield_x' },
 };
 
 export const STATUS_LABELS: Record<TicketStatus, string> = {
-  OPEN: '🟢 Otwarty',
-  CLAIMED: '🔵 W obsłudze',
-  WAITING_CLIENT: '🟡 Czeka na klienta',
-  CLOSED: '⚫ Zamknięty',
-  ARCHIVED: '📁 Zarchiwizowany',
+  OPEN: 'Otwarty',
+  CLAIMED: 'W obsłudze',
+  WAITING_CLIENT: 'Czeka na klienta',
+  CLOSED: 'Zamknięty',
+  ARCHIVED: 'W archiwum',
 };
 
 /** Statusy, w których ticket jest „żywy”. */

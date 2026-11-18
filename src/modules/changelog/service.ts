@@ -8,8 +8,8 @@ import { UserError } from '../../core/errors.js';
 import type { Panel } from '../../ui/builders/container.js';
 import { button, linkButton } from '../../ui/builders/buttons.js';
 import { v2Message } from '../../ui/builders/payload.js';
-import { card } from '../../ui/components/card.js';
-import { discordTime, truncate } from '../../utils/format.js';
+import { card, diffBlock, type DiffSign } from '../../ui/components/card.js';
+import { discordTime } from '../../utils/format.js';
 import { withLock } from '../../utils/locks.js';
 import { createLogger } from '../../utils/logger.js';
 
@@ -19,11 +19,12 @@ export const SECTION_KEYS = ['added', 'changed', 'fixed', 'removed'] as const;
 export type SectionKey = (typeof SECTION_KEYS)[number];
 export type Sections = Record<SectionKey, string[]>;
 
-export const SECTIONS: Record<SectionKey, { label: string; icon: string }> = {
-  added: { label: 'Dodano', icon: '✨' },
-  changed: { label: 'Zmieniono', icon: '🔧' },
-  fixed: { label: 'Naprawiono', icon: '🐛' },
-  removed: { label: 'Usunięto', icon: '🗑️' },
+/** Prefiks linii w bloku ```diff: „+” zielony, „-” czerwony, „~” i „*” neutralne. */
+export const SECTIONS: Record<SectionKey, { label: string; sign: DiffSign }> = {
+  added: { label: 'Dodano', sign: '+' },
+  changed: { label: 'Zmieniono', sign: '~' },
+  fixed: { label: 'Naprawiono', sign: '*' },
+  removed: { label: 'Usunięto', sign: '-' },
 };
 
 export const PROJECT_RE = /^[\p{L}\p{N} _.-]{2,40}$/u;
@@ -56,7 +57,6 @@ export function changelogPanel(
 ): Panel {
   const s = sectionsOf(entry);
   const used = SECTION_KEYS.filter((k) => s[k].length);
-  const budget = Math.floor(3000 / Math.max(used.length, 1));
   const panel = card({
     tone: 'brand',
     emoji: 'rocket',
@@ -66,15 +66,16 @@ export function changelogPanel(
       undefined,
     timestamp: false,
   });
-  for (const k of used) {
-    panel
-      .separator(false)
-      .text(
-        truncate(
-          `### ${SECTIONS[k].icon} ${SECTIONS[k].label}\n${s[k].map((l) => `• ${l}`).join('\n')}`,
-          budget,
-        ),
-      );
+  if (used.length) {
+    // Jeden blok ```diff: + Dodano (zielone), ~ Zmieniono, * Naprawiono, - Usunięto (czerwone).
+    const lines: [DiffSign, string][] = [];
+    for (const k of used) for (const l of s[k]) lines.push([SECTIONS[k].sign, `${SECTIONS[k].label}: ${l}`]);
+    let block = diffBlock(lines);
+    while (block.length > 3200 && lines.length > 1) {
+      lines.pop();
+      block = diffBlock([...lines, [' ', '…']]);
+    }
+    panel.text(block);
   }
   const buttons = [
     ...(opts.subscribeButton

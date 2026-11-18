@@ -6,7 +6,6 @@ export interface StatusDef {
   label: string;
   short: string;
   emoji: EmojiName;
-  icon: string;
   tone: ToneName;
   /** Pozycja na osi postępu (0 = poza osią). */
   step: number;
@@ -19,7 +18,6 @@ export const ORDER_STATUSES: Record<OrderStatus, StatusDef> = {
     label: 'Wycena',
     short: 'Wycena',
     emoji: 'documentation',
-    icon: '📝',
     tone: 'info',
     step: 1,
     clientText: 'Przygotowujemy wycenę Twojego projektu.',
@@ -28,7 +26,6 @@ export const ORDER_STATUSES: Record<OrderStatus, StatusDef> = {
     label: 'Zaakceptowane',
     short: 'Akceptacja',
     emoji: 'verified',
-    icon: '🤝',
     tone: 'success',
     step: 2,
     clientText: 'Wycena zaakceptowana – zaraz ruszamy!',
@@ -37,7 +34,6 @@ export const ORDER_STATUSES: Record<OrderStatus, StatusDef> = {
     label: 'Oczekuje na płatność',
     short: 'Płatność',
     emoji: 'payment_card',
-    icon: '💳',
     tone: 'warning',
     step: 3,
     clientText: 'Czekamy na płatność – dane do przelewu są na fakturze proforma.',
@@ -46,7 +42,6 @@ export const ORDER_STATUSES: Record<OrderStatus, StatusDef> = {
     label: 'W realizacji',
     short: 'Realizacja',
     emoji: 'code',
-    icon: '💻',
     tone: 'brand',
     step: 4,
     clientText: 'Pracujemy nad Twoim botem!',
@@ -55,7 +50,6 @@ export const ORDER_STATUSES: Record<OrderStatus, StatusDef> = {
     label: 'Testy',
     short: 'Testy',
     emoji: 'tools',
-    icon: '🧪',
     tone: 'info',
     step: 5,
     clientText: 'Bot jest gotowy i właśnie go testujemy.',
@@ -64,7 +58,6 @@ export const ORDER_STATUSES: Record<OrderStatus, StatusDef> = {
     label: 'Dostarczone',
     short: 'Dostarczone',
     emoji: 'package',
-    icon: '📦',
     tone: 'success',
     step: 6,
     clientText: 'Bot dostarczony – sprawdź go i daj znać, czy wszystko działa.',
@@ -73,7 +66,6 @@ export const ORDER_STATUSES: Record<OrderStatus, StatusDef> = {
     label: 'Zakończone',
     short: 'Koniec',
     emoji: 'order_complete',
-    icon: '🎉',
     tone: 'success',
     step: 7,
     clientText: 'Zlecenie zakończone. Dziękujemy za współpracę!',
@@ -82,7 +74,6 @@ export const ORDER_STATUSES: Record<OrderStatus, StatusDef> = {
     label: 'Anulowane',
     short: 'Anulowane',
     emoji: 'shield_x',
-    icon: '⛔',
     tone: 'error',
     step: 0,
     clientText: 'Zlecenie zostało anulowane.',
