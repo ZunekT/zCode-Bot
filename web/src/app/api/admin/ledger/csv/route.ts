@@ -1,7 +1,12 @@
 import { api } from '@/lib/api';
 import { getSession } from '@/lib/session';
 
-const csv = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+// Tekst zaczynający się od =, +, -, @, tab lub CR Excel potraktowałby jak formułę (CSV injection) – poprzedzamy go apostrofem.
+const csv = (v: string | number) => {
+  let s = String(v);
+  if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s) && !/^-?\d+(,\d+)?$/.test(s)) s = `'${s}`;
+  return `"${s.replace(/"/g, '""')}"`;
+};
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -17,9 +22,9 @@ export async function GET(request: Request) {
   }
   const money = (v: number) => v.toFixed(2).replace('.', ',');
   const lines = [
-    ['Lp.', 'Data', 'Kwota (zł)', 'Zlecenie', 'Klient', 'Uwagi'].map(csv).join(';'),
+    ['Lp.', 'Data', 'Kwota (zł)', 'Nr zlecenia', 'Zlecenie', 'Klient', 'Uwagi'].map(csv).join(';'),
     ...l.rows.map((r) =>
-      [r.lp, new Date(r.date).toLocaleDateString('pl-PL'), money(r.amount), `${r.order.number} ${r.order.title}`, r.client.name, r.note ?? ''].map(csv).join(';'),
+      [r.lp, new Date(r.date).toLocaleDateString('pl-PL'), money(r.amount), r.order.number, r.order.title, r.client.name, r.note ?? ''].map(csv).join(';'),
     ),
     '',
     ['Dzień', 'Suma dzienna (zł)'].map(csv).join(';'),

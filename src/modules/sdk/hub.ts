@@ -10,13 +10,26 @@ export type SdkEvent =
 
 type Listener = (event: SdkEvent) => void;
 
+const MAX_STREAMS_PER_BOT = 5;
+
 class SdkHub {
   private streams = new Map<number, Set<ServerResponse>>();
   private listeners = new Map<number, Set<Listener>>();
 
   addStream(botId: number, res: ServerResponse): void {
     if (!this.streams.has(botId)) this.streams.set(botId, new Set());
-    this.streams.get(botId)!.add(res);
+    const set = this.streams.get(botId)!;
+    // Limit połączeń na bota: przy nadmiarze zamykamy najstarsze (zwykle martwe po restarcie bota).
+    while (set.size >= MAX_STREAMS_PER_BOT) {
+      const oldest = set.values().next().value as ServerResponse;
+      set.delete(oldest);
+      try {
+        oldest.end();
+      } catch {
+        /* już zamknięte */
+      }
+    }
+    set.add(res);
   }
 
   removeStream(botId: number, res: ServerResponse): boolean {
