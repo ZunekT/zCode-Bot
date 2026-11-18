@@ -1,0 +1,22 @@
+# Tylko baza i Redis do lokalnego developmentu (bot odpalasz przez `npm run dev`).
+name: zxcode-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: zxcode
+      POSTGRES_PASSWORD: zxcode
+      POSTGRES_DB: zxcode
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+
+volumes:
+  pgdata-dev:

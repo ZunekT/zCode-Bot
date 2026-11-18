@@ -1,0 +1,56 @@
+import { env } from './config/env.js';
+import { ZxClient } from './client.js';
+import { prisma } from './db/prisma.js';
+import { redis } from './db/redis.js';
+import { registerProcessErrorHandlers } from './core/errors.js';
+import { routeInteraction } from './core/interactions.js';
+import { loadModules } from './core/loader.js';
+import { deployGuildCommands } from './core/registry.js';
+import { startScheduler, stopScheduler } from './core/scheduler.js';
+import { startHttpServer } from './http/server.js';
+import { modules } from './modules/index.js';
+import { loadApplicationEmojis } from './ui/emojis.js';
+import { logger } from './utils/logger.js';
+
+async function main() {
+  registerProcessErrorHandlers();
+  logger.info(`Start zxCode Bot (${env.NODE_ENV})`);
+
+  await prisma.$connect();
+  await redis.connect();
+  logger.info('Połączono z PostgreSQL i Redis');
+
+  const client = new ZxClient();
+  loadModules(client, modules);
+
+  client.on('interactionCreate', (interaction) => void routeInteraction(client, interaction));
+
+  client.once('clientReady', async (ready) => {
+    await loadApplicationEmojis(ready);
+    await deployGuildCommands(modules).catch((err) =>
+      logger.error('Rejestracja komend nie powiodła się', err),
+    );
+    for (const module of modules) {
+      await module.onReady?.(client).catch((err) => logger.error(`onReady modułu ${module.name}`, err));
+    }
+    startScheduler(client, modules);
+    logger.info('Bot gotowy');
+  });
+
+  const http = await startHttpServer(client);
+  await client.login(env.DISCORD_TOKEN);
+
+  const shutdown = async (signal: string) => {
+    logger.info(`Otrzymano ${signal}, zamykam…`);
+    stopScheduler();
+    await Promise.allSettled([http.close(), client.destroy(), prisma.$disconnect(), redis.quit()]);
+    process.exit(0);
+  };
+  process.once('SIGINT', () => void shutdown('SIGINT'));
+  process.once('SIGTERM', () => void shutdown('SIGTERM'));
+}
+
+main().catch((err) => {
+  logger.error('Krytyczny błąd przy starcie', err);
+  process.exit(1);
+});

@@ -1,0 +1,475 @@
+// zxCode Bot – schemat bazy danych
+// Bot działa na jednym serwerze, ale GuildConfig trzyma guildId, żeby nie wiązać configu z .env.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────── Konfiguracja ───────────────────────────────
+
+model GuildConfig {
+  guildId String @id
+
+  // Tickety
+  ticketCategoryId     String?
+  archiveCategoryId    String?
+  transcriptChannelId  String?
+  ticketAutoCloseHours Int     @default(48)
+  ticketSlaHours       Int     @default(12)
+
+  // Kanały
+  logChannelId          String?
+  auditChannelId        String?
+  announcementChannelId String?
+  changelogChannelId    String?
+  reviewChannelId       String?
+  welcomeChannelId      String?
+  suggestionChannelId   String?
+  staffAlertChannelId   String?
+
+  // Role
+  staffRoleId       String?
+  adminRoleId       String?
+  clientRoleId      String?
+  loyalClientRoleId String?
+  verifiedRoleId    String?
+
+  // Moduły włączone/wyłączone (nazwa modułu -> bool)
+  modules Json @default("{}")
+
+  // Tryb serwisowy
+  maintenance        Boolean @default(false)
+  maintenanceMessage String?
+
+  // Dane do przelewu na proformie
+  paymentDetails String?
+
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────── Tickety ───────────────────────────────
+
+enum TicketCategory {
+  ORDER
+  SUPPORT
+  PARTNERSHIP
+  QUESTION
+  COMPLAINT
+}
+
+enum TicketStatus {
+  OPEN
+  CLAIMED
+  WAITING_CLIENT
+  CLOSED
+  ARCHIVED
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model Ticket {
+  id        Int            @id @default(autoincrement())
+  channelId String?        @unique
+  userId    String
+  category  TicketCategory
+  status    TicketStatus   @default(OPEN)
+  priority  TicketPriority @default(NORMAL)
+  subject   String?
+  // Odpowiedzi z formularza (modal) – zależne od kategorii
+  formData  Json?
+
+  claimedBy String?
+  orderId   Int?    @unique
+  order     Order?  @relation(fields: [orderId], references: [id])
+
+  openedAt        DateTime  @default(now())
+  lastActivityAt  DateTime  @default(now())
+  lastClientMsgAt DateTime?
+  lastStaffMsgAt  DateTime?
+  slaAlertedAt    DateTime?
+  closeWarnedAt   DateTime?
+  closedAt        DateTime?
+  closedBy        String?
+  closeReason     String?
+  transcriptUrl   String?
+
+  rating        Int?
+  ratingComment String?
+
+  participants String[]
+  notes        TicketNote[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model TicketNote {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model ResponseTemplate {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  title     String
+  content   String
+  createdBy String
+  createdAt DateTime @default(now())
+}
+
+model FaqArticle {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  keywords  String[]
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────── Zlecenia i płatności ───────────────────────────────
+
+enum OrderStatus {
+  QUOTE
+  ACCEPTED
+  AWAITING_PAYMENT
+  IN_PROGRESS
+  TESTING
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+model Order {
+  // Numer sprawy wyświetlany jako ZX-0042 (utils/format.ts -> formatOrderId)
+  id           Int         @id @default(autoincrement())
+  userId       String
+  title        String
+  description  String?
+  status       OrderStatus @default(QUOTE)
+  price        Decimal?    @db.Decimal(10, 2)
+  currency     String      @default("PLN")
+  deadline     DateTime?
+  repoUrl      String?
+  discountCode String?
+
+  ticket        Ticket?
+  tasks         OrderTask[]
+  payments      Payment[]
+  invoices      Invoice[]
+  review        Review?
+  statusHistory OrderStatusChange[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderStatusChange {
+  id        Int          @id @default(autoincrement())
+  orderId   Int
+  order     Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  from      OrderStatus?
+  to        OrderStatus
+  changedBy String
+  createdAt DateTime     @default(now())
+}
+
+model OrderTask {
+  id       Int     @id @default(autoincrement())
+  orderId  Int
+  order    Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  content  String
+  done     Boolean @default(false)
+  position Int     @default(0)
+}
+
+model Payment {
+  id         Int      @id @default(autoincrement())
+  orderId    Int
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount     Decimal  @db.Decimal(10, 2)
+  currency   String   @default("PLN")
+  note       String?
+  recordedBy String
+  paidAt     DateTime @default(now())
+}
+
+enum InvoiceStatus {
+  ISSUED
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Invoice {
+  id         Int           @id @default(autoincrement())
+  // np. PF/2026/11/0001
+  number     String        @unique
+  orderId    Int
+  order      Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount     Decimal       @db.Decimal(10, 2)
+  currency   String        @default("PLN")
+  status     InvoiceStatus @default(ISSUED)
+  dueDate    DateTime
+  remindedAt DateTime?
+  issuedAt   DateTime      @default(now())
+}
+
+model PricingPackage {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String
+  price       Decimal  @db.Decimal(10, 2)
+  features    String[]
+  position    Int      @default(0)
+}
+
+// Pozycje kalkulatora wyceny (moduły, które klient może wybrać)
+model PricingItem {
+  id          Int     @id @default(autoincrement())
+  key         String  @unique
+  label       String
+  description String?
+  price       Decimal @db.Decimal(10, 2)
+  emoji       String?
+  active      Boolean @default(true)
+}
+
+model DiscountCode {
+  code      String    @id
+  percent   Int?
+  amount    Decimal?  @db.Decimal(10, 2)
+  maxUses   Int?
+  uses      Int       @default(0)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+}
+
+// ─────────────────────────────── Klienci, portfolio, opinie ───────────────────────────────
+
+model ClientProfile {
+  userId    String   @id
+  badges    String[]
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model PortfolioItem {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String
+  technologies String[]
+  url          String?
+  images       String[]
+  position     Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  orderId   Int?     @unique
+  order     Order?   @relation(fields: [orderId], references: [id])
+  userId    String
+  rating    Int
+  content   String
+  approved  Boolean  @default(false)
+  messageId String?
+  createdAt DateTime @default(now())
+}
+
+model MonitoredBot {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  ownerId     String?
+  // Adres health-checku (HTTP 200 = działa) albo ID bota do sprawdzania obecności
+  healthUrl   String?
+  botUserId   String?
+  online      Boolean   @default(true)
+  lastCheckAt DateTime?
+  lastDownAt  DateTime?
+  version     String?
+}
+
+// ─────────────────────────────── Ogłoszenia i changelog ───────────────────────────────
+
+enum PublishStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+}
+
+model Announcement {
+  id          Int           @id @default(autoincrement())
+  title       String
+  content     String
+  imageUrl    String?
+  buttons     Json?
+  ping        String?
+  status      PublishStatus @default(DRAFT)
+  publishAt   DateTime?
+  channelId   String?
+  messageId   String?
+  authorId    String
+  createdAt   DateTime      @default(now())
+  publishedAt DateTime?
+}
+
+enum ChangelogSource {
+  MANUAL
+  GITHUB
+}
+
+model ChangelogEntry {
+  id          Int             @id @default(autoincrement())
+  project     String
+  version     String
+  // { added: string[], changed: string[], fixed: string[], removed: string[] }
+  sections    Json
+  status      PublishStatus   @default(DRAFT)
+  source      ChangelogSource @default(MANUAL)
+  messageId   String?
+  authorId    String?
+  createdAt   DateTime        @default(now())
+  publishedAt DateTime?
+
+  @@unique([project, version])
+}
+
+model ChangelogSubscription {
+  userId  String
+  project String
+
+  @@id([userId, project])
+}
+
+enum RoadmapStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+}
+
+model RoadmapItem {
+  id        Int           @id @default(autoincrement())
+  project   String
+  title     String
+  status    RoadmapStatus @default(PLANNED)
+  createdAt DateTime      @default(now())
+}
+
+// ─────────────────────────────── Moderacja i społeczność ───────────────────────────────
+
+enum PunishmentType {
+  WARN
+  MUTE
+  KICK
+  BAN
+}
+
+model Punishment {
+  id          Int            @id @default(autoincrement())
+  userId      String
+  moderatorId String
+  type        PunishmentType
+  reason      String
+  expiresAt   DateTime?
+  revoked     Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+
+  @@index([userId])
+}
+
+enum SuggestionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  PLANNED
+}
+
+model Suggestion {
+  id        Int              @id @default(autoincrement())
+  authorId  String
+  content   String
+  status    SuggestionStatus @default(PENDING)
+  upvotes   String[]
+  downvotes String[]
+  messageId String?
+  createdAt DateTime         @default(now())
+}
+
+model Giveaway {
+  id              Int      @id @default(autoincrement())
+  prize           String
+  winnersCount    Int      @default(1)
+  requiredRole    String?
+  minDaysOnServer Int?
+  participants    String[]
+  winners         String[]
+  channelId       String
+  messageId       String?
+  endsAt          DateTime
+  ended           Boolean  @default(false)
+  createdBy       String
+}
+
+model Partnership {
+  id          Int      @id @default(autoincrement())
+  applicantId String
+  serverName  String
+  inviteUrl   String
+  description String
+  members     Int?
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+}
+
+model Reminder {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  content   String
+  remindAt  DateTime
+  orderId   Int?
+  sent      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([remindAt, sent])
+}
+
+model Snippet {
+  key       String   @id
+  language  String
+  title     String
+  code      String
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────── Audyt ───────────────────────────────
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  action    String
+  actorId   String
+  targetId  String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([actorId])
+}

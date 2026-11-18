@@ -1,0 +1,150 @@
+<p align="center">
+  <img src="assets/branding/banner.png" alt="zxCode" width="720">
+</p>
+
+# zxCode Bot
+
+Bot Discord dla serwera **zxCode** (studio programowania botów): tickety, zlecenia, ręczne płatności, ogłoszenia, changelog, portfolio, opinie, moderacja i więcej.
+Interfejs zbudowany na **Components v2**, z emotkami z paczki zxCode wgranymi jako **Application Emojis**.
+
+> Status: **szkielet projektu** (rdzeń, UI, baza, `/ping`, `/config`, `/serwis`). Moduły dochodzą etapami, patrz [Plan](#plan).
+
+## Stack
+
+| Warstwa                     | Technologia                              |
+| --------------------------- | ---------------------------------------- |
+| Bot                         | Node.js 22, TypeScript, discord.js 14.28 |
+| Baza                        | PostgreSQL 16 + Prisma 7 (adapter `pg`)  |
+| Cache / blokady / cooldowny | Redis 7 (ioredis)                        |
+| Webhooki (GitHub)           | Fastify 5                                |
+| Deploy                      | Docker + docker compose                  |
+
+## Uruchomienie lokalne
+
+1. **Aplikacja na Discordzie** ([Developer Portal](https://discord.com/developers/applications)):
+   - Bot → włącz intenty **Server Members** i **Message Content**.
+   - Zaproś bota z zakresami `bot` i `applications.commands` oraz uprawnieniami:
+     _Zarządzanie kanałami, Zarządzanie rolami, Moderowanie członków, Wyrzucanie, Banowanie, Zarządzanie wiadomościami, Wyświetlanie kanałów, Wysyłanie wiadomości, Załączanie plików, Czytanie historii, Używanie zewnętrznych emoji_.
+   - Rola bota musi być **wyżej** niż role, które ma nadawać (Klient, Stały klient, Zweryfikowany).
+2. **Konfiguracja:**
+   ```bash
+   cp .env.example .env      # uzupełnij DISCORD_TOKEN, DISCORD_CLIENT_ID, GUILD_ID
+   npm install
+   docker compose -f docker/docker-compose.dev.yml up -d   # PostgreSQL + Redis
+   npm run db:migrate        # tworzy tabele
+   npm run emojis:sync       # wgrywa 56 emotek jako Application Emojis (jednorazowo)
+   npm run dev               # start z automatycznym przeładowaniem
+   ```
+3. Na serwerze: `/config pokaz`, a następnie ustaw kategorie, kanały i role (`/config kategoria`, `/config kanal`, `/config rola`).
+
+Komendy rejestrują się automatycznie na serwerze z `GUILD_ID` przy każdym starcie (komendy serwerowe są widoczne od razu). Ręcznie: `npm run commands:deploy`.
+
+## Produkcja (VPS)
+
+```bash
+cp .env.example .env    # uzupełnij; DATABASE_URL/REDIS_URL ustawia compose
+docker compose -f docker/docker-compose.yml up -d --build
+```
+
+Kontener przy starcie wykonuje `prisma migrate deploy`. Healthcheck: `GET /health`.
+Webhook GitHuba: `POST /webhooks/github` (content type `application/json`, sekret = `GITHUB_WEBHOOK_SECRET`).
+
+## Skrypty
+
+| Skrypt                                  | Opis                                        |
+| --------------------------------------- | ------------------------------------------- |
+| `npm run dev`                           | bot w trybie watch (tsx)                    |
+| `npm run build` / `npm start`           | kompilacja do `dist/` i start               |
+| `npm run typecheck` / `lint` / `format` | jakość kodu                                 |
+| `npm run db:migrate`                    | nowa migracja (dev)                         |
+| `npm run db:deploy`                     | migracje na produkcji                       |
+| `npm run emojis:sync [-- --force]`      | wgranie / podmiana emotek z `assets/emojis` |
+| `npm run commands:deploy`               | ręczna rejestracja komend                   |
+
+## Struktura
+
+```
+src/
+├─ index.ts              start: env → db → moduły → HTTP → login
+├─ client.ts             ZxClient (moduły, komendy, handlery)
+├─ config/               env (walidacja zod), stałe, kolory
+├─ core/
+│  ├─ types.ts           kontrakt BotModule, komend, handlerów, zadań
+│  ├─ loader.ts          rejestracja modułów
+│  ├─ interactions.ts    router: komendy + customId "modul:akcja:args"
+│  ├─ registry.ts        rejestracja komend (guild)
+│  ├─ scheduler.ts       zadania cykliczne
+│  ├─ config-service.ts  GuildConfig z cache w Redis
+│  ├─ permissions.ts     everyone / staff / admin
+│  ├─ audit.ts           dziennik akcji admina (baza + kanał)
+│  └─ errors.ts          UserError, bezpieczne odpowiedzi
+├─ ui/
+│  ├─ emojis.ts          e('ticket'), emojiComponent('lock') + zapasowe unicode
+│  ├─ theme.ts           tony: info / success / client / warning / error / brand
+│  ├─ assets.ts          baner i logo jako załączniki
+│  ├─ builders/          Panel (Container v2), Form (modal v2), przyciski, paginacja, payload
+│  └─ components/        gotowe komunikaty (success/failure/info/warning)
+├─ modules/              każdy moduł w osobnym katalogu + wpis w modules/index.ts
+├─ db/                   klient Prisma i Redis
+├─ http/                 Fastify, webhook GitHuba (weryfikacja HMAC)
+└─ utils/                formatowanie (ZX-0042, kwoty, czas), blokady, logger
+```
+
+## Jak dodać moduł
+
+```ts
+// src/modules/przyklad/index.ts
+import { SlashCommandBuilder } from 'discord.js';
+import { defineCommand, defineComponent, defineModule } from '../../core/types.js';
+import { Panel } from '../../ui/builders/container.js';
+import { button } from '../../ui/builders/buttons.js';
+import { v2, v2Message } from '../../ui/builders/payload.js';
+
+export const przykladModule = defineModule({
+  name: 'przyklad',
+  description: 'Moduł przykładowy',
+  commands: [
+    defineCommand({
+      data: new SlashCommandBuilder().setName('hej').setDescription('Przywitaj się'),
+      access: 'everyone', // 'staff' | 'admin'
+      cooldown: 5,
+      run: (i) =>
+        i.reply(
+          v2(
+            new Panel({ tone: 'brand' })
+              .title('rocket', 'Cześć!')
+              .text('To jest panel Components v2.')
+              .buttons(button('przyklad:klik:42', 'Kliknij', { style: 'primary', emoji: 'star' })),
+            { ephemeral: true },
+          ),
+        ),
+    }),
+  ],
+  components: [
+    defineComponent({
+      id: 'przyklad:klik', // customId "przyklad:klik:42" → args = ['42']
+      type: 'button',
+      run: (i, [id]) => i.update(v2Message(new Panel({ tone: 'success' }).text(`Kliknięto #${id}`))),
+    }),
+  ],
+});
+```
+
+Na koniec dopisz moduł do `src/modules/index.ts`. Router sam sprawdzi, czy moduł jest włączony, czy trwa tryb serwisowy, czy użytkownik ma uprawnienia i czy minął cooldown.
+
+### Zasady
+
+- **Components v2:** wiadomość z flagą `IsComponentsV2` nie może mieć `content` ani `embeds`, cały tekst idzie przez `Panel.text()`. Odpowiedzi buduj przez `v2()`, wiadomości na kanał i edycje przez `v2Message()`.
+- **Emotki** tylko przez `e('nazwa')` / `emojiComponent('nazwa')`, nigdy przez ID wpisane na sztywno.
+- **customId:** `modul:akcja:arg1:arg2` (limit 100 znaków).
+- **Błędy dla użytkownika:** `throw new UserError('…')` pokaże czytelny komunikat ephemeral.
+- **Podwójne kliknięcia:** operacje zmieniające stan opakowuj w `withLock()`.
+- **Akcje administracyjne** zapisuj przez `audit()`.
+- ID kanałów i ról **nie** trafiają do `.env`. Ustawia się je w `/config` i trzyma w tabeli `GuildConfig`.
+
+## Plan
+
+1. **MVP:** ✅ rdzeń, UI, baza, `/config`, `/serwis` · ⏳ tickety, logi, weryfikacja
+2. **Biznes:** zlecenia `ZX-xxxx`, płatności ręczne i proforma, cennik z kalkulatorem, portfolio, opinie, role klienta
+3. **Automatyzacja:** changelog z GitHuba, monitoring botów klientów, planowane ogłoszenia, statystyki, przypomnienia
+4. **Extra:** user-install, snippety, giveaway, propozycje, partnerstwa, Scheduled Events
