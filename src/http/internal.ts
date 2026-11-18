@@ -8,6 +8,8 @@ import { safeEqual } from '../modules/sdk/keys.js';
 import { sendError } from '../modules/sdk/routes.js';
 import { publicSiteRoutes } from './public-site.js';
 import { adminRoutes } from './admin.js';
+import { adminMoreRoutes } from './admin-more.js';
+import { clientOrderRoutes } from './client-orders.js';
 import { getAccess, setAccess } from '../modules/site/service.js';
 import {
   guildData,
@@ -50,6 +52,7 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
   };
 
   publicSiteRoutes(app, client);
+  clientOrderRoutes(app, client);
 
   app.get('/internal/health', async () => ({ ok: true, discord: client.isReady() }));
 
@@ -194,6 +197,7 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
   };
 
   adminRoutes(app, client, ownerCheck as never);
+  adminMoreRoutes(app, client, ownerCheck as never);
 
   app.get('/internal/users/:userId/admin/site', async (request, reply) => {
     try {
