@@ -9,6 +9,11 @@ export function C({ k }: { k: keyof typeof company }) {
   return isPlaceholder(v) ? <span className="missing">{v}</span> : <>{v}</>;
 }
 
+/** „, adres” – tylko gdy adres jest ustawiony. */
+export function Addr() {
+  return company.address ? <>, {company.address}</> : null;
+}
+
 export function Mail() {
   return isPlaceholder(company.email) ? <C k="email" /> : <a href={`mailto:${company.email}`}>{company.email}</a>;
 }

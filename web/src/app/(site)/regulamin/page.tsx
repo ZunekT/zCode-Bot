@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { C, LegalPage, Mail, type LegalSection } from '@/components/site/Legal';
+import { Addr, C, LegalPage, Mail, type LegalSection } from '@/components/site/Legal';
 
 export const metadata: Metadata = { title: 'Regulamin', description: 'Regulamin świadczenia usług zxCode.' };
 
@@ -12,8 +12,7 @@ const sections: LegalSection[] = [
       <ol>
         <li>
           Regulamin określa zasady świadczenia usług przez <C k="name" /> (<C k="form" />
-          ), <C k="address" />
-          {' '}– dalej „Usługodawca” – działającego pod marką zxCode, za pośrednictwem strony zxcode.pl oraz serwera Discord zxCode.
+          )<Addr />{' '}– dalej „Usługodawca” – działającego pod marką zxCode, za pośrednictwem strony zxcode.pl oraz serwera Discord zxCode.
         </li>
         <li>
           Kontakt z Usługodawcą: ticket na serwerze Discord zxCode albo e-mail: <Mail />.

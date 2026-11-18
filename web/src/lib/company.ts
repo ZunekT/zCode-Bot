@@ -11,8 +11,8 @@ export const company = {
   name: 'Dorian Kaczyński',
   /** Forma działalności, np. „jednoosobowa działalność gospodarcza” albo „działalność nierejestrowana”. */
   form: 'działalność nierejestrowana (art. 5 ustawy Prawo przedsiębiorców)',
-  /** Adres (ulica, kod, miasto). */
-  address: '[adres]',
+  /** Adres korespondencyjny (ulica, kod, miasto) – puste = nie pokazujemy. */
+  address: '',
   nip: '',
   regon: '',
   /** E-mail kontaktowy (też dla spraw RODO i reklamacji). */

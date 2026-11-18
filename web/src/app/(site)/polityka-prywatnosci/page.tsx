@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { C, LegalPage, Mail, type LegalSection } from '@/components/site/Legal';
+import { Addr, C, LegalPage, Mail, type LegalSection } from '@/components/site/Legal';
 
 export const metadata: Metadata = {
   title: 'Polityka prywatności',
@@ -15,8 +15,7 @@ const sections: LegalSection[] = [
       <>
         <p>
           Administratorem danych osobowych jest <C k="name" /> (<C k="form" />
-          ), <C k="address" />
-          {' '}– dalej „Administrator”, działający pod marką zxCode.
+          )<Addr />{' '}– dalej „Administrator”, działający pod marką zxCode.
         </p>
         <p>
           W sprawach danych osobowych możesz pisać na adres <Mail /> albo w tickecie na serwerze Discord zxCode.
