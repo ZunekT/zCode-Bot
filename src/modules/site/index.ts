@@ -30,7 +30,9 @@ const siteCommand = defineCommand({
     .setDescription('[Właściciel] Strona zxcode.pl: start, tryb „Start wkrótce”, podgląd')
     .addSubcommand((s) => s.setName('status').setDescription('Czy strona jest publiczna i kto ma podgląd'))
     .addSubcommand((s) => s.setName('uruchom').setDescription('Uruchom stronę dla wszystkich'))
-    .addSubcommand((s) => s.setName('wkrotce').setDescription('Ukryj stronę – wszyscy poza podglądem widzą „Start wkrótce”'))
+    .addSubcommand((s) =>
+      s.setName('wkrotce').setDescription('Ukryj stronę – wszyscy poza podglądem widzą „Start wkrótce”'),
+    )
     .addSubcommand((s) =>
       s
         .setName('dodaj')
@@ -46,7 +48,8 @@ const siteCommand = defineCommand({
   access: 'admin',
   allowInMaintenance: true,
   async run(interaction, { client }) {
-    if (!(await isOwner(client, interaction.user.id))) throw new UserError('Tylko właściciel zxCode zarządza stroną.');
+    if (!(await isOwner(client, interaction.user.id)))
+      throw new UserError('Tylko właściciel zxCode zarządza stroną.');
     const sub = interaction.options.getSubcommand();
     const actorId = interaction.user.id;
     const current = await getAccess();
@@ -57,11 +60,16 @@ const siteCommand = defineCommand({
     let summary: string;
     if (sub === 'uruchom' || sub === 'wkrotce') {
       next = await setAccess({ launched: sub === 'uruchom' }, actorId);
-      summary = sub === 'uruchom' ? 'Strona zxcode.pl uruchomiona publicznie' : 'Strona zxcode.pl w trybie „Start wkrótce”';
+      summary =
+        sub === 'uruchom'
+          ? 'Strona zxcode.pl uruchomiona publicznie'
+          : 'Strona zxcode.pl w trybie „Start wkrótce”';
     } else {
       const user = interaction.options.getUser('osoba', true);
       const list =
-        sub === 'dodaj' ? [...current.previewUsers, user.id] : current.previewUsers.filter((id) => id !== user.id);
+        sub === 'dodaj'
+          ? [...current.previewUsers, user.id]
+          : current.previewUsers.filter((id) => id !== user.id);
       next = await setAccess({ previewUsers: list }, actorId);
       summary = `${sub === 'dodaj' ? 'Podgląd strony dla' : 'Odebrano podgląd strony:'} <@${user.id}>`;
     }

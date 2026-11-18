@@ -4,11 +4,25 @@ Strona (`web/`, Next.js) działa jako osobny kontener `web`. Z botem rozmawia pr
 (`bot:3100`, tylko sieć Dockera, nagłówek `x-internal-secret`). Logowanie przez Discord (OAuth2,
 zakres `identify`), sesja w podpisanym ciasteczku – strona nie ma własnej bazy.
 
+## Tryb „Start wkrótce”
+
+Domyślnie strona jest **ukryta**: każdy widzi tylko „Start wkrótce” (`web/src/proxy.ts`). Pełną stronę widzi
+właściciel i osoby z listy podglądu – po zalogowaniu przez Discord na `zxcode.pl/zaloguj`.
+
+- Panel → **Administracja → Strona publiczna**: „Uruchom stronę”, „Włącz Start wkrótce”, lista podglądu (ID Discord).
+- Discord: `/strona status | uruchom | wkrotce | dodaj @osoba | usun @osoba` (tylko właściciel).
+- Zmiana działa w ciągu ~15 s. Gdy bot nie odpowiada, strona zostaje w ostatnim znanym stanie (bez niego – ukryta).
+
+## Dokumenty prawne
+
+`/regulamin`, `/polityka-prywatnosci` (RODO), `/cookies`. Dane usługodawcy w **`web/src/lib/company.ts`** – pola
+z `[…]` są wyróżnione na żółto, dopóki ich nie uzupełnisz. To szablony – przed startem warto, żeby przejrzał je prawnik.
+
 ## Strona główna (wizytówka)
 
 `web/src/app/page.tsx` + `web/src/components/site/*` (animacje: biblioteka `motion`, font Geist).
-Sekcje: hero z podglądem wiadomości bota, technologie, statystyki, usługi, proces, realizacje, cennik,
-opinie, pokaz panelu, FAQ, wezwanie do działania. Treści z bazy bota (`/internal/public/site`, cache 5 min):
+Strona główna: hero, technologie, statystyki, usługi, proces, 3 realizacje, pokaz panelu, opinie, wezwanie do działania.
+Podstrony: `/realizacje`, `/opinie`, `/cennik`, `/faq`. „Zamów bota” prowadzi przez `/zamow` do `DISCORD_INVITE_URL`. Treści z bazy bota (`/internal/public/site`, cache 5 min):
 
 | Sekcja     | Skąd dane                                                                                 | Gdy pusto                                    |
 | ---------- | ----------------------------------------------------------------------------------------- | -------------------------------------------- |

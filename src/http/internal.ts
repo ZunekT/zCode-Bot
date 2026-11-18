@@ -199,7 +199,11 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
       const users = await Promise.all(
         access.previewUsers.map(async (id) => {
           const u = await client.users.fetch(id).catch(() => null);
-          return { id, name: u?.globalName ?? u?.username ?? null, avatar: u?.displayAvatarURL({ size: 64, extension: 'png' }) ?? null };
+          return {
+            id,
+            name: u?.globalName ?? u?.username ?? null,
+            avatar: u?.displayAvatarURL({ size: 64, extension: 'png' }) ?? null,
+          };
         }),
       );
       return { launched: access.launched, previewUsers: users };
@@ -215,7 +219,10 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
       const body = (request.body ?? {}) as { launched?: unknown; previewUsers?: unknown };
       const before = await getAccess();
       const next = await setAccess(
-        { launched: body.launched as boolean | undefined, previewUsers: body.previewUsers as string[] | undefined },
+        {
+          launched: body.launched as boolean | undefined,
+          previewUsers: body.previewUsers as string[] | undefined,
+        },
         userId,
       );
       if (before.launched !== next.launched || before.previewUsers.join() !== next.previewUsers.join()) {

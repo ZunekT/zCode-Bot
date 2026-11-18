@@ -38,11 +38,15 @@ export async function setAccess(patch: Partial<SiteAccess>, updatedBy: string): 
     next.launched = patch.launched;
   }
   if (patch.previewUsers !== undefined) {
-    if (!Array.isArray(patch.previewUsers) || patch.previewUsers.some((x) => typeof x !== 'string' || !/^\d{17,20}$/.test(x))) {
+    if (
+      !Array.isArray(patch.previewUsers) ||
+      patch.previewUsers.some((x) => typeof x !== 'string' || !/^\d{17,20}$/.test(x))
+    ) {
       throw new UserError('Lista podglądu: same ID użytkowników Discord.');
     }
     next.previewUsers = [...new Set(patch.previewUsers)];
-    if (next.previewUsers.length > MAX_PREVIEW) throw new UserError(`Maksymalnie ${MAX_PREVIEW} osób z podglądem.`);
+    if (next.previewUsers.length > MAX_PREVIEW)
+      throw new UserError(`Maksymalnie ${MAX_PREVIEW} osób z podglądem.`);
   }
   await prisma.siteSetting.upsert({
     where: { key: KEY },
