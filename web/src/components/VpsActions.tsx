@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
+import { Modal } from './ui/Modal';
 
 type Action = 'reboot' | 'backup';
 
@@ -58,22 +59,24 @@ export function VpsActions() {
           <Icon name="lightning" size={16} /> Restart VPS
         </button>
       </div>
-      {c && confirm && (
-        <div className="modal-back" role="presentation" onClick={() => !busy && setConfirm(null)}>
-          <div className="card modal" role="dialog" aria-modal="true" aria-labelledby="vps-confirm" onClick={(e) => e.stopPropagation()}>
-            <h2 id="vps-confirm">{c.title}</h2>
-            <p className="muted">{c.text}</p>
-            <div className="modal-actions">
-              <button className="btn btn-ghost" onClick={() => setConfirm(null)} disabled={busy}>
-                Anuluj
-              </button>
-              <button className={`btn ${c.danger ? 'btn-danger-solid' : 'btn-primary'}`} onClick={() => run(confirm)} disabled={busy} autoFocus>
-                {busy ? 'Chwila…' : c.button}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        open={!!c && !!confirm}
+        onClose={() => setConfirm(null)}
+        title={c?.title ?? ''}
+        busy={busy}
+        actions={
+          <>
+            <button className="btn btn-ghost" onClick={() => setConfirm(null)} disabled={busy}>
+              Anuluj
+            </button>
+            <button className={`btn ${c?.danger ? 'btn-danger-solid' : 'btn-primary'}${busy ? ' loading' : ''}`} onClick={() => confirm && run(confirm)} autoFocus>
+              {c?.button}
+            </button>
+          </>
+        }
+      >
+        <p>{c?.text}</p>
+      </Modal>
       {toast.node}
     </>
   );

@@ -35,6 +35,20 @@ export async function internal<T>(method: string, path: string, body?: unknown):
   return data;
 }
 
+/** Surowa odpowiedź (np. HTML proformy) – tylko po stronie serwera strony. */
+export async function internalRaw(path: string): Promise<Response | null> {
+  try {
+    const res = await fetch(`${env.internalUrl}${path}`, {
+      headers: { 'x-internal-secret': env.internalSecret },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(10_000),
+    });
+    return res.ok ? res : null;
+  } catch {
+    return null;
+  }
+}
+
 const user = (userId: string) => `/internal/users/${userId}`;
 
 /** „Nie znaleziono bota” (cudzy lub nieistniejący) → strona 404. */
@@ -144,6 +158,95 @@ export interface ClientRow extends Person {
   lastActivity: string;
 }
 
+export interface Step {
+  status: string;
+  label: string;
+  step: number;
+}
+export interface MyOrder extends Money {
+  id: number;
+  number: string;
+  title: string;
+  status: string;
+  statusLabel: string;
+  step: number;
+  tasksDone: number;
+  tasksTotal: number;
+  deadline: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface MyOrderDetails {
+  steps: Step[];
+  order: Omit<MyOrder, 'tasksDone' | 'tasksTotal' | 'updatedAt'> & {
+    description: string | null;
+    statusText: string;
+    discountCode: string | null;
+    completedAt: string | null;
+  };
+  tasks: { id: number; content: string; done: boolean }[];
+  payments: { id: number; amount: number; paidAt: string }[];
+  invoices: { id: number; number: string; amount: number; status: string; dueDate: string; issuedAt: string }[];
+  history: { to: string; at: string }[];
+  ticketUrl: string | null;
+  payment: { details: string | null; title: string } | null;
+}
+export interface TicketRow {
+  id: number;
+  category: string;
+  status: string;
+  statusLabel: string;
+  priority: string;
+  subject: string | null;
+  client: Person;
+  claimedBy: string | null;
+  openedAt: string;
+  lastActivityAt: string;
+  waitingSince: string | null;
+  orderId: number | null;
+  url: string | null;
+  rating: number | null;
+}
+export interface TicketDetails {
+  ticket: Omit<TicketRow, 'lastActivityAt' | 'waitingSince' | 'orderId'> & {
+    formData: Record<string, unknown> | null;
+    closedAt: string | null;
+    closeReason: string | null;
+    transcriptUrl: string | null;
+    ratingComment: string | null;
+    order: { id: number; number: string } | null;
+    open: boolean;
+  };
+  notes: { id: number; content: string; author: string; at: string }[];
+  messages: {
+    id: string;
+    author: { id: string; name: string; avatar: string; bot: boolean };
+    content: string;
+    attachments: { name: string; url: string; image: boolean }[];
+    createdAt: string;
+  }[];
+}
+export interface Ledger {
+  year: number;
+  quarter: number;
+  from: string;
+  to: string;
+  total: number;
+  limit: number;
+  usedPct: number;
+  months: { month: string; amount: number }[];
+  days: { date: string; amount: number }[];
+  rows: { lp: number; id: number; date: string; amount: number; order: { id: number; number: string; title: string }; client: Person; note: string | null }[];
+}
+export interface AuditEntry {
+  id: number;
+  action: string;
+  summary: string;
+  actor: Person;
+  targetId: string | null;
+  at: string;
+}
+
 export interface SiteAccessData {
   launched: boolean;
   previewUsers: { id: string; name: string | null; avatar: string | null }[];
@@ -163,6 +266,27 @@ export const api = {
   order: (userId: string, id: string) => orNotFound(internal<OrderDetails>('GET', `${adm(userId)}/orders/${Number(id)}`)),
   orderAction: (userId: string, id: string, action: string, body: unknown) =>
     internal<{ ok: boolean }>('POST', `${adm(userId)}/orders/${Number(id)}/${action}`, body),
+  myOrders: (userId: string) => internal<{ steps: Step[]; orders: MyOrder[] }>('GET', `${user(userId)}/orders`),
+  myOrder: (userId: string, id: string) => orNotFound(internal<MyOrderDetails>('GET', `${user(userId)}/orders/${Number(id)}`)),
+  tickets: (userId: string, status: string) =>
+    orNotFound(internal<{ tickets: TicketRow[] }>('GET', `${adm(userId)}/tickets?status=${encodeURIComponent(status)}`)),
+  ticket: (userId: string, id: string) => orNotFound(internal<TicketDetails>('GET', `${adm(userId)}/tickets/${Number(id)}`)),
+  ticketAction: (userId: string, id: string, action: string, body: unknown) =>
+    internal<{ ok: boolean }>('POST', `${adm(userId)}/tickets/${Number(id)}/${action}`, body),
+  ledger: (userId: string, year?: string, quarter?: string) =>
+    orNotFound(internal<Ledger>('GET', `${adm(userId)}/ledger?${new URLSearchParams({ ...(year && { year }), ...(quarter && { quarter }) })}`)),
+  ledgerSettings: (userId: string, quarterLimit: number) =>
+    internal<{ quarterLimit: number }>('PUT', `${adm(userId)}/ledger/settings`, { quarterLimit }),
+  audit: (userId: string, before?: string, action?: string) =>
+    orNotFound(
+      internal<{ entries: AuditEntry[]; next: number | null }>(
+        'GET',
+        `${adm(userId)}/audit?${new URLSearchParams({ ...(before && { before }), ...(action && { action }) })}`,
+      ),
+    ),
+  people: (userId: string) => orNotFound(internal<{ people: Person[] }>('GET', `${adm(userId)}/people`)),
+  createOrder: (userId: string, body: unknown) => internal<{ id: number; number: string }>('POST', `${adm(userId)}/orders`, body),
+  editOrder: (userId: string, id: string, body: unknown) => internal<{ ok: boolean }>('PATCH', `${adm(userId)}/orders/${Number(id)}`, body),
   clients: (userId: string) => orNotFound(internal<{ clients: ClientRow[] }>('GET', `${adm(userId)}/clients`)),
   siteAccess: (userId: string) => internal<SiteAccessData>('GET', `${user(userId)}/admin/site`),
   saveSiteAccess: (userId: string, body: { launched?: boolean; previewUsers?: string[] }) =>

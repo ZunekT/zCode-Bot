@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import { put } from '@/lib/client';
-import { roleColor } from '@/lib/format';
 import type { GuildRole, Permissions } from '@/lib/types';
+import { roleOptions } from './FieldInput';
 import { Icon } from './Icon';
+import { Select } from './ui/Select';
 import { useToast } from './Toast';
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -29,11 +30,8 @@ export function PermissionsEditor({
   const [filter, setFilter] = useState('');
   const toast = useToast();
 
-  const sortedRoles = useMemo(
-    () => [...roles].filter((r) => !r.managed).sort((a, b) => (b.position ?? 0) - (a.position ?? 0)),
-    [roles],
-  );
-  const byId = useMemo(() => new Map(roles.map((r) => [r.id, r])), [roles]);
+
+  const roleOpts = useMemo(() => roleOptions(roles), [roles]);
   const dirty = !same(perms, saved);
   const shown = commands.filter((c) => c.name.includes(filter.trim().toLowerCase().replace(/^\//, '')));
 
@@ -103,28 +101,16 @@ export function PermissionsEditor({
                   {c.description && <div className="faint small">{c.description}</div>}
                 </div>
                 <div className="perm-roles">
-                  {list.length === 0 && <span className="pill pill-plain">Domyślne uprawnienia</span>}
-                  {list.map((rid) => (
-                    <span key={rid} className="chip">
-                      <span className="swatch" style={{ background: roleColor(byId.get(rid)?.color) }} />
-                      {byId.get(rid)?.name ?? 'usunięta rola'}
-                      <button type="button" aria-label="Usuń rolę" onClick={() => update(c.name, list.filter((x) => x !== rid))}>
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                  <select
-                    value=""
-                    aria-label={`Dodaj rolę do /${c.name}`}
-                    onChange={(e) => e.target.value && update(c.name, [...list, e.target.value])}
-                  >
-                    <option value="">+ Dodaj rolę</option>
-                    {sortedRoles.filter((r) => !list.includes(r.id)).map((r) => (
-                      <option key={r.id} value={r.id}>
-                        @{r.name}
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    multiple
+                    size="sm"
+                    ariaLabel={`Role dla /${c.name}`}
+                    value={list}
+                    onChange={(v) => update(c.name, v)}
+                    options={roleOpts}
+                    placeholder="Domyślne uprawnienia – dodaj rolę…"
+                    searchable
+                  />
                 </div>
               </div>
             );

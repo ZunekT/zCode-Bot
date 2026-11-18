@@ -6,6 +6,7 @@ import type { SiteAccessData } from '@/lib/api';
 import { put } from '@/lib/client';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
+import { Modal } from './ui/Modal';
 
 export function SiteAccessCard({ initial }: { initial: SiteAccessData }) {
   const router = useRouter();
@@ -33,7 +34,7 @@ export function SiteAccessCard({ initial }: { initial: SiteAccessData }) {
   }
 
   return (
-    <section className="card" style={{ marginBottom: 16 }}>
+    <section className="card glow" style={{ marginBottom: 16 }}>
       <div className="card-head">
         <Icon name="desktop" />
         <h2>Strona publiczna</h2>
@@ -102,22 +103,24 @@ export function SiteAccessCard({ initial }: { initial: SiteAccessData }) {
         </form>
         <p className="faint small">Na Discordzie: /strona dodaj @osoba · /strona uruchom · /strona wkrotce</p>
       </div>
-      {confirm && (
-        <div className="modal-back" role="presentation" onClick={() => !busy && setConfirm(false)}>
-          <div className="card modal" role="dialog" aria-modal="true" aria-labelledby="site-confirm" onClick={(e) => e.stopPropagation()}>
-            <h2 id="site-confirm">Uruchomić stronę dla wszystkich?</h2>
-            <p className="muted">Każdy odwiedzający zobaczy pełną stronę zxcode.pl. Możesz w każdej chwili wrócić do „Start wkrótce”.</p>
-            <div className="modal-actions">
-              <button className="btn btn-ghost" onClick={() => setConfirm(false)} disabled={busy}>
-                Anuluj
-              </button>
-              <button className="btn btn-primary" onClick={() => save({ launched: true }, 'Strona uruchomiona!')} disabled={busy} autoFocus>
-                Uruchom
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        open={confirm}
+        onClose={() => setConfirm(false)}
+        title="Uruchomić stronę dla wszystkich?"
+        busy={busy}
+        actions={
+          <>
+            <button className="btn btn-ghost" onClick={() => setConfirm(false)} disabled={busy}>
+              Anuluj
+            </button>
+            <button className={`btn btn-primary${busy ? ' loading' : ''}`} onClick={() => save({ launched: true }, 'Strona uruchomiona!')} autoFocus>
+              Uruchom
+            </button>
+          </>
+        }
+      >
+        <p>Każdy odwiedzający zobaczy pełną stronę zxcode.pl. Możesz w każdej chwili wrócić do „Start wkrótce”.</p>
+      </Modal>
       {toast.node}
     </section>
   );

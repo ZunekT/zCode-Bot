@@ -2,6 +2,7 @@
 
 import type { GuildChannel, GuildRole, SchemaField } from '@/lib/types';
 import { roleColor } from '@/lib/format';
+import { Select, type Option } from './ui/Select';
 
 const KIND_LABEL: Record<string, string> = {
   voice: 'głosowy',
@@ -30,24 +31,30 @@ function channelGroups(channels: GuildChannel[], types?: string[]) {
   return groups;
 }
 
-const channelLabel = (c: GuildChannel) =>
-  c.type === 'category' ? c.name.toUpperCase() : `# ${c.name}${KIND_LABEL[c.type] ? ` (${KIND_LABEL[c.type]})` : ''}`;
 
-function Chips({ items, onRemove }: { items: { id: string; label: string; color?: string }[]; onRemove: (id: string) => void }) {
-  if (!items.length) return null;
-  return (
-    <div className="chips">
-      {items.map((i) => (
-        <span key={i.id} className="chip">
-          {i.color && <span className="swatch" style={{ background: i.color }} />}
-          {i.label}
-          <button type="button" onClick={() => onRemove(i.id)} aria-label={`Usuń ${i.label}`}>
-            ×
-          </button>
-        </span>
-      ))}
-    </div>
-  );
+/** Kanały jako opcje listy wyboru: pogrupowane po kategoriach, jak na Discordzie. */
+export function channelOptions(channels: GuildChannel[], types?: string[]): Option[] {
+  const out: Option[] = [];
+  for (const g of channelGroups(channels, types)) {
+    for (const c of g.items) {
+      out.push({
+        value: c.id,
+        label: c.type === 'category' ? c.name.toUpperCase() : c.name,
+        prefix: c.type === 'category' || c.type === 'voice' || c.type === 'stage' ? undefined : '#',
+        group: g.label ?? 'Bez kategorii',
+        hint: KIND_LABEL[c.type],
+      });
+    }
+  }
+  return out;
+}
+
+/** Role od najwyższej, z kolorem; bez ról zarządzanych przez integracje. */
+export function roleOptions(roles: GuildRole[]): Option[] {
+  return [...roles]
+    .filter((r) => !r.managed)
+    .sort((a, b) => (b.position ?? 0) - (a.position ?? 0))
+    .map((r) => ({ value: r.id, label: r.name, color: roleColor(r.color), prefix: '@' }));
 }
 
 export function FieldInput({
@@ -132,117 +139,29 @@ export function FieldInput({
     }
 
     case 'select': {
-      const opts = field.options ?? [];
-      if (field.multiple) {
-        const list = Array.isArray(value) ? (value as string[]) : [];
-        return (
-          <>
-            <Chips
-              items={list.map((v) => ({ id: v, label: opts.find((o) => o.value === v)?.label ?? v }))}
-              onRemove={(v) => onChange(list.filter((x) => x !== v))}
-            />
-            <select id={id} value="" onChange={(e) => e.target.value && onChange([...list, e.target.value])}>
-              <option value="">Dodaj…</option>
-              {opts.filter((o) => !list.includes(o.value)).map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </>
-        );
-      }
-      return (
-        <select id={id} value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value || null)}>
-          {!field.required && <option value="">— brak —</option>}
-          {opts.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+      const opts = (field.options ?? []).map((o) => ({ value: o.value, label: o.label }));
+      return field.multiple ? (
+        <Select id={id} multiple value={Array.isArray(value) ? (value as string[]) : []} onChange={onChange} options={opts} placeholder="Dodaj…" />
+      ) : (
+        <Select id={id} value={typeof value === 'string' ? value : null} onChange={onChange} options={opts} clearable={!field.required} placeholder="— brak —" />
       );
     }
 
     case 'channel': {
-      const groups = channelGroups(channels, field.channelTypes);
-      const byId = new Map(channels.map((c) => [c.id, c]));
-      const options = (exclude: string[] = []) =>
-        groups.map((g, i) => {
-          const items = g.items.filter((c) => !exclude.includes(c.id));
-          if (!items.length) return null;
-          const opts = items.map((c) => (
-            <option key={c.id} value={c.id}>
-              {channelLabel(c)}
-            </option>
-          ));
-          return g.label ? (
-            <optgroup key={i} label={g.label}>
-              {opts}
-            </optgroup>
-          ) : (
-            opts
-          );
-        });
-
-      if (field.multiple) {
-        const list = Array.isArray(value) ? (value as string[]) : [];
-        return (
-          <>
-            <Chips
-              items={list.map((cid) => ({ id: cid, label: byId.get(cid) ? channelLabel(byId.get(cid)!) : 'usunięty kanał' }))}
-              onRemove={(cid) => onChange(list.filter((x) => x !== cid))}
-            />
-            <select id={id} value="" onChange={(e) => e.target.value && onChange([...list, e.target.value])}>
-              <option value="">Dodaj kanał…</option>
-              {options(list)}
-            </select>
-          </>
-        );
-      }
-      const current = typeof value === 'string' ? value : '';
-      return (
-        <select id={id} value={current} onChange={(e) => onChange(e.target.value || null)}>
-          <option value="">— nie ustawiono —</option>
-          {current && !byId.has(current) && <option value={current}>usunięty kanał</option>}
-          {options()}
-        </select>
+      const opts = channelOptions(channels, field.channelTypes);
+      return field.multiple ? (
+        <Select id={id} multiple value={Array.isArray(value) ? (value as string[]) : []} onChange={onChange} options={opts} placeholder="Dodaj kanał…" searchable />
+      ) : (
+        <Select id={id} value={typeof value === 'string' ? value : null} onChange={onChange} options={opts} clearable placeholder="— nie ustawiono —" searchable />
       );
     }
 
     case 'role': {
-      const sorted = [...roles].filter((r) => !r.managed).sort((a, b) => (b.position ?? 0) - (a.position ?? 0));
-      const byId = new Map(roles.map((r) => [r.id, r]));
-      if (field.multiple) {
-        const list = Array.isArray(value) ? (value as string[]) : [];
-        return (
-          <>
-            <Chips
-              items={list.map((rid) => ({ id: rid, label: byId.get(rid)?.name ?? 'usunięta rola', color: roleColor(byId.get(rid)?.color) }))}
-              onRemove={(rid) => onChange(list.filter((x) => x !== rid))}
-            />
-            <select id={id} value="" onChange={(e) => e.target.value && onChange([...list, e.target.value])}>
-              <option value="">Dodaj rolę…</option>
-              {sorted.filter((r) => !list.includes(r.id)).map((r) => (
-                <option key={r.id} value={r.id}>
-                  @{r.name}
-                </option>
-              ))}
-            </select>
-          </>
-        );
-      }
-      const current = typeof value === 'string' ? value : '';
-      return (
-        <select id={id} value={current} onChange={(e) => onChange(e.target.value || null)}>
-          <option value="">— nie ustawiono —</option>
-          {current && !byId.has(current) && <option value={current}>usunięta rola</option>}
-          {sorted.map((r) => (
-            <option key={r.id} value={r.id}>
-              @{r.name}
-            </option>
-          ))}
-        </select>
+      const opts = roleOptions(roles);
+      return field.multiple ? (
+        <Select id={id} multiple value={Array.isArray(value) ? (value as string[]) : []} onChange={onChange} options={opts} placeholder="Dodaj rolę…" searchable />
+      ) : (
+        <Select id={id} value={typeof value === 'string' ? value : null} onChange={onChange} options={opts} clearable placeholder="— nie ustawiono —" searchable />
       );
     }
   }

@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import { put } from '@/lib/client';
 import type { Presence, Profile } from '@/lib/types';
 import { Icon } from './Icon';
+import { Select } from './ui/Select';
 import { useToast } from './Toast';
 
 const STATUSES: { value: Presence['status']; label: string }[] = [
@@ -108,13 +109,12 @@ export function ProfileEditor({
         <div className="field">
           <span className="field-label">Aktywność</span>
           <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 8 }}>
-            <select value={actType} onChange={(e) => setActType(e.target.value as typeof actType)} aria-label="Typ aktywności">
-              {ACTIVITIES.map((a) => (
-                <option key={a.value} value={a.value}>
-                  {a.label}
-                </option>
-              ))}
-            </select>
+            <Select
+              ariaLabel="Typ aktywności"
+              value={actType}
+              onChange={(v) => v && setActType(v as typeof actType)}
+              options={ACTIVITIES.map((x) => ({ value: x.value, label: x.label }))}
+            />
             <input
               className="input"
               value={actText}

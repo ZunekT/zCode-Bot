@@ -1,27 +1,48 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import { Icon } from './Icon';
 
-export interface ToastMsg {
+interface ToastMsg {
   id: number;
   ok: boolean;
   text: string;
 }
+type Show = (ok: boolean, text: string) => void;
 
+const Ctx = createContext<Show | null>(null);
+let seq = 0;
+
+/** Stos powiadomień dla całego panelu (prawy dolny róg, pasek czasu, zamykanie kliknięciem). */
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [list, setList] = useState<ToastMsg[]>([]);
+  const remove = useCallback((id: number) => setList((l) => l.filter((t) => t.id !== id)), []);
+  const show = useCallback<Show>(
+    (ok, text) => {
+      const id = ++seq;
+      setList((l) => [...l.slice(-3), { id, ok, text }]);
+      setTimeout(() => remove(id), 4200);
+    },
+    [remove],
+  );
+  return (
+    <Ctx.Provider value={show}>
+      {children}
+      <div className="toasts" role="status" aria-live="polite">
+        {list.map((t) => (
+          <button key={t.id} className={`toast2 ${t.ok ? 'ok' : 'err'}`} onClick={() => remove(t.id)}>
+            <Icon name={t.ok ? 'verified' : 'shield_x'} size={20} />
+            <span>{t.text}</span>
+            <i className="toast2-timer" aria-hidden />
+          </button>
+        ))}
+      </div>
+    </Ctx.Provider>
+  );
+}
+
+/** Zgodne z dotychczasowym API: { show, node } (node nie jest już potrzebny). */
 export function useToast() {
-  const [toast, setToast] = useState<ToastMsg | null>(null);
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3500);
-    return () => clearTimeout(t);
-  }, [toast]);
-  const show = (ok: boolean, text: string) => setToast({ id: Date.now(), ok, text });
-  const node = toast ? (
-    <div key={toast.id} className={`toast notice ${toast.ok ? 'notice-ok' : 'notice-err'}`} role="status">
-      <Icon name={toast.ok ? 'verified' : 'shield_x'} />
-      <p>{toast.text}</p>
-    </div>
-  ) : null;
-  return { show, node };
+  const show = useContext(Ctx);
+  return { show: show ?? (() => undefined), node: null as ReactNode };
 }
