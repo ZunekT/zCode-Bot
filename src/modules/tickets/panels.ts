@@ -81,6 +81,7 @@ export function actionSelect(ticket: Ticket): StringSelectMenuBuilder {
     'add',
     ...(ticket.participants.length ? (['remove'] as const) : []),
     'note',
+    ...(ticket.orderId ? [] : (['order'] as const)),
     'remind',
     'close',
   ];

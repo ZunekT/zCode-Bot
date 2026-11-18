@@ -33,7 +33,8 @@ const DEADLINES = [
 const labelOf = (list: { value: string; label: string }[], value: string | undefined) =>
   list.find((o) => o.value === value)?.label ?? value ?? '—';
 
-export function ticketForm(category: TicketCategory) {
+/** prefill – wstępnie wypełnione pola formularza zamówienia (np. z cennika). */
+export function ticketForm(category: TicketCategory, prefill: { name?: string; description?: string } = {}) {
   const def = CATEGORIES[category];
   const form = new Form(`ticket:create:${category}`, def.label);
 
@@ -45,6 +46,7 @@ export function ticketForm(category: TicketCategory) {
           label: 'Nazwa / temat projektu',
           max: 80,
           placeholder: 'np. Bot do ticketów dla serwera RP',
+          value: prefill.name,
         })
         .text({
           id: 'description',
@@ -53,6 +55,7 @@ export function ticketForm(category: TicketCategory) {
           paragraph: true,
           min: 20,
           max: 2000,
+          value: prefill.description,
         })
         .select({ id: 'budget', label: 'Budżet', options: BUDGETS, placeholder: 'Wybierz przedział' })
         .select({ id: 'deadline', label: 'Termin', options: DEADLINES, placeholder: 'Na kiedy?' })

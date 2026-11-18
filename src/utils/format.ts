@@ -71,3 +71,37 @@ export function formatDuration(ms: number): string {
   const parts = [d && `${d}d`, h && `${h}h`, m && `${m}m`].filter(Boolean);
   return parts.length ? parts.join(' ') : `${s % 60}s`;
 }
+
+/** "500" | "500,50" | "1 200 zł" | "99.9" -> 500.5 itd.; null gdy nie da się odczytać. */
+export function parseMoney(input: string): number | null {
+  const cleaned = input.replace(/zł|pln|\s/gi, '').replace(',', '.');
+  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
+  const value = Number(cleaned);
+  return Number.isFinite(value) && value >= 0 && value < 1_000_000 ? Math.round(value * 100) / 100 : null;
+}
+
+/**
+ * Data po polsku: "24.12.2026", "24.12" (najbliższy taki dzień), "+14" (za 14 dni).
+ * Zwraca koniec dnia (23:59) albo null.
+ */
+export function parseDate(input: string, now = new Date()): Date | null {
+  const s = input.trim();
+  const rel = s.match(/^\+(\d{1,3})\s*(d|dni)?$/i);
+  if (rel) {
+    const d = new Date(now.getTime() + Number(rel[1]) * 86_400_000);
+    d.setHours(23, 59, 0, 0);
+    return d;
+  }
+  const m = s.match(/^(\d{1,2})[./-](\d{1,2})(?:[./-](\d{2,4}))?$/);
+  if (!m) return null;
+  const day = Number(m[1]);
+  const month = Number(m[2]) - 1;
+  const year = m[3] ? Number(m[3].length === 2 ? `20${m[3]}` : m[3]) : now.getFullYear();
+  let date = new Date(year, month, day, 23, 59, 0, 0);
+  if (!m[3] && date.getTime() < now.getTime()) date = new Date(year + 1, month, day, 23, 59, 0, 0);
+  if (date.getDate() !== day || date.getMonth() !== month) return null; // np. 31.02
+  return date;
+}
+
+/** Zaokrąglenie do groszy (operacje na kwotach z bazy). */
+export const cents = (v: number) => Math.round(v * 100) / 100;

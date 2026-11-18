@@ -24,6 +24,7 @@ import { emojiComponent } from '../../ui/emojis.js';
 import { checkCooldown } from '../../utils/locks.js';
 import { createLogger } from '../../utils/logger.js';
 import { CATEGORIES, CONTROL_ACTIONS, LIMITS, PRIORITIES, type ControlAction } from './constants.js';
+import { orderCreateModal } from '../orders/forms.js';
 import { ticketForm } from './forms.js';
 import { closedDmPanel, publicPanel, ratedDmPanel, ratingLogCard, ticketNo } from './panels.js';
 import {
@@ -176,6 +177,13 @@ async function runAction(
     case 'note':
       await interaction.showModal(noteModal(id));
       return 'replied';
+
+    case 'order': {
+      const ticket = await getTicket(id);
+      if (ticket.orderId) throw new UserError('Ten ticket ma już zlecenie – zobacz przypięty panel.');
+      await interaction.showModal(orderCreateModal(ticket));
+      return 'replied';
+    }
 
     case 'remind':
       await remindClient(client, id, member);

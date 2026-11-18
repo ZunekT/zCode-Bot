@@ -107,6 +107,12 @@ export const CONTROL_ACTIONS = {
     emoji: 'documentation',
     staff: true,
   },
+  order: {
+    label: 'Utwórz zlecenie',
+    description: 'Zamień ticket w zlecenie ZX-xxxx z panelem',
+    emoji: 'package',
+    staff: true,
+  },
   remind: {
     label: 'Przypomnij klientowi',
     description: 'Ping z prośbą o odpowiedź',

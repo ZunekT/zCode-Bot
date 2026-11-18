@@ -7,7 +7,7 @@
 Bot Discord dla serwera **zxCode** (studio programowania botów): tickety, zlecenia, ręczne płatności, ogłoszenia, changelog, portfolio, opinie, moderacja i więcej.
 Interfejs zbudowany na **Components v2**, z emotkami z paczki zxCode wgranymi jako **Application Emojis**.
 
-> Status: rdzeń, `/config`, `/serwis`, **tickety**, **FAQ**, **logi** i **weryfikacja**. Kolejne moduły dochodzą etapami, patrz [Plan](#plan).
+> Status: etap 1 (tickety, FAQ, logi, weryfikacja) i etap 2 (**zlecenia, płatności i proformy, cennik z kalkulatorem, portfolio, opinie, role klienta**). Plan: [Plan](#plan).
 
 ## Stack
 
@@ -117,6 +117,38 @@ Wiadomości wysłane przed uruchomieniem bota nie są w pamięci, więc przy ich
 - **Ochrona przed rajdem:** gdy w krótkim czasie wejdzie dużo osób (np. 10 w 30 s), weryfikacja zostaje wstrzymana. Obsługa dostaje alert z przyciskiem **Odblokuj weryfikację**. Ręcznie: `/weryfikacja blokada`.
 - `/weryfikacja zweryfikuj @osoba` to ręczna weryfikacja przez obsługę. `/weryfikacja statystyki` pokazuje dziś, 7 i 30 dni.
 
+## Zlecenia i płatności
+
+**Tworzenie:** w tickecie wybierz w menu ⚙️ **Utwórz zlecenie**. Formularz wypełni się danymi z ticketu (projekt, opis, budżet klienta). Można też użyć `/zlecenie utworz`. Panel zlecenia zostaje przypięty w kanale ticketu.
+
+**Panel zlecenia:** oś statusów (Wycena › Akceptacja › Płatność › Realizacja › Testy › Dostarczone › Koniec), cena z rabatem, wpłacono / do zapłaty, termin, repozytorium, proformy i checklista zadań. Menu **Zarządzaj zleceniem** (dla obsługi):
+
+- **Zmień status:** klient dostaje kartę w DM, panel się odświeża, a wpis trafia do logów.
+- **Edytuj szczegóły:** tytuł, opis, cena, termin (`dd.mm.rrrr`, `dd.mm`, `+14`), repozytorium.
+- **Dodaj zadania / Odhacz zadania:** checklista z paskiem postępu.
+- **Zapisz wpłatę:** saldo liczy się samo. Po pełnej spłacie proformy są oznaczane jako opłacone, a status przechodzi z „Płatność” na „Realizacja”.
+- **Wystaw proformę:** dokument HTML (do druku lub zapisu jako PDF) z danymi z `/config platnosci` i tytułem przelewu `ZX-0042 PF/2026/11/0001`. Trafia do ticketu i w DM, a status zmienia się na „Płatność”.
+- **Kod rabatowy:** procentowy (przeliczany przy zmianie ceny) albo kwotowy, z limitem użyć.
+
+Klient akceptuje wycenę przyciskiem w panelu. Dzień przed terminem płatności dostaje przypomnienie, a po terminie proforma jest oznaczana jako zaległa i obsługa dostaje alert.
+
+**Zakończenie zlecenia:** rola **Klient** (1+ zleceń) i **Stały klient** (3+), odznaki w `/profil` i prośba o opinię w DM.
+
+| Komenda                                                 | Kto     | Opis                                                               |
+| ------------------------------------------------------- | ------- | ------------------------------------------------------------------ |
+| `/zlecenie moje` / `info [numer]`                       | klient  | lista i szczegóły swoich zleceń                                    |
+| `/zlecenie lista [status]`                              | obsługa | aktywne lub wybrane zlecenia                                       |
+| `/zlecenie utworz / status / wplata / proforma / panel` | obsługa | to samo, co w menu panelu, plus przeniesienie panelu               |
+| `/profil [osoba]`                                       | wszyscy | odznaki, zlecenia, opinie (kwoty widzi tylko właściciel i obsługa) |
+
+## Cennik, portfolio, opinie
+
+- `/cennik domyslne` dodaje przykładowe pakiety i pozycje kalkulatora do edycji. `/cennik panel` wysyła panel z banerem. Przycisk **Zamów** przy pakiecie otwiera ticket z wypełnionym formularzem.
+- **Kalkulator wyceny:** klient zaznacza funkcje w select menu, wpisuje kod rabatowy i klika **Zamów ten zestaw**. Otwiera się ticket z listą funkcji i ceną.
+- `/cennik pakiet|pozycja dodaj/usun` (ta sama nazwa = edycja), `/cennik rabat dodaj/lista/usun`.
+- `/portfolio dodaj` przyjmuje do 4 zrzutów ekranu, zapisanych w bazie, więc linki nie wygasają. `/portfolio przegladaj` to przeglądarka ◀ ▶, a `/portfolio panel` to publiczny panel.
+- **Opinie:** prośba w DM po zakończeniu zlecenia (lub `/opinia`), akceptacja przez obsługę na kanale alertów, publikacja na kanale **Opinie**. `/opinie` pokazuje średnią i najnowsze. Średnia trafia też do panelu cennika.
+
 ## Produkcja (VPS)
 
 ```bash
@@ -223,6 +255,6 @@ Na koniec dopisz moduł do `src/modules/index.ts`. Router sam sprawdzi, czy modu
 ## Plan
 
 1. **MVP:** ✅ rdzeń, UI, baza, `/config`, `/serwis`, tickety, FAQ, logi, weryfikacja
-2. **Biznes:** zlecenia `ZX-xxxx`, płatności ręczne i proforma, cennik z kalkulatorem, portfolio, opinie, role klienta
+2. **Biznes:** ✅ zlecenia `ZX-xxxx`, płatności ręczne i proforma, cennik z kalkulatorem, portfolio, opinie, role klienta
 3. **Automatyzacja:** changelog z GitHuba, monitoring botów klientów, planowane ogłoszenia, statystyki, przypomnienia
 4. **Extra:** user-install, snippety, giveaway, propozycje, partnerstwa, Scheduled Events
