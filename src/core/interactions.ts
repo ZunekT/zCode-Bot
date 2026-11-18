@@ -27,7 +27,23 @@ async function guard(
   module: BotModule,
   access: AccessLevel | undefined,
   allowInMaintenance: boolean | undefined,
+  allowDM = false,
 ): Promise<Context | null> {
+  // Interakcje z DM (np. ocena ticketu) – tylko moduł i tryb serwisowy, bez uprawnień serwerowych.
+  if (allowDM && !interaction.inGuild()) {
+    const config = await getConfig(env.GUILD_ID);
+    if (!isModuleEnabled(config, module.name) && module.toggleable !== false) return null;
+    if (config.maintenance && !allowInMaintenance) {
+      if (interaction.isRepliable()) {
+        await interaction.reply(
+          warning('Przerwa techniczna', config.maintenanceMessage ?? 'Trwają prace serwisowe.'),
+        );
+      }
+      return null;
+    }
+    return { client, config };
+  }
+
   if (!interaction.inCachedGuild() || interaction.guildId !== env.GUILD_ID) {
     if (interaction.isRepliable())
       await interaction.reply(failure('Niedostępne', 'Ten bot działa tylko na serwerze zxCode.'));
@@ -129,16 +145,18 @@ export async function routeInteraction(client: ZxClient, interaction: Interactio
     const where = `komponent ${key}`;
 
     const typeMatches =
-      (handler.type === 'button' && interaction.isButton()) ||
+      ((handler.type === 'button' || handler.type === 'dmButton') && interaction.isButton()) ||
       (handler.type === 'select' && interaction.isAnySelectMenu()) ||
-      (handler.type === 'modal' && interaction.isModalSubmit());
+      ((handler.type === 'modal' || handler.type === 'dmModal') && interaction.isModalSubmit());
     if (!typeMatches) {
       log.warn(`Handler ${key} ma typ ${handler.type}, a przyszła inna interakcja`);
       return;
     }
 
     try {
-      const ctx = await guard(interaction, client, module, handler.access, handler.allowInMaintenance);
+      const dm = handler.type === 'dmButton' || handler.type === 'dmModal';
+      const access = 'access' in handler ? handler.access : undefined;
+      const ctx = await guard(interaction, client, module, access, handler.allowInMaintenance, dm);
       if (!ctx) return;
       // Typ został sprawdzony wyżej (typeMatches).
       await handler.run(interaction as never, args, ctx);

@@ -80,30 +80,33 @@ enum TicketPriority {
 }
 
 model Ticket {
-  id        Int            @id @default(autoincrement())
-  channelId String?        @unique
-  userId    String
-  category  TicketCategory
-  status    TicketStatus   @default(OPEN)
-  priority  TicketPriority @default(NORMAL)
-  subject   String?
+  id               Int            @id @default(autoincrement())
+  channelId        String?        @unique
+  // Wiadomość z panelem sterowania w kanale ticketu (aktualizowana przy przejęciu, priorytecie itd.)
+  controlMessageId String?
+  userId           String
+  category         TicketCategory
+  status           TicketStatus   @default(OPEN)
+  priority         TicketPriority @default(NORMAL)
+  subject          String?
   // Odpowiedzi z formularza (modal) – zależne od kategorii
-  formData  Json?
+  formData         Json?
 
   claimedBy String?
   orderId   Int?    @unique
   order     Order?  @relation(fields: [orderId], references: [id])
 
-  openedAt        DateTime  @default(now())
-  lastActivityAt  DateTime  @default(now())
-  lastClientMsgAt DateTime?
-  lastStaffMsgAt  DateTime?
-  slaAlertedAt    DateTime?
-  closeWarnedAt   DateTime?
-  closedAt        DateTime?
-  closedBy        String?
-  closeReason     String?
-  transcriptUrl   String?
+  openedAt          DateTime  @default(now())
+  lastActivityAt    DateTime  @default(now())
+  lastClientMsgAt   DateTime?
+  lastStaffMsgAt    DateTime?
+  firstStaffReplyAt DateTime?
+  slaAlertedAt      DateTime?
+  closeWarnedAt     DateTime?
+  closedAt          DateTime?
+  closedBy          String?
+  closeReason       String?
+  transcriptUrl     String?
 
   rating        Int?
   ratingComment String?

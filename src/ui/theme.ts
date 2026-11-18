@@ -9,6 +9,7 @@ export const Tone = {
   warning: { color: Colors.warning, emoji: 'lightning' },
   error: { color: Colors.error, emoji: 'shield_x' },
   brand: { color: Colors.brand, emoji: 'logo' },
+  neutral: { color: Colors.neutral, emoji: 'lock' },
 } as const satisfies Record<string, { color: number; emoji: EmojiName }>;
 
 export type ToneName = keyof typeof Tone;

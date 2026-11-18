@@ -72,7 +72,22 @@ export interface ModalHandler extends ComponentBase {
   run(interaction: ModalSubmitInteraction<'cached'>, args: string[], ctx: Context): Promise<unknown>;
 }
 
-export type ComponentHandler = ButtonHandler | SelectHandler | ModalHandler;
+/**
+ * Handlery działające także w wiadomościach prywatnych (np. ocena ticketu w DM).
+ * Interakcja nie musi pochodzić z serwera, więc nie ma `member` ani sprawdzania uprawnień.
+ */
+export interface DmButtonHandler extends Omit<ComponentBase, 'access'> {
+  type: 'dmButton';
+  run(interaction: ButtonInteraction, args: string[], ctx: Context): Promise<unknown>;
+}
+
+export interface DmModalHandler extends Omit<ComponentBase, 'access'> {
+  type: 'dmModal';
+  run(interaction: ModalSubmitInteraction, args: string[], ctx: Context): Promise<unknown>;
+}
+
+export type ComponentHandler =
+  ButtonHandler | SelectHandler | ModalHandler | DmButtonHandler | DmModalHandler;
 
 export interface EventHandler<K extends keyof ClientEvents = keyof ClientEvents> {
   event: K;

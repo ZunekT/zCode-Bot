@@ -2,6 +2,7 @@ import { env } from './config/env.js';
 import { ZxClient } from './client.js';
 import { prisma } from './db/prisma.js';
 import { redis } from './db/redis.js';
+import { assertDatabaseUpToDate } from './core/db-check.js';
 import { registerProcessErrorHandlers } from './core/errors.js';
 import { routeInteraction } from './core/interactions.js';
 import { loadModules } from './core/loader.js';
@@ -18,6 +19,7 @@ async function main() {
 
   await prisma.$connect();
   await redis.connect();
+  await assertDatabaseUpToDate();
   logger.info('Połączono z PostgreSQL i Redis');
 
   const client = new ZxClient();

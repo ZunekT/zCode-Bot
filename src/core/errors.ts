@@ -19,7 +19,10 @@ export class UserError extends Error {
 /** Odpowiada niezależnie od tego, czy interakcja była już potwierdzona. */
 export async function safeReply(interaction: RepliableInteraction, payload: V2Payload): Promise<void> {
   try {
-    if (interaction.deferred || interaction.replied) {
+    if (interaction.deferred && !interaction.replied) {
+      // Zastępujemy „Bot myśli…” – edycja nie przyjmuje flagi Ephemeral (zostaje z deferReply).
+      await interaction.editReply({ ...payload, flags: ['IsComponentsV2'] });
+    } else if (interaction.replied) {
       await interaction.followUp(payload);
     } else {
       await interaction.reply(payload);

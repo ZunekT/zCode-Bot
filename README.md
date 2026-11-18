@@ -7,7 +7,7 @@
 Bot Discord dla serwera **zxCode** (studio programowania botów): tickety, zlecenia, ręczne płatności, ogłoszenia, changelog, portfolio, opinie, moderacja i więcej.
 Interfejs zbudowany na **Components v2**, z emotkami z paczki zxCode wgranymi jako **Application Emojis**.
 
-> Status: **szkielet projektu** (rdzeń, UI, baza, `/ping`, `/config`, `/serwis`). Moduły dochodzą etapami, patrz [Plan](#plan).
+> Status: rdzeń, `/config`, `/serwis`, **tickety** i **FAQ**. Kolejne moduły dochodzą etapami, patrz [Plan](#plan).
 
 ## Stack
 
@@ -31,13 +31,55 @@ Interfejs zbudowany na **Components v2**, z emotkami z paczki zxCode wgranymi ja
    cp .env.example .env      # uzupełnij DISCORD_TOKEN, DISCORD_CLIENT_ID, GUILD_ID
    npm install
    docker compose -f docker/docker-compose.dev.yml up -d   # PostgreSQL + Redis
-   npm run db:migrate        # tworzy tabele
+   npm run db:migrate        # tworzy tabele (na Termuxie: npm run db:apply)
    npm run emojis:sync       # wgrywa 56 emotek jako Application Emojis (jednorazowo)
    npm run dev               # start z automatycznym przeładowaniem
    ```
 3. Na serwerze: `/config pokaz`, a następnie ustaw kategorie, kanały i role (`/config kategoria`, `/config kanal`, `/config rola`).
 
 Komendy rejestrują się automatycznie na serwerze z `GUILD_ID` przy każdym starcie (komendy serwerowe są widoczne od razu). Ręcznie: `npm run commands:deploy`.
+
+## Tickety
+
+**Konfiguracja (raz):**
+
+```
+/config kategoria typ:Kategoria ticketów   kategoria:🎫 TICKETY
+/config kategoria typ:Archiwum ticketów    kategoria:📁 ARCHIWUM
+/config rola      typ:Obsługa              rola:@Support
+/config kanal     typ:Logi                 kanal:#logi
+/config kanal     typ:Transkrypty ticketów kanal:#transkrypty
+/config kanal     typ:Alerty dla obsługi   kanal:#alerty
+/config tickety   auto_zamkniecie:48 sla:12
+/ticket panel     kanal:#pomoc
+```
+
+**Jak to działa:**
+
+- Panel ma 5 kategorii (zamówienie, wsparcie, współpraca, pytanie, reklamacja). Każda otwiera własny formularz (modal v2 z selectami i uploadem plików).
+- Ticket to kanał w kategorii ticketów z panelem sterowania: **Przejmij / Zwolnij**, **Priorytet**, **Dodaj osobę**, **Zamknij**.
+- Limity: 1 ticket na kategorię, 3 naraz na osobę, 30 s cooldownu. Discord pozwala na 50 kanałów w kategorii.
+- Bot podpowiada artykuły FAQ, jeśli słowa kluczowe pasują do treści formularza.
+- **SLA:** gdy klient czeka dłużej niż `sla` godzin, bot pinguje obsługę na kanale alertów (raz, do następnej odpowiedzi).
+- **Auto-zamykanie:** gdy obsługa odpisała, a klient milczy `auto_zamkniecie` godzin, bot ostrzega z przyciskiem „Zostaw otwarty”. Po kolejnych maks. 24 h zamyka ticket.
+- **Zamknięcie:** transkrypt HTML trafia na kanał transkryptów, klient dostaje DM z podsumowaniem, transkryptem i oceną 1–5 ⭐. Kanał idzie do archiwum (widoczny tylko dla obsługi) albo zostaje usunięty, jeśli archiwum nie ma lub jest pełne. Z archiwum można go ponownie otworzyć albo usunąć.
+- Oceny ≤ 2 ⭐ trafiają też na kanał alertów.
+
+**Komendy:**
+
+| Komenda                            | Kto            | Opis                                                             |
+| ---------------------------------- | -------------- | ---------------------------------------------------------------- |
+| `/ticket panel`                    | admin          | wysyła panel z banerem                                           |
+| `/ticket zamknij [powod]`          | autor, obsługa | zamyka ticket                                                    |
+| `/ticket dodaj` / `usun`           | obsługa        | dostęp dodatkowych osób                                          |
+| `/ticket priorytet`                | obsługa        | 🟢 niski, 🔵 normalny, 🟠 wysoki, 🔴 pilny                       |
+| `/ticket lista`                    | obsługa        | otwarte tickety według priorytetu, z czasem oczekiwania          |
+| `/ticket statystyki [okres]`       | obsługa        | liczby, czas 1. odpowiedzi i rozwiązania, oceny, ranking obsługi |
+| `/odpowiedz <szablon>`             | obsługa        | gotowa odpowiedź (`{klient}`, `{obsluga}`, `{ticket}`)           |
+| `/szablon dodaj/edytuj/usun/lista` | obsługa        | szablony odpowiedzi                                              |
+| `/notatka dodaj/lista`             | obsługa        | notatki wewnętrzne (klient ich nie widzi)                        |
+| `/faq pokaz/lista`                 | wszyscy        | baza pytań (obsługa może wysłać publicznie)                      |
+| `/faq dodaj/edytuj/usun`           | obsługa        | artykuły ze słowami kluczowymi                                   |
 
 ## Produkcja (VPS)
 
@@ -144,7 +186,7 @@ Na koniec dopisz moduł do `src/modules/index.ts`. Router sam sprawdzi, czy modu
 
 ## Plan
 
-1. **MVP:** ✅ rdzeń, UI, baza, `/config`, `/serwis` · ⏳ tickety, logi, weryfikacja
+1. **MVP:** ✅ rdzeń, UI, baza, `/config`, `/serwis`, tickety, FAQ · ⏳ logi, weryfikacja
 2. **Biznes:** zlecenia `ZX-xxxx`, płatności ręczne i proforma, cennik z kalkulatorem, portfolio, opinie, role klienta
 3. **Automatyzacja:** changelog z GitHuba, monitoring botów klientów, planowane ogłoszenia, statystyki, przypomnienia
 4. **Extra:** user-install, snippety, giveaway, propozycje, partnerstwa, Scheduled Events
