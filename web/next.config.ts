@@ -3,7 +3,12 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
-  images: { unoptimized: true },
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    localPatterns: [{ pathname: '/api/portfolio/**' }, { pathname: '/emojis/**' }, { pathname: '/branding/**' }],
+    remotePatterns: [{ protocol: 'https', hostname: 'cdn.discordapp.com' }],
+    minimumCacheTTL: 86400,
+  },
   async headers() {
     return [
       {

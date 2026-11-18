@@ -1,11 +1,12 @@
-'use client';
-
+import Image from 'next/image';
 import Link from 'next/link';
-import { AnimatePresence, m, useReducedMotion, useScroll, useSpring } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { SiteData } from '@/lib/site';
 import { Icon } from '../Icon';
-import { Arrow, Check, CountUp, EASE, Marquee, Reveal, Spotlight, Stars, useVisible } from './primitives';
+import { CountUp, FaqList, LiveSwitches, PanelMock, Spotlight } from './islands';
+import { Arrow, Check, Marquee, Reveal, Stars } from './primitives';
+
+export { FaqList };
 
 const money = (v: number) =>
   v.toLocaleString('pl-PL', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 });
@@ -40,12 +41,12 @@ export function PageHero({ kicker, title, lead, children }: { kicker: string; ti
         <div className="grid-bg" />
       </div>
       <div className="wrap">
-        <m.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}>
+        <div className="enter">
           <span className="kicker center">{kicker}</span>
           <h1>{title}</h1>
           {lead && <p className="lead">{lead}</p>}
           {children}
-        </m.div>
+        </div>
       </div>
     </section>
   );
@@ -102,46 +103,13 @@ export function Stats({ stats }: { stats: SiteData['stats'] }) {
 
 // ───────────────────────────── Usługi (bento) ─────────────────────────────
 
-function LiveSwitches() {
-  const reduce = useReducedMotion();
-  const [ref, visible] = useVisible<HTMLDivElement>();
-  const [on, setOn] = useState([true, false, true]);
-  useEffect(() => {
-    if (reduce || !visible) return;
-    let i = 0;
-    const t = setInterval(() => {
-      setOn((s) => s.map((v, j) => (j === i % 3 ? !v : v)));
-      i++;
-    }, 1500);
-    return () => clearInterval(t);
-  }, [reduce, visible]);
-  return (
-    <div ref={ref} className="mini-switches tile-visual" aria-hidden>
-      {['Powitania', 'Ekonomia', 'Logi serwera'].map((l, i) => (
-        <div key={l} className="mini-row">
-          {l}
-          <span className={`mini-switch${on[i] ? ' on' : ''}`} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function UptimeBars() {
   const bars = Array.from({ length: 36 }, (_, i) => (i === 24 ? 0.45 : 0.75 + ((i * 37) % 25) / 100));
   return (
     <div className="tile-visual" aria-hidden>
       <div className="uptime-bars">
         {bars.map((h, i) => (
-          <m.i
-            key={i}
-            className={h < 0.6 ? 'bad' : undefined}
-            initial={{ scaleY: 0 }}
-            whileInView={{ scaleY: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.012, duration: 0.45, ease: EASE }}
-            style={{ height: `${h * 100}%` }}
-          />
+          <i key={i} className={h < 0.6 ? 'bad' : undefined} style={{ height: `${h * 100}%`, '--i': i } as CSSProperties} />
         ))}
       </div>
       <div className="small muted" style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between' }}>
@@ -249,9 +217,6 @@ const STEPS = [
 ];
 
 export function Process() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 85%', 'end 60%'] });
-  const scaleX = useSpring(scrollYProgress, { stiffness: 90, damping: 24 });
   return (
     <section id="proces" className="section cv">
       <div className="wrap">
@@ -263,9 +228,9 @@ export function Process() {
             </>
           }
         />
-        <div className="steps" ref={ref}>
+        <div className="steps">
           <div className="steps-line" aria-hidden>
-            <m.span style={{ scaleX }} />
+            <span />
           </div>
           {STEPS.map((s, i) => (
             <Reveal key={s.title} className="step" delay={i * 0.08}>
@@ -290,7 +255,13 @@ export function PortfolioGrid({ items, compact }: { items: SiteData['portfolio']
           <article className={`work${compact ? ' compact' : ''}`}>
             <div className="work-media">
               {p.images[0] ? (
-                <img className="cover" src={`/api/portfolio/${p.images[0]}`} alt={p.title} loading="lazy" decoding="async" width={640} height={360} />
+                <Image
+                  className="cover"
+                  src={`/api/portfolio/${p.images[0]}`}
+                  alt={p.title}
+                  fill
+                  sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 380px"
+                />
               ) : (
                 <div className="ph">
                   <img src="/emojis/bot.png" alt="" width={72} height={72} />
@@ -306,7 +277,7 @@ export function PortfolioGrid({ items, compact }: { items: SiteData['portfolio']
               <div className="work-gallery" style={{ marginTop: 14 }}>
                 {p.images.slice(1, 6).map((id) => (
                   <a key={id} href={`/api/portfolio/${id}`} target="_blank" rel="noreferrer">
-                    <img src={`/api/portfolio/${id}`} alt="" loading="lazy" decoding="async" width={56} height={36} />
+                    <Image src={`/api/portfolio/${id}`} alt="" width={56} height={36} sizes="56px" />
                   </a>
                 ))}
               </div>
@@ -504,19 +475,7 @@ export function ReviewsGrid({ reviews }: { reviews: SiteData['reviews'] }) {
 
 // ───────────────────────────── Pokaz panelu ─────────────────────────────
 
-const CHANNELS = ['# powitania', '# ogloszenia', '# lobby'];
-
 export function PanelShowcase() {
-  const reduce = useReducedMotion();
-  const [ref, visible] = useVisible<HTMLDivElement>();
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    if (reduce || !visible) return;
-    const t = setInterval(() => setTick((v) => v + 1), 1800);
-    return () => clearInterval(t);
-  }, [reduce, visible]);
-  const dirty = tick % 3 === 1;
-
   return (
     <section id="panel" className="section cv" style={{ scrollMarginTop: 60 }}>
       <div className="wrap showcase">
@@ -550,77 +509,7 @@ export function PanelShowcase() {
         </div>
 
         <Reveal delay={0.08}>
-          <div ref={ref} className="browser" aria-hidden>
-            <div className="browser-bar">
-              <i />
-              <i />
-              <i />
-              <div className="browser-url">zxcode.pl/panel</div>
-            </div>
-            <div className="browser-body">
-              <div className="browser-side">
-                {['Ogólne', 'Powitania', 'Ekonomia', 'Tickety', 'Logi'].map((s, i) => (
-                  <span key={s} className={i === 1 ? 'on' : undefined}>
-                    <i /> {s}
-                  </span>
-                ))}
-              </div>
-              <div className="browser-main">
-                <div className="bm-card">
-                  <h5>
-                    Powitania <span className={`mini-switch${tick % 6 < 5 ? ' on' : ''}`} />
-                  </h5>
-                  <div className="bm-fields">
-                    <div className="bm-field">
-                      Kanał powitań
-                      <div className="bm-input">{CHANNELS[tick % 3]}</div>
-                    </div>
-                    <div className="bm-field">
-                      Rola na start
-                      <div className="bm-input">
-                        <span style={{ width: 8, height: 8, borderRadius: 9, background: '#2ecc8f', marginRight: 8, flexShrink: 0 }} />
-                        @Gracz
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bm-field" style={{ marginTop: 10 }}>
-                    Treść
-                    <div className="bm-input">Witaj {'{user}'} na serwerze!</div>
-                  </div>
-                </div>
-                <div className="bm-card">
-                  <h5>
-                    Ekonomia <span className="mini-switch on" />
-                  </h5>
-                  <div className="bm-fields">
-                    <div className="bm-field">
-                      Nazwa waluty
-                      <div className="bm-input">monety</div>
-                    </div>
-                    <div className="bm-field">
-                      Nagroda dzienna
-                      <div className="bm-input">250</div>
-                    </div>
-                  </div>
-                </div>
-                <div style={{ minHeight: 46, display: 'flex', justifyContent: 'center' }}>
-                  <AnimatePresence>
-                    {dirty && (
-                      <m.div
-                        className="bm-save"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                      >
-                        <span>Masz niezapisane zmiany</span>
-                        <span>Zapisz</span>
-                      </m.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-            </div>
-          </div>
+          <PanelMock />
         </Reveal>
       </div>
     </section>
@@ -633,40 +522,6 @@ export interface FaqEntry {
   id: number | string;
   question: string;
   answer: string;
-}
-
-export function FaqList({ items, firstOpen = true }: { items: FaqEntry[]; firstOpen?: boolean }) {
-  const [open, setOpen] = useState<FaqEntry['id'] | null>(firstOpen ? (items[0]?.id ?? null) : null);
-  return (
-    <div className="faq-list">
-      {items.map((f) => {
-        const isOpen = open === f.id;
-        const id = `faq-${f.id}`;
-        return (
-          <div key={f.id} className={`faq-item${isOpen ? ' open' : ''}`}>
-            <button className="faq-q" aria-expanded={isOpen} aria-controls={id} onClick={() => setOpen(isOpen ? null : f.id)}>
-              {f.question}
-              <span className="faq-plus" aria-hidden />
-            </button>
-            <AnimatePresence initial={false}>
-              {isOpen && (
-                <m.div
-                  id={id}
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.28, ease: EASE }}
-                  style={{ overflow: 'hidden' }}
-                >
-                  <div className="faq-a">{f.answer}</div>
-                </m.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
-    </div>
-  );
 }
 
 // ───────────────────────────── CTA ─────────────────────────────

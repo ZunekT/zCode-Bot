@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { env } from './env';
 import type { BotDetails, GuildSettings, PublicBot } from './types';
@@ -166,8 +167,10 @@ export const api = {
   siteAccess: (userId: string) => internal<SiteAccessData>('GET', `${user(userId)}/admin/site`),
   saveSiteAccess: (userId: string, body: { launched?: boolean; previewUsers?: string[] }) =>
     internal<{ launched: boolean; previewUsers: string[] }>('PUT', `${user(userId)}/admin/site`, body),
-  me: (userId: string) =>
+  /** Jedno zapytanie na żądanie (layout i strona korzystają z tego samego wyniku). */
+  me: cache((userId: string) =>
     internal<{ owner: boolean; vps: boolean }>('GET', `${user(userId)}/me`).catch(() => ({ owner: false, vps: false })),
+  ),
   vps: (userId: string, range: string) =>
     orNotFound(internal<VpsData>('GET', `${user(userId)}/admin/vps?range=${encodeURIComponent(range)}`)),
   vpsAction: (userId: string, action: 'reboot' | 'backup') =>

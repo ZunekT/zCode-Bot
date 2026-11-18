@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { AnimatePresence, m } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { Icon } from '../Icon';
+import { useScrolled } from './islands';
 
 export const NAV_LINKS = [
   { href: '/', label: 'Start' },
@@ -16,15 +16,9 @@ export const NAV_LINKS = [
 
 export function Nav() {
   const pathname = usePathname();
-  const [scrolled, setScrolled] = useState(false);
+  const scrolled = useScrolled();
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 16);
-    on();
-    window.addEventListener('scroll', on, { passive: true });
-    return () => window.removeEventListener('scroll', on);
-  }, []);
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
     if (!open) return;
@@ -33,7 +27,7 @@ export function Nav() {
     return () => window.removeEventListener('keydown', esc);
   }, [open]);
 
-  const current = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href)) ? 'page' : undefined;
+  const current = (href: string) => ((href === '/' ? pathname === '/' : pathname.startsWith(href)) ? 'page' : undefined);
 
   return (
     <>
@@ -59,37 +53,27 @@ export function Nav() {
           Zamów bota
         </a>
         <button
-          className="snav-burger"
+          className={`snav-burger${open ? ' open' : ''}`}
           aria-label={open ? 'Zamknij menu' : 'Otwórz menu'}
           aria-expanded={open}
+          aria-controls="menu-mobile"
           onClick={() => setOpen((o) => !o)}
         >
-          <span style={open ? { transform: 'translateY(2.75px) rotate(45deg)' } : undefined} />
-          <span style={open ? { transform: 'translateY(-2.75px) rotate(-45deg)' } : undefined} />
+          <span />
+          <span />
         </button>
       </header>
-      <AnimatePresence>
-        {open && (
-          <m.nav
-            className="snav-mobile"
-            aria-label="Menu"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.18 }}
-          >
-            {NAV_LINKS.map((l) => (
-              <Link key={l.href} href={l.href} aria-current={current(l.href)}>
-                {l.label}
-              </Link>
-            ))}
-            <hr />
-            <Link href="/panel" prefetch={false}>
-              Panel klienta <span className="muted">→</span>
-            </Link>
-          </m.nav>
-        )}
-      </AnimatePresence>
+      <nav id="menu-mobile" className={`snav-mobile${open ? ' open' : ''}`} aria-label="Menu" aria-hidden={!open} inert={!open}>
+        {NAV_LINKS.map((l) => (
+          <Link key={l.href} href={l.href} aria-current={current(l.href)}>
+            {l.label}
+          </Link>
+        ))}
+        <hr />
+        <Link href="/panel" prefetch={false}>
+          Panel klienta <span className="muted">→</span>
+        </Link>
+      </nav>
     </>
   );
 }

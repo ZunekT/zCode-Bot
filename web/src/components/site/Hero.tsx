@@ -1,36 +1,15 @@
-'use client';
-
 import Link from 'next/link';
-import { m, useReducedMotion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { Icon } from '../Icon';
-import { Arrow, EASE, Stars, useVisible } from './primitives';
+import { OrderProgress } from './islands';
+import { Arrow, Stars } from './primitives';
 
 const LINE_1 = ['Boty', 'Discord,'];
 const LINE_2 = ['które', 'pracują', 'za', 'Ciebie'];
-const PROGRESS = [35, 60, 85, 100];
+const d = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties;
 
-const word = (i: number) => ({
-  initial: { opacity: 0, y: 28 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.7, delay: 0.08 + i * 0.06, ease: EASE },
-});
-
+/** Hero – HTML z serwera, animacje wejścia w CSS; jedyna wyspa to pasek postępu w podglądzie. */
 export function Hero({ rating, reviews, avatars }: { rating: number | null; reviews: number; avatars: string[] }) {
-  const reduce = useReducedMotion();
-  const [stageRef, visible] = useVisible<HTMLDivElement>();
-  const [step, setStep] = useState(1);
-
-  // Postęp zlecenia „na żywo” – tylko gdy podgląd jest na ekranie.
-  useEffect(() => {
-    if (reduce || !visible) return;
-    const t = setInterval(() => setStep((s) => (s + 1) % PROGRESS.length), 2200);
-    return () => clearInterval(t);
-  }, [reduce, visible]);
-
-  const pct = PROGRESS[step]!;
-  const done = pct === 100;
-
   return (
     <section className="hero2">
       <div className="bg" aria-hidden>
@@ -40,55 +19,43 @@ export function Hero({ rating, reviews, avatars }: { rating: number | null; revi
 
       <div className="wrap">
         <div className="hero2-head">
-          <m.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}>
-            <Link href="/#panel" className="pill-badge">
-              <b>NOWE</b>
-              <span>Panel klienta – ustawienia bota online</span>
-              <Arrow />
-            </Link>
-          </m.div>
+          <Link href="/#panel" className="pill-badge enter" style={d(0)}>
+            <b>NOWE</b>
+            <span>Panel klienta – ustawienia bota online</span>
+            <Arrow />
+          </Link>
 
           <h1>
             {LINE_1.map((w, i) => (
-              <m.span key={w} className="word" {...word(i)}>
+              <span key={w} className="word enter" style={d(80 + i * 60)}>
                 {w}&nbsp;
-              </m.span>
+              </span>
             ))}
             <br />
             {LINE_2.map((w, i) => (
-              <m.span key={w} className="word grad" {...word(i + LINE_1.length)}>
+              <span key={w} className="word grad enter" style={d(200 + i * 60)}>
                 {w}
                 {i < LINE_2.length - 1 ? ' ' : ''}
-              </m.span>
+              </span>
             ))}
           </h1>
 
-          <m.p
-            className="hero2-sub"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.45, ease: EASE }}
-          >
-            Tickety, ekonomia, RP, moderacja i integracje. Projektujemy, piszemy i utrzymujemy boty dla Twojej społeczności –
-            a ustawienia zmieniasz sam w panelu.
-          </m.p>
+          <p className="hero2-sub enter" style={d(420)}>
+            Tickety, ekonomia, RP, moderacja i integracje. Projektujemy, piszemy i utrzymujemy boty dla Twojej społeczności – a
+            ustawienia zmieniasz sam w panelu.
+          </p>
 
-          <m.div
-            className="hero2-actions"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.55, ease: EASE }}
-          >
+          <div className="hero2-actions enter" style={d(520)}>
             <a href="/zamow" className="cta-btn">
               <Icon name="discord" size={20} /> Zamów bota <Arrow />
             </a>
             <Link href="/realizacje" className="ghost-btn">
               Zobacz realizacje <Arrow />
             </Link>
-          </m.div>
+          </div>
 
           {rating !== null && reviews > 0 && (
-            <m.div className="hero2-trust" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 0.6 }}>
+            <div className="hero2-trust enter" style={d(700)}>
               {avatars.length > 0 && (
                 <div className="avatars">
                   {avatars.slice(0, 5).map((a, i) => (
@@ -105,17 +72,11 @@ export function Hero({ rating, reviews, avatars }: { rating: number | null; revi
                   </Link>
                 </div>
               </div>
-            </m.div>
+            </div>
           )}
         </div>
 
-        <m.div
-          ref={stageRef}
-          className="stage"
-          initial={{ opacity: 0, y: 32 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.35, ease: EASE }}
-        >
+        <div className="stage enter" style={d(350)}>
           <div className="float-card float-1">
             <span className="live-dot" />
             <div>
@@ -147,7 +108,7 @@ export function Hero({ rating, reviews, avatars }: { rating: number | null; revi
             </div>
             <div className="dc-body">
               <div className="dc-msg">
-                <img className="dc-avatar" src="/emojis/logo_round.png" alt="" />
+                <img className="dc-avatar" src="/emojis/logo_round.png" alt="" width={40} height={40} />
                 <div style={{ minWidth: 0 }}>
                   <div className="dc-name">
                     zxCode <span className="dc-app">APP</span> <span className="dc-time">Dzisiaj o 14:32</span>
@@ -158,19 +119,7 @@ export function Hero({ rating, reviews, avatars }: { rating: number | null; revi
                     </h4>
                     <div style={{ color: '#b5bac1' }}>Bot RP dla serwera Miasto Nocą</div>
                     <div className="dc-sep" />
-                    <div className="dc-field">
-                      <b>Status:</b> {done ? 'Gotowe do odbioru' : 'W realizacji'}
-                    </div>
-                    <div className="dc-field">
-                      <b>Moduły:</b> ekonomia, praca, tickety, logi
-                    </div>
-                    <div className="dc-progress">
-                      <span>Postęp</span>
-                      <span className={`dc-bar${done ? ' done' : ''}`}>
-                        <span style={{ transform: `scaleX(${pct / 100})` }} />
-                      </span>
-                      <span className="dc-pct">{pct}%</span>
-                    </div>
+                    <OrderProgress />
                     <div className="dc-buttons">
                       <span className="dc-btn primary">
                         <img src="/emojis/checklist.png" width={16} height={16} alt="" /> Panel
@@ -184,7 +133,7 @@ export function Hero({ rating, reviews, avatars }: { rating: number | null; revi
               </div>
             </div>
           </div>
-        </m.div>
+        </div>
       </div>
     </section>
   );
