@@ -4,6 +4,22 @@ Strona (`web/`, Next.js) działa jako osobny kontener `web`. Z botem rozmawia pr
 (`bot:3100`, tylko sieć Dockera, nagłówek `x-internal-secret`). Logowanie przez Discord (OAuth2,
 zakres `identify`), sesja w podpisanym ciasteczku – strona nie ma własnej bazy.
 
+## Strona główna (wizytówka)
+
+`web/src/app/page.tsx` + `web/src/components/site/*` (animacje: biblioteka `motion`, font Geist).
+Sekcje: hero z podglądem wiadomości bota, technologie, statystyki, usługi, proces, realizacje, cennik,
+opinie, pokaz panelu, FAQ, wezwanie do działania. Treści z bazy bota (`/internal/public/site`, cache 5 min):
+
+| Sekcja     | Skąd dane                                                                                 | Gdy pusto                                    |
+| ---------- | ----------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Statystyki | zakończone zlecenia, klienci, średnia opinii, uptime monitoringu, liczba osób na serwerze | ukryta (pokazuje tylko wartości > 0, min. 2) |
+| Realizacje | `/portfolio` (ze zdjęciami)                                                               | ukryta                                       |
+| Cennik     | pakiety i dodatki z `/cennik`                                                             | przycisk „bezpłatna wycena”                  |
+| Opinie     | zatwierdzone opinie (nick i avatar z Discorda)                                            | ukryta                                       |
+| FAQ        | baza FAQ (min. 3 pytania)                                                                 | domyślne pytania                             |
+
+Przycisk „Zamów bota” prowadzi do `DISCORD_INVITE_URL` (bez niego – do logowania).
+
 ## Pierwsze uruchomienie (VPS)
 
 1. **DNS** – rekordy A `zxcode.pl` i `www.zxcode.pl` → IP serwera.

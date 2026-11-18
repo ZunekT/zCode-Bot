@@ -1,8 +1,24 @@
-import Link from 'next/link';
+import { MotionConfig } from 'motion/react';
 import { Icon } from '@/components/Icon';
-import { Topbar } from '@/components/Topbar';
+import { Hero } from '@/components/site/Hero';
+import { Nav } from '@/components/site/Nav';
+import {
+  Faq,
+  FinalCta,
+  Footer,
+  PanelShowcase,
+  Portfolio,
+  Pricing,
+  Process,
+  Reviews,
+  Services,
+  Stats,
+  TechStrip,
+} from '@/components/site/Sections';
+import '@/components/site/site.css';
 import { env } from '@/lib/env';
 import { getSession } from '@/lib/session';
+import { getSite, type SiteData } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,77 +28,52 @@ const ERRORS: Record<string, string> = {
   discord: 'Discord nie potwierdził logowania. Spróbuj jeszcze raz.',
 };
 
-const FEATURES = [
-  {
-    icon: 'tools',
-    title: 'Panel ustawień',
-    text: 'Kanały, role, teksty i moduły bota zmieniasz na stronie. Bot dostaje zmiany od razu, bez restartu.',
-  },
-  {
-    icon: 'shield_check',
-    title: 'Uprawnienia komend',
-    text: 'Decydujesz, które role na Twoim serwerze mogą używać poszczególnych komend bota.',
-  },
-  {
-    icon: 'server',
-    title: 'Monitoring 24/7',
-    text: 'Pilnujemy, żeby bot działał. Przy awarii dostajemy alert i od razu się tym zajmujemy.',
-  },
-];
+const EMPTY: SiteData = {
+  stats: { ordersCompleted: 0, clients: 0, rating: null, reviews: 0, members: null, botsMonitored: 0, uptime: null },
+  packages: [],
+  addons: [],
+  portfolio: [],
+  reviews: [],
+  faq: [],
+};
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ blad?: string }> }) {
-  const [session, { blad }] = await Promise.all([getSession(), searchParams]);
-  const invite = env.discordInvite;
+  const [session, { blad }, site] = await Promise.all([getSession(), searchParams, getSite()]);
+  const data = site ?? EMPTY;
+  // Zamówienie: zaproszenie na serwer Discord, a bez niego – logowanie (panel).
+  const orderUrl = env.discordInvite ?? '/api/auth/login';
+  const avatars = data.reviews
+    .map((r) => r.avatar)
+    .filter((a): a is string => !!a && /^https:\/\/cdn\.discordapp\.com\//.test(a));
+  const sections = ['uslugi', 'proces', data.portfolio.length ? 'realizacje' : '', 'cennik', 'panel', 'faq'].filter(Boolean);
 
   return (
-    <>
-      <Topbar session={session} />
-      <main className="container">
+    <MotionConfig reducedMotion="user">
+      <div className="site">
+        <Nav loggedIn={!!session} orderUrl={orderUrl} sections={sections} />
         {blad && ERRORS[blad] && (
-          <div className="notice notice-err" style={{ marginTop: 24 }}>
-            <Icon name="shield_x" />
-            <p>{ERRORS[blad]}</p>
+          <div className="wrap" style={{ position: 'relative', zIndex: 5, paddingTop: 96 }}>
+            <div className="notice notice-err">
+              <Icon name="shield_x" />
+              <p>{ERRORS[blad]}</p>
+            </div>
           </div>
         )}
-        <section className="hero">
-          <img src="/emojis/logo_round.png" alt="zxCode" className="hero-logo" />
-          <div className="eyebrow">
-            &lt; Programowanie botów <b>Discord</b> /&gt;
-          </div>
-          <h1>
-            Boty Discord <span>szyte na miarę</span>
-          </h1>
-          <p>Projektujemy, piszemy i utrzymujemy boty dla Twojej społeczności. Wszystkie ustawienia masz w jednym panelu.</p>
-          <div className="hero-actions">
-            {session ? (
-              <Link href="/panel" className="btn btn-primary btn-lg">
-                <Icon name="bot" size={20} /> Przejdź do panelu
-              </Link>
-            ) : (
-              <a href="/api/auth/login" className="btn btn-primary btn-lg">
-                <Icon name="discord" size={20} /> Zaloguj przez Discord
-              </a>
-            )}
-            {invite && (
-              <a href={invite} className="btn btn-lg" target="_blank" rel="noreferrer">
-                <Icon name="cart" size={20} /> Zamów bota
-              </a>
-            )}
-          </div>
-        </section>
-        <section className="features">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="card feature">
-              <Icon name={f.icon} size={40} />
-              <h3>{f.title}</h3>
-              <p>{f.text}</p>
-            </div>
-          ))}
-        </section>
-      </main>
-      <footer className="footer">
-        <div className="container">© {new Date().getFullYear()} zxCode · Programowanie botów Discord</div>
-      </footer>
-    </>
+        <main>
+          <Hero orderUrl={orderUrl} rating={data.stats.rating} reviews={data.stats.reviews} avatars={avatars} />
+          <TechStrip />
+          <Stats stats={data.stats} />
+          <Services />
+          <Process />
+          <Portfolio items={data.portfolio} />
+          <Pricing packages={data.packages} addons={data.addons} orderUrl={orderUrl} />
+          <Reviews reviews={data.reviews} />
+          <PanelShowcase />
+          <Faq items={data.faq} />
+          <FinalCta orderUrl={orderUrl} loggedIn={!!session} />
+        </main>
+        <Footer orderUrl={orderUrl} />
+      </div>
+    </MotionConfig>
   );
 }

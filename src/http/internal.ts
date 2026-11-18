@@ -6,6 +6,7 @@ import { audit } from '../core/audit.js';
 import { createLogger } from '../utils/logger.js';
 import { safeEqual } from '../modules/sdk/keys.js';
 import { sendError } from '../modules/sdk/routes.js';
+import { publicSiteRoutes } from './public-site.js';
 import {
   guildData,
   ownedBot,
@@ -45,6 +46,8 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
     if (!/^\d{17,20}$/.test(userId)) throw new Error('bad user');
     return { userId, botId: Number(botId) };
   };
+
+  publicSiteRoutes(app, client);
 
   app.get('/internal/health', async () => ({ ok: true, discord: client.isReady() }));
 
