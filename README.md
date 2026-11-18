@@ -7,7 +7,7 @@
 Bot Discord dla serwera **zxCode** (studio programowania botów): tickety, zlecenia, ręczne płatności, ogłoszenia, changelog, portfolio, opinie, moderacja i więcej.
 Interfejs zbudowany na **Components v2**, z emotkami z paczki zxCode wgranymi jako **Application Emojis**.
 
-> Status: etap 1 (tickety, FAQ, logi, weryfikacja) i etap 2 (**zlecenia, płatności i proformy, cennik z kalkulatorem, portfolio, opinie, role klienta**). Plan: [Plan](#plan).
+> Status: etapy 1–3 – tickety, FAQ, logi, weryfikacja, zlecenia, płatności, cennik, portfolio, opinie, role klienta, **ogłoszenia, changelog z GitHubem, roadmapa, monitoring botów, przypomnienia, statystyki**. Plan: [Plan](#plan).
 
 ## Stack
 
@@ -149,6 +149,39 @@ Klient akceptuje wycenę przyciskiem w panelu. Dzień przed terminem płatności
 - `/portfolio dodaj` przyjmuje do 4 zrzutów ekranu, zapisanych w bazie, więc linki nie wygasają. `/portfolio przegladaj` to przeglądarka ◀ ▶, a `/portfolio panel` to publiczny panel.
 - **Opinie:** prośba w DM po zakończeniu zlecenia (lub `/opinia`), akceptacja przez obsługę na kanale alertów, publikacja na kanale **Opinie**. `/opinie` pokazuje średnią i najnowsze. Średnia trafia też do panelu cennika.
 
+## Ogłoszenia
+
+`/ogloszenie nowe [kanal]` otwiera formularz: tytuł, treść (markdown), obrazek, przyciski z linkami (`Nazwa | https://…`) i ping. Po wysłaniu formularza dostajesz **edytor**: podgląd 1:1, a pod nim wybór pingu (brak / @everyone / @here / dowolna rola), kanału i przyciski **Opublikuj teraz**, **Zaplanuj** (np. `jutro 18:00`, `24.12 12:00`, czas polski), **Edytuj**, **Usuń**.
+
+- Na kanale typu „Ogłoszenia” bot sam robi crosspost do serwerów obserwujących.
+- Opublikowane ogłoszenie można edytować (wiadomość zmienia się w miejscu, bez ponownego pingu) albo usunąć.
+- `/ogloszenie lista` pokazuje szkice, zaplanowane i opublikowane, z menu otwierającym edytor.
+
+## Changelog i roadmapa
+
+- `/changelog projekt dodaj nazwa [repo] [rola] [kanal]` tworzy projekt. Z **rolą** subskrypcja = nadanie roli i ping przy nowej wersji. Bez roli subskrybenci dostają DM.
+- `/changelog nowy projekt wersja` otwiera formularz z sekcjami ✨ Dodano / 🔧 Zmieniono / 🐛 Naprawiono / 🗑️ Usunięto (każda zmiana w nowej linii). Dostajesz szkic z podglądem i przyciskami Opublikuj / Edytuj / Odrzuć.
+- Pod każdym wpisem jest przycisk **🔔 Powiadamiaj mnie**. `/changelog historia` pozwala przeglądać wersje strzałkami ◀ ▶. `/changelog szkice` pokazuje nieopublikowane.
+- **GitHub:** w repozytorium ustaw webhook `https://TWÓJ-SERWER/webhooks/github` (typ `application/json`, sekret = `GITHUB_WEBHOOK_SECRET`, zdarzenie **Releases**). Opublikowany release tworzy szkic na kanale alertów. Parser rozpoznaje nagłówki PL/EN i prefiksy `feat:` / `fix:` / `refactor:`.
+- `/roadmapa pokaz [projekt]` (wszyscy), `/roadmapa dodaj / status / usun` (obsługa): 🗓️ W planach, 🛠️ W trakcie, ✅ Gotowe.
+
+## Monitoring botów klientów
+
+`/monitoring dodaj nazwa tryb [adres] [bot] [wlasciciel]`:
+
+| Tryb         | Jak działa                                                                                      | Kiedy używać                                                |
+| ------------ | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 🌐 HTTP      | bot co minutę odpytuje adres health-check (200 = działa, JSON `{"version": "…"}` pokaże wersję) | bot klienta ma publiczny adres                              |
+| 💓 Heartbeat | bot klienta co minutę wywołuje `GET/POST /heartbeat/<token>` (gotowy kod w odpowiedzi komendy)  | bot na hostingu bez publicznego adresu; wymaga `PUBLIC_URL` |
+| 🟢 Presence  | status online konta bota na serwerze zxCode                                                     | wymaga Presence Intent i `ENABLE_PRESENCE_INTENT=true`      |
+
+Dwa nieudane sprawdzenia z rzędu dają alert 🔴 na kanale alertów (z pingiem obsługi) i DM do klienta. Po powrocie przychodzi 🟢 z czasem przerwy. `/monitoring panel` wysyła **tablicę statusu**, która aktualizuje się sama. `/status` pokazuje ją każdemu, `/monitoring lista | sprawdz | heartbeat | usun` służą obsłudze.
+
+## Przypomnienia i statystyki
+
+- `/przypomnij kiedy:… tresc:… [zlecenie]` przyjmuje `30m`, `2h`, `1h30m`, `3d`, `18:00`, `jutro 10:00`, `24.12 18:00` (czas polski). Przypomnienie przychodzi w DM z przyciskami **Odłóż 1h**, **Jutro 9:00**, **Gotowe**. Przy zablokowanym DM trafia na kanał, na którym je ustawiono. `/przypomnienia` pokazuje listę z możliwością usuwania.
+- `/statystyki [okres]` (obsługa): członkowie (wejścia/wyjścia), wiadomości dziennie z mini-wykresem i wykresem PNG, weryfikacje, tickety (czas 1. odpowiedzi, oceny), zlecenia, opinie. Wpłaty i należności widzi tylko administracja.
+
 ## Produkcja (VPS)
 
 ```bash
@@ -256,5 +289,5 @@ Na koniec dopisz moduł do `src/modules/index.ts`. Router sam sprawdzi, czy modu
 
 1. **MVP:** ✅ rdzeń, UI, baza, `/config`, `/serwis`, tickety, FAQ, logi, weryfikacja
 2. **Biznes:** ✅ zlecenia `ZX-xxxx`, płatności ręczne i proforma, cennik z kalkulatorem, portfolio, opinie, role klienta
-3. **Automatyzacja:** changelog z GitHuba, monitoring botów klientów, planowane ogłoszenia, statystyki, przypomnienia
+3. **Automatyzacja:** ✅ ogłoszenia (planowane), changelog z GitHuba, roadmapa, monitoring botów klientów, statystyki, przypomnienia
 4. **Extra:** user-install, snippety, giveaway, propozycje, partnerstwa, Scheduled Events

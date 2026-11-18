@@ -1,4 +1,5 @@
 import { ORDER_PREFIX } from '../config/constants.js';
+import { zonedDate, zonedParts } from './time.js';
 
 /** 42 -> "ZX-0042" */
 export function formatOrderId(id: number): string {
@@ -82,24 +83,22 @@ export function parseMoney(input: string): number | null {
 
 /**
  * Data po polsku: "24.12.2026", "24.12" (najbliższy taki dzień), "+14" (za 14 dni).
- * Zwraca koniec dnia (23:59) albo null.
+ * Zwraca koniec dnia (23:59 w strefie serwera) albo null.
  */
 export function parseDate(input: string, now = new Date()): Date | null {
   const s = input.trim();
+  const today = zonedParts(now);
   const rel = s.match(/^\+(\d{1,3})\s*(d|dni)?$/i);
-  if (rel) {
-    const d = new Date(now.getTime() + Number(rel[1]) * 86_400_000);
-    d.setHours(23, 59, 0, 0);
-    return d;
-  }
+  if (rel) return zonedDate(today.year, today.month, today.day + Number(rel[1]), 23, 59);
   const m = s.match(/^(\d{1,2})[./-](\d{1,2})(?:[./-](\d{2,4}))?$/);
   if (!m) return null;
   const day = Number(m[1]);
   const month = Number(m[2]) - 1;
-  const year = m[3] ? Number(m[3].length === 2 ? `20${m[3]}` : m[3]) : now.getFullYear();
-  let date = new Date(year, month, day, 23, 59, 0, 0);
-  if (!m[3] && date.getTime() < now.getTime()) date = new Date(year + 1, month, day, 23, 59, 0, 0);
-  if (date.getDate() !== day || date.getMonth() !== month) return null; // np. 31.02
+  if (month < 0 || month > 11) return null;
+  const year = m[3] ? Number(m[3].length === 2 ? `20${m[3]}` : m[3]) : today.year;
+  let date = zonedDate(year, month, day, 23, 59);
+  if (zonedParts(date).day !== day) return null; // np. 31.02
+  if (!m[3] && date.getTime() < now.getTime()) date = zonedDate(year + 1, month, day, 23, 59);
   return date;
 }
 

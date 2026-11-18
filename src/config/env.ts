@@ -12,6 +12,13 @@ const schema = z.object({
   GITHUB_WEBHOOK_SECRET: z.string().optional().default(''),
   GITHUB_TOKEN: z.string().optional().default(''),
   HTTP_PORT: z.coerce.number().int().positive().default(3000),
+  /** Publiczny adres serwera HTTP bota (do linków heartbeat), np. https://bot.zxcode.pl */
+  PUBLIC_URL: z.string().url().optional(),
+  /** Monitoring trybu „presence” – wymaga włączenia Presence Intent w Developer Portal. */
+  ENABLE_PRESENCE_INTENT: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });

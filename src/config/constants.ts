@@ -25,3 +25,6 @@ export const DiscordLimits = {
 
 /** Prefiks numeru sprawy, np. ZX-0042. */
 export const ORDER_PREFIX = 'ZX';
+
+/** Strefa czasowa serwera – daty wpisywane przez ludzi („jutro 10:00”) liczymy w niej. */
+export const TIMEZONE = 'Europe/Warsaw';

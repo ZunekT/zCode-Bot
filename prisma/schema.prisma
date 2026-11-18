@@ -57,6 +57,10 @@ model GuildConfig {
   // Moduły włączone/wyłączone (nazwa modułu -> bool)
   modules Json @default("{}")
 
+  // Tablica statusu monitorowanych botów (aktualizowana automatycznie)
+  statusBoardChannelId String?
+  statusBoardMessageId String?
+
   // Tryb serwisowy
   maintenance        Boolean @default(false)
   maintenanceMessage String?
@@ -332,16 +336,38 @@ model Review {
 }
 
 model MonitoredBot {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
-  ownerId     String?
+  id                  Int       @id @default(autoincrement())
+  name                String    @unique
+  ownerId             String?
   // Adres health-checku (HTTP 200 = działa) albo ID bota do sprawdzania obecności
-  healthUrl   String?
-  botUserId   String?
-  online      Boolean   @default(true)
-  lastCheckAt DateTime?
-  lastDownAt  DateTime?
-  version     String?
+  healthUrl           String?
+  botUserId           String?
+  // http | heartbeat | presence
+  mode                String    @default("http")
+  heartbeatToken      String?   @unique
+  lastHeartbeatAt     DateTime?
+  online              Boolean   @default(true)
+  consecutiveFailures Int       @default(0)
+  lastResponseMs      Int?
+  lastError           String?
+  checksTotal         Int       @default(0)
+  checksOk            Int       @default(0)
+  lastCheckAt         DateTime?
+  lastDownAt          DateTime?
+  lastUpAt            DateTime?
+  version             String?
+  orderId             Int?
+  createdAt           DateTime  @default(now())
+}
+
+// Dzienne liczniki serwera (do /statystyki i wykresów trendu)
+model DailyStat {
+  // RRRR-MM-DD (strefa Europe/Warsaw)
+  date     String @id
+  members  Int    @default(0)
+  joins    Int    @default(0)
+  leaves   Int    @default(0)
+  messages Int    @default(0)
 }
 
 // ─────────────────────────────── Ogłoszenia i changelog ───────────────────────────────
@@ -357,7 +383,13 @@ model Announcement {
   title       String
   content     String
   imageUrl    String?
+  // Obrazek trzymamy w bazie – linki do załączników Discorda wygasają.
+  imageData   Bytes?
+  imageName   String?
+  imageType   String?
+  // [{ label, url }]
   buttons     Json?
+  // null | "everyone" | "here" | "role:<id>"
   ping        String?
   status      PublishStatus @default(DRAFT)
   publishAt   DateTime?
@@ -379,14 +411,29 @@ model ChangelogEntry {
   version     String
   // { added: string[], changed: string[], fixed: string[], removed: string[] }
   sections    Json
+  description String?
+  releaseUrl  String?
   status      PublishStatus   @default(DRAFT)
   source      ChangelogSource @default(MANUAL)
   messageId   String?
+  channelId   String?
   authorId    String?
   createdAt   DateTime        @default(now())
   publishedAt DateTime?
 
   @@unique([project, version])
+}
+
+model ChangelogProject {
+  name        String   @id
+  description String?
+  // owner/repo na GitHubie – release z tego repo tworzy szkic changelogu
+  repo        String?  @unique
+  // Rola pingowana przy nowej wersji (subskrypcja = nadanie tej roli)
+  roleId      String?
+  // Kanał changelogu projektu (domyślnie kanał z /config)
+  channelId   String?
+  createdAt   DateTime @default(now())
 }
 
 model ChangelogSubscription {
@@ -482,6 +529,8 @@ model Reminder {
   content   String
   remindAt  DateTime
   orderId   Int?
+  // Gdy DM jest zablokowany – kanał, na którym ustawiono przypomnienie
+  channelId String?
   sent      Boolean  @default(false)
   createdAt DateTime @default(now())
 

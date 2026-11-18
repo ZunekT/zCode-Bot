@@ -1,5 +1,5 @@
 import { randomInt } from 'node:crypto';
-import { deflateSync } from 'node:zlib';
+import { Canvas, type RGB } from '../../utils/png.js';
 
 /**
  * Captcha jako PNG generowany w czystym JS (bez natywnych bibliotek – działa też na Termuxie).
@@ -40,7 +40,6 @@ const W = 300;
 const H = 100;
 const SCALE = 7;
 
-type RGB = [number, number, number];
 const PALETTE: RGB[] = [
   [26, 159, 255],
   [255, 255, 255],
@@ -56,30 +55,6 @@ export function randomCode(length = 5): string {
 }
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
-
-class Canvas {
-  readonly px = new Uint8Array(W * H * 3);
-
-  set(x: number, y: number, [r, g, b]: RGB, alpha = 1) {
-    x = Math.round(x);
-    y = Math.round(y);
-    if (x < 0 || y < 0 || x >= W || y >= H) return;
-    const i = (y * W + x) * 3;
-    this.px[i] = Math.round(this.px[i]! * (1 - alpha) + r * alpha);
-    this.px[i + 1] = Math.round(this.px[i + 1]! * (1 - alpha) + g * alpha);
-    this.px[i + 2] = Math.round(this.px[i + 2]! * (1 - alpha) + b * alpha);
-  }
-
-  line(x0: number, y0: number, x1: number, y1: number, color: RGB, width: number, alpha: number) {
-    const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
-    for (let s = 0; s <= steps; s++) {
-      const x = x0 + ((x1 - x0) * s) / steps;
-      const y = y0 + ((y1 - y0) * s) / steps;
-      for (let dx = 0; dx < width; dx++)
-        for (let dy = 0; dy < width; dy++) this.set(x + dx, y + dy, color, alpha);
-    }
-  }
-}
 
 function drawGlyph(c: Canvas, ch: string, cx: number, cy: number, angle: number, color: RGB) {
   const glyph = GLYPHS[ch];
@@ -100,46 +75,9 @@ function drawGlyph(c: Canvas, ch: string, cx: number, cy: number, angle: number,
   }
 }
 
-function crc32(buf: Buffer): number {
-  let c = ~0;
-  for (const byte of buf) {
-    c ^= byte;
-    for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1));
-  }
-  return ~c >>> 0;
-}
-
-function chunk(type: string, data: Buffer): Buffer {
-  const len = Buffer.alloc(4);
-  len.writeUInt32BE(data.length);
-  const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(body));
-  return Buffer.concat([len, body, crc]);
-}
-
-function encodePng(px: Uint8Array): Buffer {
-  const raw = Buffer.alloc((W * 3 + 1) * H);
-  for (let y = 0; y < H; y++) {
-    raw[y * (W * 3 + 1)] = 0; // filtr: brak
-    Buffer.from(px.buffer, px.byteOffset + y * W * 3, W * 3).copy(raw, y * (W * 3 + 1) + 1);
-  }
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(W, 0);
-  ihdr.writeUInt32BE(H, 4);
-  ihdr[8] = 8; // bit depth
-  ihdr[9] = 2; // RGB
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    chunk('IHDR', ihdr),
-    chunk('IDAT', deflateSync(raw)),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
-}
-
 /** Generuje obrazek PNG z kodem. */
 export function renderCaptcha(code: string): Buffer {
-  const c = new Canvas();
+  const c = new Canvas(W, H);
 
   // Tło: ciemny gradient w barwach zxCode + ziarno
   for (let y = 0; y < H; y++) {
@@ -173,5 +111,5 @@ export function renderCaptcha(code: string): Buffer {
   for (let i = 0; i < 700; i++)
     c.set(rand(0, W), rand(0, H), PALETTE[randomInt(PALETTE.length)]!, rand(0.3, 0.8));
 
-  return encodePng(c.px);
+  return c.toPng();
 }

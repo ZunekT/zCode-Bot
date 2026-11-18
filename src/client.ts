@@ -1,6 +1,7 @@
 import { Client, Collection, GatewayIntentBits, Partials } from 'discord.js';
 import type { BotModule, Command, ComponentHandler } from './core/types.js';
 import { createLogger } from './utils/logger.js';
+import { env } from './config/env.js';
 
 export class ZxClient extends Client {
   readonly modules = new Collection<string, BotModule>();
@@ -21,6 +22,8 @@ export class ZxClient extends Client {
         GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildInvites,
         GatewayIntentBits.DirectMessages,
+        // Uprzywilejowany – tylko gdy włączony w Developer Portal (monitoring „presence”).
+        ...(env.ENABLE_PRESENCE_INTENT ? [GatewayIntentBits.GuildPresences] : []),
       ],
       partials: [Partials.Channel, Partials.Message, Partials.GuildMember],
       allowedMentions: { parse: [], repliedUser: false },
