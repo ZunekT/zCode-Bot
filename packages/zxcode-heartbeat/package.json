@@ -1,7 +1,7 @@
 {
   "name": "zxcode-heartbeat",
   "version": "1.0.0",
-  "description": "Monitoring bota Discord przez zxCode – jedna linijka, bot sam zgłasza, że działa.",
+  "description": "Monitoring bota Discord przez zxCode – bot sam zgłasza, że działa.",
   "main": "index.js",
   "types": "index.d.ts",
   "exports": {
@@ -37,5 +37,10 @@
     "discord.js": {
       "optional": true
     }
+  },
+  "homepage": "https://zxcode.pl",
+  "author": "zxCode (https://zxcode.pl)",
+  "publishConfig": {
+    "access": "public"
   }
 }

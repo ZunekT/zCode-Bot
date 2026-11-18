@@ -1,7 +1,7 @@
 {
   "name": "zxcode-sdk",
   "version": "1.0.0",
-  "description": "zxCode SDK – ustawienia bota Discord edytowane w panelu zxcode.pl, uprawnienia komend, profil i monitoring.",
+  "description": "Ustawienia bota Discord edytowane w panelu zxcode.pl – moduły, uprawnienia komend, profil i monitoring.",
   "main": "index.js",
   "types": "index.d.ts",
   "exports": {
@@ -11,16 +11,36 @@
       "require": "./index.js"
     }
   },
-  "files": ["index.js", "index.mjs", "index.d.ts", "README.md"],
+  "files": [
+    "index.js",
+    "index.mjs",
+    "index.d.ts",
+    "README.md"
+  ],
   "engines": {
     "node": ">=18"
   },
-  "keywords": ["discord", "discord.js", "bot", "dashboard", "config", "panel", "zxcode"],
+  "keywords": [
+    "discord",
+    "discord.js",
+    "bot",
+    "dashboard",
+    "panel",
+    "zxcode",
+    "settings"
+  ],
   "license": "UNLICENSED",
   "peerDependencies": {
     "discord.js": ">=14"
   },
   "peerDependenciesMeta": {
-    "discord.js": { "optional": true }
+    "discord.js": {
+      "optional": true
+    }
+  },
+  "homepage": "https://zxcode.pl",
+  "author": "zxCode (https://zxcode.pl)",
+  "publishConfig": {
+    "access": "public"
   }
 }
