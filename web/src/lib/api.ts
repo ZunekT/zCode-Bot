@@ -123,8 +123,22 @@ export interface Overview {
   revenueByMonth: { month: string; amount: number }[];
   ordersByStatus: { status: string; label: string; count: number }[];
   recentOrders: OrderRow[];
-  recentPayments: { id: number; amount: number; paidAt: string; note: string | null; order: { id: number; number: string; title: string }; client: Person }[];
-  overdueInvoices: { id: number; number: string; amount: number; dueDate: string; order: { id: number; number: string; title: string }; client: Person }[];
+  recentPayments: {
+    id: number;
+    amount: number;
+    paidAt: string;
+    note: string | null;
+    order: { id: number; number: string; title: string };
+    client: Person;
+  }[];
+  overdueInvoices: {
+    id: number;
+    number: string;
+    amount: number;
+    dueDate: string;
+    order: { id: number; number: string; title: string };
+    client: Person;
+  }[];
 }
 export interface OrderDetails {
   order: OrderRow & {
@@ -138,7 +152,14 @@ export interface OrderDetails {
   statuses: { status: string; label: string }[];
   tasks: { id: number; content: string; done: boolean }[];
   payments: { id: number; amount: number; note: string | null; paidAt: string }[];
-  invoices: { id: number; number: string; amount: number; status: string; dueDate: string; issuedAt: string }[];
+  invoices: {
+    id: number;
+    number: string;
+    amount: number;
+    status: string;
+    dueDate: string;
+    issuedAt: string;
+  }[];
   history: { from: string | null; to: string; at: string; by: string }[];
   ticket: { id: number; status: string; url: string | null; transcriptUrl: string | null } | null;
   review: { rating: number; content: string; approved: boolean } | null;
@@ -183,7 +204,14 @@ export interface MyOrderDetails {
   };
   tasks: { id: number; content: string; done: boolean }[];
   payments: { id: number; amount: number; paidAt: string }[];
-  invoices: { id: number; number: string; amount: number; status: string; dueDate: string; issuedAt: string }[];
+  invoices: {
+    id: number;
+    number: string;
+    amount: number;
+    status: string;
+    dueDate: string;
+    issuedAt: string;
+  }[];
   history: { to: string; at: string }[];
   ticketUrl: string | null;
   payment: { details: string | null; title: string } | null;
@@ -233,7 +261,15 @@ export interface Ledger {
   usedPct: number;
   months: { month: string; amount: number }[];
   days: { date: string; amount: number }[];
-  rows: { lp: number; id: number; date: string; amount: number; order: { id: number; number: string; title: string }; client: Person; note: string | null }[];
+  rows: {
+    lp: number;
+    id: number;
+    date: string;
+    amount: number;
+    order: { id: number; number: string; title: string };
+    client: Person;
+    note: string | null;
+  }[];
 }
 export interface AuditEntry {
   id: number;
@@ -260,18 +296,32 @@ export const api = {
         `${adm(userId)}/orders?${new URLSearchParams({ ...(status && { status }), ...(q && { q }) })}`,
       ),
     ),
-  order: (userId: string, id: string) => orNotFound(internal<OrderDetails>('GET', `${adm(userId)}/orders/${Number(id)}`)),
+  order: (userId: string, id: string) =>
+    orNotFound(internal<OrderDetails>('GET', `${adm(userId)}/orders/${Number(id)}`)),
   orderAction: (userId: string, id: string, action: string, body: unknown) =>
     internal<{ ok: boolean }>('POST', `${adm(userId)}/orders/${Number(id)}/${action}`, body),
-  myOrders: (userId: string) => internal<{ steps: Step[]; orders: MyOrder[] }>('GET', `${user(userId)}/orders`),
-  myOrder: (userId: string, id: string) => orNotFound(internal<MyOrderDetails>('GET', `${user(userId)}/orders/${Number(id)}`)),
+  myOrders: (userId: string) =>
+    internal<{ steps: Step[]; orders: MyOrder[] }>('GET', `${user(userId)}/orders`),
+  myOrder: (userId: string, id: string) =>
+    orNotFound(internal<MyOrderDetails>('GET', `${user(userId)}/orders/${Number(id)}`)),
   tickets: (userId: string, status: string) =>
-    orNotFound(internal<{ tickets: TicketRow[] }>('GET', `${adm(userId)}/tickets?status=${encodeURIComponent(status)}`)),
-  ticket: (userId: string, id: string) => orNotFound(internal<TicketDetails>('GET', `${adm(userId)}/tickets/${Number(id)}`)),
+    orNotFound(
+      internal<{ tickets: TicketRow[] }>(
+        'GET',
+        `${adm(userId)}/tickets?status=${encodeURIComponent(status)}`,
+      ),
+    ),
+  ticket: (userId: string, id: string) =>
+    orNotFound(internal<TicketDetails>('GET', `${adm(userId)}/tickets/${Number(id)}`)),
   ticketAction: (userId: string, id: string, action: string, body: unknown) =>
     internal<{ ok: boolean }>('POST', `${adm(userId)}/tickets/${Number(id)}/${action}`, body),
   ledger: (userId: string, year?: string, quarter?: string) =>
-    orNotFound(internal<Ledger>('GET', `${adm(userId)}/ledger?${new URLSearchParams({ ...(year && { year }), ...(quarter && { quarter }) })}`)),
+    orNotFound(
+      internal<Ledger>(
+        'GET',
+        `${adm(userId)}/ledger?${new URLSearchParams({ ...(year && { year }), ...(quarter && { quarter }) })}`,
+      ),
+    ),
   ledgerSettings: (userId: string, quarterLimit: number) =>
     internal<{ quarterLimit: number }>('PUT', `${adm(userId)}/ledger/settings`, { quarterLimit }),
   audit: (userId: string, before?: string, action?: string) =>
@@ -292,23 +342,37 @@ export const api = {
   saveAdmins: (userId: string, body: { users?: string[]; roles?: string[] }) =>
     internal<{ users: string[]; roles: string[] }>('PUT', `${adm(userId)}/admins`, body),
   people: (userId: string) => orNotFound(internal<{ people: Person[] }>('GET', `${adm(userId)}/people`)),
-  createOrder: (userId: string, body: unknown) => internal<{ id: number; number: string }>('POST', `${adm(userId)}/orders`, body),
-  editOrder: (userId: string, id: string, body: unknown) => internal<{ ok: boolean }>('PATCH', `${adm(userId)}/orders/${Number(id)}`, body),
-  clients: (userId: string) => orNotFound(internal<{ clients: ClientRow[] }>('GET', `${adm(userId)}/clients`)),
+  createOrder: (userId: string, body: unknown) =>
+    internal<{ id: number; number: string }>('POST', `${adm(userId)}/orders`, body),
+  editOrder: (userId: string, id: string, body: unknown) =>
+    internal<{ ok: boolean }>('PATCH', `${adm(userId)}/orders/${Number(id)}`, body),
+  clients: (userId: string) =>
+    orNotFound(internal<{ clients: ClientRow[] }>('GET', `${adm(userId)}/clients`)),
   siteAccess: (userId: string) => internal<SiteAccessData>('GET', `${user(userId)}/admin/site`),
   saveSiteAccess: (userId: string, body: { launched?: boolean; previewUsers?: string[] }) =>
     internal<{ launched: boolean; previewUsers: string[] }>('PUT', `${user(userId)}/admin/site`, body),
   me: cache((userId: string) =>
-    internal<{ owner: boolean; admin: boolean; vps: boolean }>('GET', `${user(userId)}/me`).catch(() => ({ owner: false, admin: false, vps: false })),
+    internal<{ owner: boolean; admin: boolean; vps: boolean }>('GET', `${user(userId)}/me`).catch(() => ({
+      owner: false,
+      admin: false,
+      vps: false,
+    })),
   ),
   vps: (userId: string, range: string) =>
     orNotFound(internal<VpsData>('GET', `${user(userId)}/admin/vps?range=${encodeURIComponent(range)}`)),
   vpsAction: (userId: string, action: 'reboot' | 'backup') =>
     internal<{ ok: boolean }>('POST', `${user(userId)}/admin/vps/${action}`, {}),
-  bots: (userId: string) => internal<{ bots: PublicBot[] }>('GET', `${user(userId)}/bots`).then((r) => r.bots),
-  bot: (userId: string, botId: string) => orNotFound(internal<BotDetails>('GET', `${user(userId)}/bots/${Number(botId)}`)),
+  bots: (userId: string) =>
+    internal<{ bots: PublicBot[] }>('GET', `${user(userId)}/bots`).then((r) => r.bots),
+  bot: (userId: string, botId: string) =>
+    orNotFound(internal<BotDetails>('GET', `${user(userId)}/bots/${Number(botId)}`)),
   guild: (userId: string, botId: string, guildId: string) =>
-    orNotFound(internal<GuildSettings>('GET', `${user(userId)}/bots/${Number(botId)}/guilds/${guildId.replace(/\D/g, '')}`)),
+    orNotFound(
+      internal<GuildSettings>(
+        'GET',
+        `${user(userId)}/bots/${Number(botId)}/guilds/${guildId.replace(/\D/g, '')}`,
+      ),
+    ),
   saveConfig: (userId: string, botId: string, guildId: string, body: unknown) =>
     internal<{ revision: number; values: unknown; permissions: unknown }>(
       'PUT',
@@ -317,10 +381,26 @@ export const api = {
     ),
   botMembers: (userId: string, botId: string) =>
     orNotFound(internal<BotMembers>('GET', `${user(userId)}/bots/${Number(botId)}/members`)),
-  saveBotMember: (userId: string, botId: string, memberId: string, permissions: unknown) =>
-    internal<{ added: boolean }>('PUT', `${user(userId)}/bots/${Number(botId)}/members/${memberId.replace(/\D/g, '')}`, { permissions }),
+  saveBotMember: (
+    userId: string,
+    botId: string,
+    memberId: string,
+    body: { permissions?: unknown; modules?: unknown; guilds?: unknown },
+  ) =>
+    internal<{ added: boolean }>(
+      'PUT',
+      `${user(userId)}/bots/${Number(botId)}/members/${memberId.replace(/\D/g, '')}`,
+      body,
+    ),
   removeBotMember: (userId: string, botId: string, memberId: string) =>
-    internal<{ ok: boolean }>('DELETE', `${user(userId)}/bots/${Number(botId)}/members/${memberId.replace(/\D/g, '')}`),
+    internal<{ ok: boolean }>(
+      'DELETE',
+      `${user(userId)}/bots/${Number(botId)}/members/${memberId.replace(/\D/g, '')}`,
+    ),
   saveProfile: (userId: string, botId: string, body: unknown) =>
-    internal<{ profile: unknown; revision: number }>('PUT', `${user(userId)}/bots/${Number(botId)}/profile`, body),
+    internal<{ profile: unknown; revision: number }>(
+      'PUT',
+      `${user(userId)}/bots/${Number(botId)}/profile`,
+      body,
+    ),
 };

@@ -11,15 +11,19 @@ import { adminRoutes } from './admin.js';
 import { adminMoreRoutes } from './admin-more.js';
 import { clientOrderRoutes } from './client-orders.js';
 import { getAccess, setAccess } from '../modules/site/service.js';
-import {
-  guildData,
-  publicBot,
-  setConfig,
-  setProfile,
-  type Profile,
-} from '../modules/sdk/service.js';
+import { guildData, publicBot, setConfig, setProfile, type Profile } from '../modules/sdk/service.js';
 import { uptime } from '../modules/monitoring/service.js';
-import { PERM_LABELS, botAccess, listMembers, removeMember, requirePerm, setMember } from '../modules/sdk/members.js';
+import {
+  botAccess,
+  canSeeGuild,
+  describe,
+  listMembers,
+  removeMember,
+  requireGuild,
+  requireModules,
+  requirePerm,
+  setMember,
+} from '../modules/sdk/members.js';
 import { MathostError, mathost, mathostEnabled, vpsId } from '../modules/vps/mathost.js';
 import { issues, snapshot } from '../modules/vps/service.js';
 import { accessOf, getAdmins, isOwner, isSiteAdmin, setAdmins } from '../modules/site/admins.js';
@@ -61,7 +65,11 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
         include: { _count: { select: { guilds: true } } },
       });
       return {
-        bots: bots.map((b) => ({ ...publicBot(b), guildCount: b._count.guilds, shared: b.ownerId !== userId })),
+        bots: bots.map((b) => ({
+          ...publicBot(b),
+          guildCount: b._count.guilds,
+          shared: b.ownerId !== userId,
+        })),
       };
     } catch (err) {
       return sendError(reply, err);
@@ -85,10 +93,12 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
         bot: publicBot(bot),
         schema: bot.schema ?? { modules: [] },
         commands: bot.commands ?? [],
-        guilds: guilds.map((g) => ({ id: g.guildId, name: g.name, icon: g.icon })),
+        guilds: guilds
+          .filter((g) => canSeeGuild(access, g.guildId))
+          .map((g) => ({ id: g.guildId, name: g.name, icon: g.icon })),
         profile: (bot.profile as Profile | null) ?? {},
         profileRevision: bot.profileRevision,
-        access: { owner: access.owner, perms: access.perms },
+        access: { owner: access.owner, perms: access.perms, modules: access.modules, guilds: access.guilds },
         monitoring: monitored
           ? {
               online: monitored.online,
@@ -107,7 +117,7 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
     try {
       const { userId, botId } = userParam(request.params);
       const { guildId } = request.params as { guildId: string };
-      await botAccess(botId, userId);
+      requireGuild(await botAccess(botId, userId), guildId);
       const [guild, data, config] = await Promise.all([
         prisma.sdkGuild.findUnique({ where: { botId_guildId: { botId, guildId } } }),
         guildData(botId, guildId),
@@ -140,7 +150,14 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
       const access = await botAccess(botId, userId);
       const { bot } = access;
       const body = (request.body ?? {}) as { values?: unknown; permissions?: unknown };
-      if (body.values !== undefined) requirePerm(access, 'settings');
+      requireGuild(access, guildId);
+      if (body.values !== undefined) {
+        requirePerm(access, 'settings');
+        // Osoba z dostępem do wybranych modułów może zapisać tylko te moduły.
+        if (body.values && typeof body.values === 'object' && !Array.isArray(body.values))
+          requireModules(access, Object.keys(body.values));
+        else if (access.modules) requireModules(access, ['?']);
+      }
       if (body.permissions !== undefined) requirePerm(access, 'commands');
       const saved = await setConfig(botId, guildId, body, userId);
       await audit(client, {
@@ -189,9 +206,9 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
       const { userId, botId } = userParam(request.params);
       const { memberId } = request.params as { memberId: string };
       const access = await botAccess(botId, userId);
-      const body = (request.body ?? {}) as { permissions?: unknown };
-      const res = await setMember(client, access, userId, memberId, body.permissions);
-      const what = res.permissions.map((p) => PERM_LABELS[p]).join(', ') || 'tylko podgląd';
+      const body = (request.body ?? {}) as { permissions?: unknown; modules?: unknown; guilds?: unknown };
+      const res = await setMember(client, access, userId, memberId, body);
+      const what = describe(res);
       await audit(client, {
         action: 'sdk.members',
         actorId: userId,

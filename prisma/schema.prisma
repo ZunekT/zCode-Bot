@@ -575,6 +575,10 @@ model SdkBotMember {
   userId      String
   /// Podzbiór: settings, commands, profile, access (pusta lista = tylko podgląd)
   permissions String[]
+  /// Klucze modułów do edycji (pusta lista = wszystkie moduły)
+  modules     String[] @default([])
+  /// ID serwerów, na których działa dostęp (pusta lista = wszystkie serwery)
+  guilds      String[] @default([])
   addedBy     String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

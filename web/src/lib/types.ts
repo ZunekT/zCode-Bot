@@ -51,6 +51,10 @@ export type BotPerm = 'settings' | 'commands' | 'profile' | 'access';
 export interface BotAccess {
   owner: boolean;
   perms: BotPerm[];
+  /** null = wszystkie moduły */
+  modules: string[] | null;
+  /** null = wszystkie serwery */
+  guilds: string[] | null;
 }
 
 export interface BotMember {
@@ -58,6 +62,8 @@ export interface BotMember {
   name: string;
   avatar: string | null;
   permissions: BotPerm[];
+  modules: string[];
+  guilds: string[];
   addedBy: string;
   createdAt: string;
 }

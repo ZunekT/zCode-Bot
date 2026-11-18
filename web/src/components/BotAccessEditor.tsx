@@ -3,14 +3,15 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { del, put } from '@/lib/client';
-import type { BotMember, BotMembers, BotPerm } from '@/lib/types';
+import type { BotAccess, BotMember, BotMembers, BotPerm } from '@/lib/types';
 import { Icon } from './Icon';
 import { PersonChip } from './PersonChip';
 import { useToast } from './Toast';
 import { Modal } from './ui/Modal';
+import { Select } from './ui/Select';
 
 const PERMS: { key: BotPerm; label: string; hint: string }[] = [
-  { key: 'settings', label: 'Ustawienia serwerów', hint: 'Zmiana ustawień bota na serwerach' },
+  { key: 'settings', label: 'Ustawienia i moduły', hint: 'Konfiguracja modułów bota na serwerach' },
   { key: 'commands', label: 'Uprawnienia komend', hint: 'Które role mogą używać komend' },
   { key: 'profile', label: 'Profil bota', hint: 'Nazwa, avatar i status bota' },
   {
@@ -20,31 +21,69 @@ const PERMS: { key: BotPerm; label: string; hint: string }[] = [
   },
 ];
 
-const summary = (perms: BotPerm[]) =>
-  perms.length === PERMS.length
-    ? 'pełny dostęp'
-    : perms.length
-      ? PERMS.filter((p) => perms.includes(p.key))
-          .map((p) => p.label.toLowerCase())
-          .join(', ')
-      : 'tylko podgląd';
+interface Named {
+  key: string;
+  label: string;
+}
 
 interface Editing {
   id: string;
   name: string;
   perms: BotPerm[];
+  modules: string[];
+  guilds: string[];
   isNew: boolean;
 }
 
-export function BotAccessEditor({ botId, me, data }: { botId: number; me: string; data: BotMembers }) {
+export function BotAccessEditor({
+  botId,
+  me,
+  data,
+  modules,
+  guilds,
+}: {
+  botId: number;
+  me: string;
+  data: BotMembers;
+  modules: Named[];
+  guilds: Named[];
+}) {
   const router = useRouter();
   const toast = useToast();
   const [editing, setEditing] = useState<Editing | null>(null);
   const [newId, setNewId] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
-  const mine = data.me.perms;
-  const manager = mine.includes('access');
-  const canManage = (m: BotMember) => manager && m.id !== me && m.permissions.every((p) => mine.includes(p));
+  const mine: BotAccess = data.me;
+  const manager = mine.perms.includes('access');
+  // Moduły i serwery, które mogę przydzielić (ograniczone moim własnym zakresem).
+  const myModules = mine.modules ? modules.filter((m) => mine.modules!.includes(m.key)) : modules;
+  const myGuilds = mine.guilds ? guilds.filter((g) => mine.guilds!.includes(g.key)) : guilds;
+  const labelOf = (list: Named[], key: string) => list.find((x) => x.key === key)?.label ?? key;
+
+  const within = (mineList: string[] | null, theirs: string[]) =>
+    !mineList || (theirs.length > 0 && theirs.every((x) => mineList.includes(x)));
+  const canManage = (m: BotMember) =>
+    manager &&
+    m.id !== me &&
+    m.permissions.every((p) => mine.perms.includes(p)) &&
+    (!m.permissions.includes('settings') || within(mine.modules, m.modules)) &&
+    (!(m.permissions.includes('settings') || m.permissions.includes('commands')) ||
+      within(mine.guilds, m.guilds));
+
+  function summary(m: { permissions: BotPerm[]; modules: string[]; guilds: string[] }) {
+    if (!m.permissions.length) return 'tylko podgląd';
+    const parts = PERMS.filter((p) => m.permissions.includes(p.key)).map((p) =>
+      p.key === 'settings' && m.modules.length
+        ? `moduły: ${m.modules.map((k) => labelOf(modules, k)).join(', ')}`
+        : p.label.toLowerCase(),
+    );
+    const scope = m.guilds.length ? ` · serwery: ${m.guilds.map((k) => labelOf(guilds, k)).join(', ')}` : '';
+    return (
+      (m.permissions.length === PERMS.length && !m.modules.length && !m.guilds.length
+        ? 'pełny dostęp'
+        : parts.join(', ')) + scope
+    );
+  }
 
   function startAdd() {
     const id = newId.trim().replace(/[<@!>]/g, '');
@@ -56,16 +95,25 @@ export function BotAccessEditor({ botId, me, data }: { botId: number; me: string
     setEditing({
       id,
       name: `ID ${id}`,
-      perms: (['settings', 'commands'] as BotPerm[]).filter((p) => mine.includes(p)),
+      perms: (['settings', 'commands'] as BotPerm[]).filter((p) => mine.perms.includes(p)),
+      modules: mine.modules ? [...mine.modules] : [],
+      guilds: mine.guilds ? [...mine.guilds] : [],
       isNew: true,
     });
   }
 
   async function save() {
     if (!editing) return;
+    const { perms, modules: mods, guilds: gs } = editing;
+    if (perms.includes('settings') && mine.modules && !mods.length)
+      return toast.show(false, 'Wybierz moduły.');
+    if ((perms.includes('settings') || perms.includes('commands')) && mine.guilds && !gs.length)
+      return toast.show(false, 'Wybierz serwery.');
     setBusy('save');
     const res = await put<{ added: boolean }>(`/api/bots/${botId}/members/${editing.id}`, {
-      permissions: editing.perms,
+      permissions: perms,
+      modules: mods,
+      guilds: gs,
     });
     setBusy(null);
     if (!res.ok) return toast.show(false, res.error ?? 'Nie udało się zapisać.');
@@ -96,6 +144,7 @@ export function BotAccessEditor({ botId, me, data }: { botId: number; me: string
     setEditing(
       (e) => e && { ...e, perms: e.perms.includes(p) ? e.perms.filter((x) => x !== p) : [...e.perms, p] },
     );
+  const scoped = editing && (editing.perms.includes('settings') || editing.perms.includes('commands'));
 
   return (
     <section className="card glow">
@@ -114,14 +163,23 @@ export function BotAccessEditor({ botId, me, data }: { botId: number; me: string
         </div>
         {data.members.map((m) => (
           <div key={m.id} className="link-row">
-            <PersonChip p={m} sub={summary(m.permissions)} />
+            <PersonChip p={m} sub={summary(m)} />
             <div className="grow" />
             {m.id === me && <span className="pill pill-plain">Ty</span>}
             {canManage(m) && (
               <button
                 className="btn btn-sm"
                 disabled={busy !== null}
-                onClick={() => setEditing({ id: m.id, name: m.name, perms: m.permissions, isNew: false })}
+                onClick={() =>
+                  setEditing({
+                    id: m.id,
+                    name: m.name,
+                    perms: m.permissions,
+                    modules: m.modules,
+                    guilds: m.guilds,
+                    isNew: false,
+                  })
+                }
               >
                 Zmień
               </button>
@@ -162,7 +220,9 @@ export function BotAccessEditor({ botId, me, data }: { botId: number; me: string
         </div>
       ) : (
         <div className="card-body faint small" style={{ borderTop: '1px solid var(--border)' }}>
-          Masz dostęp: {summary(mine)}. Dostępem zarządza właściciel bota.
+          Twój dostęp:{' '}
+          {summary({ permissions: mine.perms, modules: mine.modules ?? [], guilds: mine.guilds ?? [] })}.
+          Dostępem zarządza właściciel bota.
         </div>
       )}
 
@@ -194,31 +254,64 @@ export function BotAccessEditor({ botId, me, data }: { botId: number; me: string
               </p>
             )}
             {PERMS.map((p) => {
-              const allowed = mine.includes(p.key);
+              const allowed = mine.perms.includes(p.key);
               return (
-                <label
-                  key={p.key}
-                  className="link-row"
-                  style={{ cursor: allowed ? 'pointer' : 'not-allowed', opacity: allowed ? 1 : 0.5 }}
-                >
-                  <span className="grow">
-                    <span style={{ fontWeight: 600, display: 'block' }}>{p.label}</span>
-                    <span className="faint small">
-                      {allowed ? p.hint : 'Nie masz tego uprawnienia, więc nie możesz go nadać.'}
+                <div key={p.key}>
+                  <label
+                    className="link-row"
+                    style={{ cursor: allowed ? 'pointer' : 'not-allowed', opacity: allowed ? 1 : 0.5 }}
+                  >
+                    <span className="grow">
+                      <span style={{ fontWeight: 600, display: 'block' }}>{p.label}</span>
+                      <span className="faint small">
+                        {allowed ? p.hint : 'Nie masz tego uprawnienia, więc nie możesz go nadać.'}
+                      </span>
                     </span>
-                  </span>
-                  <button
-                    type="button"
-                    role="switch"
-                    className="switch"
-                    aria-label={p.label}
-                    aria-checked={editing.perms.includes(p.key)}
-                    disabled={!allowed}
-                    onClick={() => toggle(p.key)}
-                  />
-                </label>
+                    <button
+                      type="button"
+                      role="switch"
+                      className="switch"
+                      aria-label={p.label}
+                      aria-checked={editing.perms.includes(p.key)}
+                      disabled={!allowed}
+                      onClick={() => toggle(p.key)}
+                    />
+                  </label>
+                  {p.key === 'settings' && editing.perms.includes('settings') && myModules.length > 0 && (
+                    <div className="stack" style={{ gap: 6, padding: '0 16px 12px' }}>
+                      <span className="faint small">Które moduły może edytować</span>
+                      <Select
+                        multiple
+                        ariaLabel="Moduły"
+                        value={editing.modules}
+                        onChange={(v) => setEditing((e) => e && { ...e, modules: v })}
+                        placeholder={mine.modules ? 'Wybierz moduły…' : 'Wszystkie moduły'}
+                        options={myModules.map((m) => ({ value: m.key, label: m.label }))}
+                      />
+                    </div>
+                  )}
+                </div>
               );
             })}
+            {scoped && myGuilds.length > 0 && (
+              <div
+                className="stack"
+                style={{ gap: 6, padding: '12px 16px 0', borderTop: '1px solid var(--border)' }}
+              >
+                <span style={{ fontWeight: 600 }}>Serwery</span>
+                <span className="faint small">
+                  Na których serwerach działają ustawienia i uprawnienia komend tej osoby
+                </span>
+                <Select
+                  multiple
+                  ariaLabel="Serwery"
+                  value={editing.guilds}
+                  onChange={(v) => setEditing((e) => e && { ...e, guilds: v })}
+                  placeholder={mine.guilds ? 'Wybierz serwery…' : 'Wszystkie serwery'}
+                  options={myGuilds.map((g) => ({ value: g.key, label: g.label }))}
+                />
+              </div>
+            )}
           </div>
         )}
       </Modal>

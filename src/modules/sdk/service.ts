@@ -39,7 +39,7 @@ export class ValidationFailed extends UserError {
 }
 
 const json = (v: unknown) => v as Prisma.InputJsonValue;
-const schemaOf = (bot: Pick<SdkBot, 'schema'>): BotSchema =>
+export const schemaOf = (bot: Pick<SdkBot, 'schema'>): BotSchema =>
   (bot.schema as BotSchema | null) ?? { modules: [] };
 const commandsOf = (bot: Pick<SdkBot, 'commands'>): string[] =>
   Array.isArray(bot.commands) ? (bot.commands as { name: string }[]).map((c) => c.name) : [];

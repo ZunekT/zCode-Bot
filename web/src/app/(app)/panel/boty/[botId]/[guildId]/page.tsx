@@ -21,6 +21,10 @@ export default async function GuildPage({
   const perms = tab === 'uprawnienia';
   const base = `/panel/boty/${d.bot.id}/${s.guild.id}`;
   const canEdit = d.access.perms.includes(perms ? 'commands' : 'settings');
+  // Dostęp zawężony do wybranych modułów: pokazujemy tylko te moduły.
+  const allowed = d.access.modules;
+  const schema =
+    canEdit && allowed ? { modules: d.schema.modules.filter((m) => allowed.includes(m.key)) } : d.schema;
 
   return (
     <div className="app-page">
@@ -74,6 +78,16 @@ export default async function GuildPage({
         </div>
       )}
 
+      {canEdit && allowed && !perms && (
+        <div className="notice" style={{ marginBottom: 16 }}>
+          <Icon name="shield_check" />
+          <p>
+            Masz dostęp do modułów: <b>{schema.modules.map((m) => m.label).join(', ')}</b>. Pozostałe moduły
+            zmienia właściciel bota.
+          </p>
+        </div>
+      )}
+
       <fieldset className="readonly-wrap" disabled={!canEdit}>
         {perms ? (
           <PermissionsEditor
@@ -89,7 +103,7 @@ export default async function GuildPage({
             key={`s-${s.revision}`}
             botId={d.bot.id}
             guildId={s.guild.id}
-            schema={d.schema}
+            schema={schema}
             initial={s.values}
             channels={s.guild.channels}
             roles={s.guild.roles}

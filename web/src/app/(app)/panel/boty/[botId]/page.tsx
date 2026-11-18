@@ -128,7 +128,13 @@ export default async function BotPage({
 
       {tab === 'dostep' && (
         <div style={{ maxWidth: 820 }}>
-          <BotAccessEditor botId={bot.id} me={session.id} data={members} />
+          <BotAccessEditor
+            botId={bot.id}
+            me={session.id}
+            data={members}
+            modules={d.schema.modules.map((m) => ({ key: m.key, label: m.label }))}
+            guilds={d.guilds.map((g) => ({ key: g.id, label: g.name }))}
+          />
         </div>
       )}
 
