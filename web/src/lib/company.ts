@@ -8,15 +8,15 @@ export const company = {
   /** Nazwa marki. */
   brand: 'zxCode',
   /** Imię i nazwisko albo nazwa firmy (administrator danych). */
-  name: '[imię i nazwisko / nazwa firmy]',
+  name: 'Dorian Kaczyński',
   /** Forma działalności, np. „jednoosobowa działalność gospodarcza” albo „działalność nierejestrowana”. */
-  form: '[forma działalności]',
+  form: 'działalność nierejestrowana (art. 5 ustawy Prawo przedsiębiorców)',
   /** Adres (ulica, kod, miasto). */
   address: '[adres]',
   nip: '',
   regon: '',
   /** E-mail kontaktowy (też dla spraw RODO i reklamacji). */
-  email: '[e-mail kontaktowy]',
+  email: 'kontakt@zxcode.pl',
   /** Adres strony. */
   website: 'https://zxcode.pl',
   /** Data wejścia w życie dokumentów. */

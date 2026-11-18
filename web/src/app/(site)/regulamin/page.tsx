@@ -69,7 +69,7 @@ const sections: LegalSection[] = [
       <ol>
         <li>Ceny podawane są w złotych polskich (PLN) i są cenami końcowymi.</li>
         <li>
-          Płatność odbywa się przelewem na podstawie faktury proforma. Przy większych projektach Usługodawca może wymagać
+          Płatność odbywa się przelewem na podstawie proformy. Po zapłacie Klient może otrzymać rachunek. Przy większych projektach Usługodawca może wymagać
           zaliczki – jej wysokość podaje w Wycenie.
         </li>
         <li>Usługi cykliczne (np. hosting) opłaca się z góry za dany okres rozliczeniowy.</li>

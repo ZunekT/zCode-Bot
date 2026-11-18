@@ -43,7 +43,7 @@ const sections: LegalSection[] = [
             </tr>
             <tr>
               <td>Zamówienie i realizacja</td>
-              <td>Treść ticketów, ustalenia, dane do faktury (imię i nazwisko lub firma, adres, NIP), historia wpłat.</td>
+              <td>Treść ticketów, ustalenia, dane do rachunku (imię i nazwisko lub firma, adres, NIP), historia wpłat.</td>
             </tr>
             <tr>
               <td>Panel i boty</td>
@@ -74,7 +74,7 @@ const sections: LegalSection[] = [
           <b>Zawarcie i wykonanie umowy</b> (wycena, realizacja, hosting, panel, wsparcie) – art. 6 ust. 1 lit. b RODO.
         </li>
         <li>
-          <b>Obowiązki prawne</b>, w szczególności księgowe i podatkowe – art. 6 ust. 1 lit. c RODO.
+          <b>Obowiązki prawne</b>, w szczególności podatkowe (m.in. prowadzenie uproszczonej ewidencji sprzedaży) – art. 6 ust. 1 lit. c RODO.
         </li>
         <li>
           <b>Prawnie uzasadniony interes Administratora</b> – art. 6 ust. 1 lit. f RODO: bezpieczeństwo strony i serwera
@@ -145,7 +145,7 @@ const sections: LegalSection[] = [
     title: 'Czy musisz podać dane',
     body: (
       <p>
-        Podanie danych jest dobrowolne, ale bez nich nie możemy przygotować wyceny, zrealizować zamówienia ani wystawić faktury.
+        Podanie danych jest dobrowolne, ale bez nich nie możemy przygotować wyceny, zrealizować zamówienia ani wystawić rachunku.
         Logowanie przez Discord jest potrzebne tylko do korzystania z panelu klienta.
       </p>
     ),
