@@ -564,8 +564,25 @@ model SdkBot {
 
   guilds  SdkGuild[]
   configs SdkConfig[]
+  members SdkBotMember[]
 
   @@index([ownerId])
+}
+
+/// Osoby, którym właściciel (lub ktoś z uprawnieniem „access”) udostępnił bota w panelu
+model SdkBotMember {
+  botId       Int
+  userId      String
+  /// Podzbiór: settings, commands, profile, access (pusta lista = tylko podgląd)
+  permissions String[]
+  addedBy     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bot SdkBot @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@id([botId, userId])
+  @@index([userId])
 }
 
 /// Serwer, na którym jest bot – kanały i role do wyboru w panelu.

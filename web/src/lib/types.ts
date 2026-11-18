@@ -43,6 +43,29 @@ export interface PublicBot {
   lastSeenAt: string | null;
   createdAt: string;
   guildCount?: number;
+  shared?: boolean;
+}
+
+export type BotPerm = 'settings' | 'commands' | 'profile' | 'access';
+
+export interface BotAccess {
+  owner: boolean;
+  perms: BotPerm[];
+}
+
+export interface BotMember {
+  id: string;
+  name: string;
+  avatar: string | null;
+  permissions: BotPerm[];
+  addedBy: string;
+  createdAt: string;
+}
+
+export interface BotMembers {
+  owner: { id: string; name: string; avatar: string | null };
+  members: BotMember[];
+  me: BotAccess;
 }
 
 export interface Presence {
@@ -63,6 +86,7 @@ export interface BotDetails {
   guilds: { id: string; name: string; icon: string | null }[];
   profile: Profile;
   profileRevision: number;
+  access: BotAccess;
   monitoring: { online: boolean; uptime: string; lastDownAt: string | null; version: string | null } | null;
 }
 

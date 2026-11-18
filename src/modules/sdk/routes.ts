@@ -1,3 +1,4 @@
+import { Forbidden } from './members.js';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { SdkBot } from '../../generated/prisma/client.js';
 import { UserError } from '../../core/errors.js';
@@ -26,6 +27,7 @@ declare module 'fastify' {
 export function sendError(reply: FastifyReply, err: unknown) {
   if (err instanceof ValidationFailed)
     return reply.code(400).send({ error: 'validation', errors: err.errors });
+  if (err instanceof Forbidden) return reply.code(403).send({ error: err.message });
   if (err instanceof UserError) return reply.code(400).send({ error: err.message });
   log.error('Błąd API SDK', err);
   return reply.code(500).send({ error: 'Błąd serwera' });

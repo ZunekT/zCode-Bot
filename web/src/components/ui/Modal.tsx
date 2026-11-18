@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 export function Modal({
   open,
@@ -30,13 +31,15 @@ export function Modal({
     };
   }, [open, busy, onClose]);
   if (!open) return null;
-  return (
+  // Portal do <body>: okno nie dziedziczy warstw (z-index, transform) karty, w której je otwarto.
+  return createPortal(
     <div className="modal-back2" role="presentation" onClick={() => !busy && onClose()}>
       <div ref={ref} className="modal2 glass" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <h2>{title}</h2>
         {children}
         {actions && <div className="modal-actions">{actions}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

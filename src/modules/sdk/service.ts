@@ -318,13 +318,6 @@ export async function setProfile(
 
 // ───────────────────────────── Odczyt dla panelu ─────────────────────────────
 
-export async function ownedBot(botId: number, userId: string): Promise<SdkBot> {
-  const bot = Number.isSafeInteger(botId) ? await prisma.sdkBot.findUnique({ where: { id: botId } }) : null;
-  // Brak bota i cudzy bot zwracają ten sam komunikat – nie zdradzamy, że istnieje.
-  if (!bot || bot.ownerId !== userId) throw new UserError('Nie znaleziono bota.');
-  return bot;
-}
-
 export function publicBot(bot: SdkBot) {
   return {
     id: bot.id,

@@ -13,13 +13,13 @@ import { clientOrderRoutes } from './client-orders.js';
 import { getAccess, setAccess } from '../modules/site/service.js';
 import {
   guildData,
-  ownedBot,
   publicBot,
   setConfig,
   setProfile,
   type Profile,
 } from '../modules/sdk/service.js';
 import { uptime } from '../modules/monitoring/service.js';
+import { PERM_LABELS, botAccess, listMembers, removeMember, requirePerm, setMember } from '../modules/sdk/members.js';
 import { MathostError, mathost, mathostEnabled, vpsId } from '../modules/vps/mathost.js';
 import { issues, snapshot } from '../modules/vps/service.js';
 import { accessOf, getAdmins, isOwner, isSiteAdmin, setAdmins } from '../modules/site/admins.js';
@@ -56,11 +56,13 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
     try {
       const { userId } = userParam(request.params);
       const bots = await prisma.sdkBot.findMany({
-        where: { ownerId: userId },
+        where: { OR: [{ ownerId: userId }, { members: { some: { userId } } }] },
         orderBy: { createdAt: 'asc' },
         include: { _count: { select: { guilds: true } } },
       });
-      return { bots: bots.map((b) => ({ ...publicBot(b), guildCount: b._count.guilds })) };
+      return {
+        bots: bots.map((b) => ({ ...publicBot(b), guildCount: b._count.guilds, shared: b.ownerId !== userId })),
+      };
     } catch (err) {
       return sendError(reply, err);
     }
@@ -69,7 +71,8 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
   app.get('/internal/users/:userId/bots/:botId', async (request, reply) => {
     try {
       const { userId, botId } = userParam(request.params);
-      const bot = await ownedBot(botId, userId);
+      const access = await botAccess(botId, userId);
+      const { bot } = access;
       const [guilds, monitored] = await Promise.all([
         prisma.sdkGuild.findMany({
           where: { botId },
@@ -85,6 +88,7 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
         guilds: guilds.map((g) => ({ id: g.guildId, name: g.name, icon: g.icon })),
         profile: (bot.profile as Profile | null) ?? {},
         profileRevision: bot.profileRevision,
+        access: { owner: access.owner, perms: access.perms },
         monitoring: monitored
           ? {
               online: monitored.online,
@@ -103,7 +107,7 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
     try {
       const { userId, botId } = userParam(request.params);
       const { guildId } = request.params as { guildId: string };
-      await ownedBot(botId, userId);
+      await botAccess(botId, userId);
       const [guild, data, config] = await Promise.all([
         prisma.sdkGuild.findUnique({ where: { botId_guildId: { botId, guildId } } }),
         guildData(botId, guildId),
@@ -133,8 +137,11 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
     try {
       const { userId, botId } = userParam(request.params);
       const { guildId } = request.params as { guildId: string };
-      const bot = await ownedBot(botId, userId);
+      const access = await botAccess(botId, userId);
+      const { bot } = access;
       const body = (request.body ?? {}) as { values?: unknown; permissions?: unknown };
+      if (body.values !== undefined) requirePerm(access, 'settings');
+      if (body.permissions !== undefined) requirePerm(access, 'commands');
       const saved = await setConfig(botId, guildId, body, userId);
       await audit(client, {
         action: body.permissions !== undefined ? 'sdk.permissions' : 'sdk.config',
@@ -151,7 +158,9 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
   app.put('/internal/users/:userId/bots/:botId/profile', async (request, reply) => {
     try {
       const { userId, botId } = userParam(request.params);
-      const bot = await ownedBot(botId, userId);
+      const access = await botAccess(botId, userId);
+      requirePerm(access, 'profile');
+      const { bot } = access;
       const result = await setProfile(botId, (request.body ?? {}) as Record<string, unknown>);
       await audit(client, {
         action: 'sdk.profile',
@@ -159,6 +168,58 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
         summary: `Panel WWW: zmiana profilu bota **${bot.name}**`,
       });
       return result;
+    } catch (err) {
+      return sendError(reply, err);
+    }
+  });
+
+  // ───────────── Współdzielenie bota ─────────────
+
+  app.get('/internal/users/:userId/bots/:botId/members', async (request, reply) => {
+    try {
+      const { userId, botId } = userParam(request.params);
+      return await listMembers(client, await botAccess(botId, userId));
+    } catch (err) {
+      return sendError(reply, err);
+    }
+  });
+
+  app.put('/internal/users/:userId/bots/:botId/members/:memberId', async (request, reply) => {
+    try {
+      const { userId, botId } = userParam(request.params);
+      const { memberId } = request.params as { memberId: string };
+      const access = await botAccess(botId, userId);
+      const body = (request.body ?? {}) as { permissions?: unknown };
+      const res = await setMember(client, access, userId, memberId, body.permissions);
+      const what = res.permissions.map((p) => PERM_LABELS[p]).join(', ') || 'tylko podgląd';
+      await audit(client, {
+        action: 'sdk.members',
+        actorId: userId,
+        targetId: memberId,
+        summary: `Panel WWW: ${res.added ? 'udostępniono' : 'zmieniono dostęp do'} bota **${access.bot.name}** – <@${memberId}> (${what})`,
+      });
+      return res;
+    } catch (err) {
+      return sendError(reply, err);
+    }
+  });
+
+  app.delete('/internal/users/:userId/bots/:botId/members/:memberId', async (request, reply) => {
+    try {
+      const { userId, botId } = userParam(request.params);
+      const { memberId } = request.params as { memberId: string };
+      const access = await botAccess(botId, userId);
+      await removeMember(access, userId, memberId);
+      await audit(client, {
+        action: 'sdk.members',
+        actorId: userId,
+        targetId: memberId,
+        summary:
+          memberId === userId
+            ? `Panel WWW: rezygnacja z dostępu do bota **${access.bot.name}** – <@${userId}>`
+            : `Panel WWW: odebrano dostęp do bota **${access.bot.name}** – <@${memberId}>`,
+      });
+      return { ok: true };
     } catch (err) {
       return sendError(reply, err);
     }

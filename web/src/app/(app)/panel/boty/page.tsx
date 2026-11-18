@@ -18,7 +18,7 @@ export default async function BotsPage() {
       <div className="app-head">
         <div>
           <h1>Moje boty</h1>
-          <p>Ustawienia, uprawnienia, profil i monitoring Twoich botów.</p>
+          <p>Ustawienia, uprawnienia, profil i monitoring Twoich botów oraz botów udostępnionych Tobie.</p>
         </div>
         <div className="spacer" />
         {invite && (
@@ -52,6 +52,7 @@ export default async function BotsPage() {
               </div>
               <div className="meta">
                 <StatusPill connected={b.connected} />
+                {b.shared && <span className="pill pill-plain">Udostępniony</span>}
                 <span>Serwery: {b.guildCount ?? 0}</span>
                 {b.botVersion && <span>v{b.botVersion.replace(/^v/, '')}</span>}
                 {!b.connected && b.lastSeenAt && <span>ostatnio {timeAgo(b.lastSeenAt)}</span>}

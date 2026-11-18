@@ -2,7 +2,7 @@ import 'server-only';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { env } from './env';
-import type { BotDetails, GuildSettings, PublicBot } from './types';
+import type { BotDetails, BotMembers, GuildSettings, PublicBot } from './types';
 
 export class ApiError extends Error {
   constructor(
@@ -315,6 +315,12 @@ export const api = {
       `${user(userId)}/bots/${Number(botId)}/guilds/${guildId.replace(/\D/g, '')}/config`,
       body,
     ),
+  botMembers: (userId: string, botId: string) =>
+    orNotFound(internal<BotMembers>('GET', `${user(userId)}/bots/${Number(botId)}/members`)),
+  saveBotMember: (userId: string, botId: string, memberId: string, permissions: unknown) =>
+    internal<{ added: boolean }>('PUT', `${user(userId)}/bots/${Number(botId)}/members/${memberId.replace(/\D/g, '')}`, { permissions }),
+  removeBotMember: (userId: string, botId: string, memberId: string) =>
+    internal<{ ok: boolean }>('DELETE', `${user(userId)}/bots/${Number(botId)}/members/${memberId.replace(/\D/g, '')}`),
   saveProfile: (userId: string, botId: string, body: unknown) =>
     internal<{ profile: unknown; revision: number }>('PUT', `${user(userId)}/bots/${Number(botId)}/profile`, body),
 };

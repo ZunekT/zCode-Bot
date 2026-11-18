@@ -16,7 +16,8 @@ export async function guarded(
   if (!session) return NextResponse.json({ error: 'Sesja wygasła – zaloguj się ponownie.' }, { status: 401 });
   let body: unknown;
   try {
-    body = await request.json();
+    const text = await request.text();
+    body = request.method === 'DELETE' && !text ? {} : JSON.parse(text);
   } catch {
     return NextResponse.json({ error: 'Nieprawidłowe dane.' }, { status: 400 });
   }

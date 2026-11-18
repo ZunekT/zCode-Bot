@@ -11,8 +11,9 @@ export interface SaveResult<T> {
 
 export const put = <T,>(url: string, body: unknown) => send<T>('PUT', url, body);
 export const post = <T,>(url: string, body: unknown) => send<T>('POST', url, body);
+export const del = <T,>(url: string) => send<T>('DELETE', url, {});
 
-async function send<T>(method: 'PUT' | 'POST', url: string, body: unknown): Promise<SaveResult<T>> {
+async function send<T>(method: 'PUT' | 'POST' | 'DELETE', url: string, body: unknown): Promise<SaveResult<T>> {
   try {
     const res = await fetch(url, {
       method,

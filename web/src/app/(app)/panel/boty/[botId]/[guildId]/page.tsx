@@ -20,6 +20,7 @@ export default async function GuildPage({
   const icon = guildIconUrl(s.guild.icon);
   const perms = tab === 'uprawnienia';
   const base = `/panel/boty/${d.bot.id}/${s.guild.id}`;
+  const canEdit = d.access.perms.includes(perms ? 'commands' : 'settings');
 
   return (
     <div className="app-page">
@@ -31,7 +32,11 @@ export default async function GuildPage({
         <span>{s.guild.name}</span>
       </div>
       <div className="page-head">
-        {icon ? <img src={icon} alt="" className="avatar avatar-guild" /> : <div className="avatar avatar-guild">{initials(s.guild.name)}</div>}
+        {icon ? (
+          <img src={icon} alt="" className="avatar avatar-guild" />
+        ) : (
+          <div className="avatar avatar-guild">{initials(s.guild.name)}</div>
+        )}
         <div>
           <h1>{s.guild.name}</h1>
           <div className="muted small">
@@ -59,26 +64,38 @@ export default async function GuildPage({
         />
       </div>
 
-      {perms ? (
-        <PermissionsEditor
-          key={`p-${s.revision}`}
-          botId={d.bot.id}
-          guildId={s.guild.id}
-          commands={d.commands}
-          roles={s.guild.roles}
-          initial={s.permissions}
-        />
-      ) : (
-        <SettingsEditor
-          key={`s-${s.revision}`}
-          botId={d.bot.id}
-          guildId={s.guild.id}
-          schema={d.schema}
-          initial={s.values}
-          channels={s.guild.channels}
-          roles={s.guild.roles}
-        />
+      {!canEdit && (
+        <div className="notice" style={{ marginBottom: 16 }}>
+          <Icon name="shield_check" />
+          <p>
+            Masz tu tylko podgląd – właściciel bota nie dał Ci uprawnienia do zmiany{' '}
+            {perms ? 'uprawnień komend' : 'ustawień'}.
+          </p>
+        </div>
       )}
+
+      <fieldset className="readonly-wrap" disabled={!canEdit}>
+        {perms ? (
+          <PermissionsEditor
+            key={`p-${s.revision}`}
+            botId={d.bot.id}
+            guildId={s.guild.id}
+            commands={d.commands}
+            roles={s.guild.roles}
+            initial={s.permissions}
+          />
+        ) : (
+          <SettingsEditor
+            key={`s-${s.revision}`}
+            botId={d.bot.id}
+            guildId={s.guild.id}
+            schema={d.schema}
+            initial={s.values}
+            channels={s.guild.channels}
+            roles={s.guild.roles}
+          />
+        )}
+      </fieldset>
     </div>
   );
 }

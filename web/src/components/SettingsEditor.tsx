@@ -2,7 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { put } from '@/lib/client';
-import type { BotSchema, ConfigValues, GuildChannel, GuildRole, SchemaField, SchemaModule, ValidationError } from '@/lib/types';
+import type {
+  BotSchema,
+  ConfigValues,
+  GuildChannel,
+  GuildRole,
+  SchemaField,
+  SchemaModule,
+  ValidationError,
+} from '@/lib/types';
 import { FieldInput } from './FieldInput';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
@@ -56,24 +64,36 @@ export function SettingsEditor({
     return () => window.removeEventListener('beforeunload', h);
   }, [dirty]);
 
-  // Podświetlenie modułu w menu przy przewijaniu.
+  // Zakładka z adresu (#m-tickety) – odświeżenie lub link otwiera ten sam moduł.
   useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const v = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (v) setActive(v.target.id.replace(/^m-/, ''));
-      },
-      { rootMargin: '-80px 0px -60% 0px' },
-    );
-    document.querySelectorAll('.module').forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  }, []);
+    const key = window.location.hash.replace(/^#m-/, '');
+    if (schema.modules.some((m) => m.key === key)) setActive(key);
+  }, [schema]);
+
+  function select(key: string) {
+    setActive(key);
+    history.replaceState(null, '', `#m-${key}`);
+    document.getElementById(`tab-${key}`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    const top = document.querySelector('.settings')?.getBoundingClientRect().top ?? 0;
+    if (top < 0) window.scrollBy({ top: top - 90 });
+  }
 
   function set(mod: SchemaModule, key: string, v: unknown) {
     setValues((prev) => {
       const next = { ...prev, [mod.key]: { ...(prev[mod.key] ?? {}), [key]: v } };
       // Pole wróciło do zapisanej wartości, której nie było w bazie → usuwamy, żeby nie liczyło się jako zmiana.
-      if (saved[mod.key]?.[key] === undefined && same(v, key === 'enabled' ? mod.defaultEnabled !== false : shown(mod.fields.find((f) => f.key === key)!, undefined))) {
+      if (
+        saved[mod.key]?.[key] === undefined &&
+        same(
+          v,
+          key === 'enabled'
+            ? mod.defaultEnabled !== false
+            : shown(
+                mod.fields.find((f) => f.key === key)!,
+                undefined,
+              ),
+        )
+      ) {
         delete next[mod.key]![key];
       }
       return next;
@@ -90,7 +110,9 @@ export function SettingsEditor({
     setBarError(null);
     const payload: ConfigValues = {};
     for (const key of dirtyModules) payload[key] = values[key] ?? {};
-    const res = await put<{ values: ConfigValues }>(`/api/bots/${botId}/guilds/${guildId}/config`, { values: payload });
+    const res = await put<{ values: ConfigValues }>(`/api/bots/${botId}/guilds/${guildId}/config`, {
+      values: payload,
+    });
     setSaving(false);
     if (!res.ok) {
       const map: Record<string, string> = {};
@@ -98,7 +120,15 @@ export function SettingsEditor({
       setErrors(map);
       setBarError(res.error ?? 'Nie udało się zapisać.');
       const first = Object.keys(map)[0];
-      if (first) document.getElementById(`f-${first}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (first) {
+        // Błąd może być w innym module – przełączamy na niego i pokazujemy pole.
+        setActive(first.split('.')[0]!);
+        setTimeout(
+          () =>
+            document.getElementById(`f-${first}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+          50,
+        );
+      }
       return;
     }
     const fresh = res.data?.values ?? values;
@@ -126,24 +156,42 @@ export function SettingsEditor({
 
   return (
     <div className="settings">
-      <nav className="side" aria-label="Moduły">
+      <nav className="side" aria-label="Moduły" role="tablist">
         <div className="side-title">Moduły</div>
-        {schema.modules.map((m) => (
-          <a key={m.key} href={`#m-${m.key}`} aria-current={active === m.key}>
-            <span
-              className={`dot ${dirtyModules.includes(m.key) ? 'dirty' : m.toggle && isEnabled(m, values[m.key]) ? 'on' : ''}`}
-            />
-            {m.label}
-          </a>
-        ))}
+        {schema.modules.map((m) => {
+          const hasError = Object.keys(errors).some((k) => k.startsWith(`${m.key}.`));
+          return (
+            <a
+              key={m.key}
+              id={`tab-${m.key}`}
+              href={`#m-${m.key}`}
+              role="tab"
+              aria-selected={active === m.key}
+              aria-current={active === m.key}
+              onClick={(e) => {
+                e.preventDefault();
+                select(m.key);
+              }}
+            >
+              <span
+                className={`dot ${dirtyModules.includes(m.key) || hasError ? 'dirty' : m.toggle && isEnabled(m, values[m.key]) ? 'on' : ''}`}
+              />
+              {m.label}
+            </a>
+          );
+        })}
       </nav>
 
-      <div>
-        {schema.modules.map((mod) => {
+      <div role="tabpanel">
+        {schema.modules.filter((mod) => mod.key === active).map((mod) => {
           const stored = values[mod.key];
           const enabled = isEnabled(mod, stored);
           return (
-            <section key={mod.key} id={`m-${mod.key}`} className={`card module${enabled ? '' : ' off'}`}>
+            <section
+              key={mod.key}
+              id={`m-${mod.key}`}
+              className={`card module tab-in${enabled ? '' : ' off'}`}
+            >
               <div className="module-head">
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h2>{mod.label}</h2>
@@ -205,7 +253,11 @@ export function SettingsEditor({
         })}
       </div>
 
-      <div className={`savebar${dirty ? ' show' : ''}${barError ? ' error' : ''}`} role="region" aria-label="Niezapisane zmiany">
+      <div
+        className={`savebar${dirty ? ' show' : ''}${barError ? ' error' : ''}`}
+        role="region"
+        aria-label="Niezapisane zmiany"
+      >
         <p className={barError ? '' : undefined} style={barError ? { color: 'var(--err)' } : undefined}>
           {barError ?? 'Masz niezapisane zmiany'}
         </p>

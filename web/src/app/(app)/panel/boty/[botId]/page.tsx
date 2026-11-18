@@ -1,16 +1,31 @@
 import Link from 'next/link';
+import { BotAccessEditor } from '@/components/BotAccessEditor';
 import { BotAvatar, StatusPill } from '@/components/BotAvatar';
 import { Icon } from '@/components/Icon';
 import { ProfileEditor } from '@/components/ProfileEditor';
+import { Segmented } from '@/components/ui/Segmented';
 import { api } from '@/lib/api';
 import { guildIconUrl, initials, timeAgo } from '@/lib/format';
 import { requireSession } from '@/lib/session';
 
-export default async function BotPage({ params }: { params: Promise<{ botId: string }> }) {
-  const { botId } = await params;
+const TABS = ['serwery', 'profil', 'dostep', 'monitoring'] as const;
+type Tab = (typeof TABS)[number];
+
+export default async function BotPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ botId: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const [{ botId }, { tab: rawTab }] = await Promise.all([params, searchParams]);
   const session = await requireSession();
-  const d = await api.bot(session.id, botId);
+  const [d, members] = await Promise.all([api.bot(session.id, botId), api.botMembers(session.id, botId)]);
   const { bot } = d;
+  const canProfile = d.access.perms.includes('profile');
+  let tab: Tab = TABS.includes(rawTab as Tab) ? (rawTab as Tab) : 'serwery';
+  if (tab === 'monitoring' && !d.monitoring) tab = 'serwery';
+  const base = `/panel/boty/${bot.id}`;
 
   return (
     <div className="app-page">
@@ -28,6 +43,7 @@ export default async function BotPage({ params }: { params: Promise<{ botId: str
             {bot.username && <span>@{bot.username}</span>}
             {bot.botVersion && <span>v{bot.botVersion.replace(/^v/, '')}</span>}
             {!bot.connected && <span>ostatnio {timeAgo(bot.lastSeenAt)}</span>}
+            {!d.access.owner && <span className="pill pill-plain">Udostępniony</span>}
           </div>
         </div>
       </div>
@@ -42,70 +58,106 @@ export default async function BotPage({ params }: { params: Promise<{ botId: str
         </div>
       )}
 
-      <div className="two-col">
-        <div className="stack">
-          <section className="card glow">
-            <div className="card-head">
-              <Icon name="server" />
-              <h2>Serwery</h2>
-              <div className="spacer" />
-              <span className="muted small">Wybierz serwer, żeby zmienić ustawienia bota</span>
-            </div>
-            {d.guilds.length === 0 ? (
-              <div className="card-body muted">Bot nie jest jeszcze na żadnym serwerze.</div>
-            ) : (
-              <div className="list">
-                {d.guilds.map((g) => {
-                  const icon = guildIconUrl(g.icon);
-                  return (
-                    <Link key={g.id} href={`/panel/boty/${bot.id}/${g.id}`} className="list-item">
-                      {icon ? (
-                        <img src={icon} alt="" className="avatar avatar-guild" />
-                      ) : (
-                        <div className="avatar avatar-guild">{initials(g.name)}</div>
-                      )}
-                      <div className="grow">
-                        <div style={{ fontWeight: 700 }}>{g.name}</div>
-                        <div className="faint small">ID {g.id}</div>
-                      </div>
-                      <span className="btn btn-sm">Ustawienia</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          {d.monitoring && (
-            <section className="card glow">
-              <div className="card-head">
-                <Icon name="lightning" />
-                <h2>Monitoring</h2>
-              </div>
-              <div className="stats">
-                <div className="stat">
-                  <div className="stat-label">Stan</div>
-                  <div className="stat-value" style={{ color: d.monitoring.online ? 'var(--ok)' : 'var(--err)' }}>
-                    {d.monitoring.online ? 'Działa' : 'Awaria'}
-                  </div>
-                </div>
-                <div className="stat">
-                  <div className="stat-label">Uptime</div>
-                  <div className="stat-value">{d.monitoring.uptime}</div>
-                </div>
-                <div className="stat">
-                  <div className="stat-label">Ostatnia awaria</div>
-                  <div className="stat-value" style={{ fontSize: 16 }}>
-                    {d.monitoring.lastDownAt ? timeAgo(d.monitoring.lastDownAt) : 'brak'}
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
-        </div>
-
-        <ProfileEditor botId={bot.id} profile={d.profile} username={bot.username} avatarUrl={bot.avatarUrl} />
+      <div style={{ marginBottom: 20 }}>
+        <Segmented
+          variant="tabs"
+          value={tab}
+          items={[
+            { value: 'serwery', label: `Serwery (${d.guilds.length})`, href: base },
+            { value: 'profil', label: 'Profil', href: `${base}?tab=profil` },
+            { value: 'dostep', label: `Dostęp (${members.members.length + 1})`, href: `${base}?tab=dostep` },
+            ...(d.monitoring
+              ? [{ value: 'monitoring', label: 'Monitoring', href: `${base}?tab=monitoring` }]
+              : []),
+          ]}
+        />
       </div>
+
+      {tab === 'serwery' && (
+        <section className="card glow">
+          <div className="card-head">
+            <Icon name="server" />
+            <h2>Serwery</h2>
+            <div className="spacer" />
+            <span className="muted small">Wybierz serwer, żeby zmienić ustawienia bota</span>
+          </div>
+          {d.guilds.length === 0 ? (
+            <div className="card-body muted">Bot nie jest jeszcze na żadnym serwerze.</div>
+          ) : (
+            <div className="list">
+              {d.guilds.map((g) => {
+                const icon = guildIconUrl(g.icon);
+                return (
+                  <Link key={g.id} href={`/panel/boty/${bot.id}/${g.id}`} className="list-item">
+                    {icon ? (
+                      <img src={icon} alt="" className="avatar avatar-guild" />
+                    ) : (
+                      <div className="avatar avatar-guild">{initials(g.name)}</div>
+                    )}
+                    <div className="grow">
+                      <div style={{ fontWeight: 700 }}>{g.name}</div>
+                      <div className="faint small">ID {g.id}</div>
+                    </div>
+                    <span className="btn btn-sm">Ustawienia</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {tab === 'profil' && (
+        <div className="stack" style={{ maxWidth: 720 }}>
+          {!canProfile && (
+            <div className="notice">
+              <Icon name="shield_check" />
+              <p>Masz tu tylko podgląd – właściciel bota nie dał Ci uprawnienia do zmiany profilu.</p>
+            </div>
+          )}
+          <fieldset className="readonly-wrap" disabled={!canProfile}>
+            <ProfileEditor
+              botId={bot.id}
+              profile={d.profile}
+              username={bot.username}
+              avatarUrl={bot.avatarUrl}
+            />
+          </fieldset>
+        </div>
+      )}
+
+      {tab === 'dostep' && (
+        <div style={{ maxWidth: 820 }}>
+          <BotAccessEditor botId={bot.id} me={session.id} data={members} />
+        </div>
+      )}
+
+      {tab === 'monitoring' && d.monitoring && (
+        <section className="card glow">
+          <div className="card-head">
+            <Icon name="lightning" />
+            <h2>Monitoring</h2>
+          </div>
+          <div className="stats">
+            <div className="stat">
+              <div className="stat-label">Stan</div>
+              <div className="stat-value" style={{ color: d.monitoring.online ? 'var(--ok)' : 'var(--err)' }}>
+                {d.monitoring.online ? 'Działa' : 'Awaria'}
+              </div>
+            </div>
+            <div className="stat">
+              <div className="stat-label">Uptime</div>
+              <div className="stat-value">{d.monitoring.uptime}</div>
+            </div>
+            <div className="stat">
+              <div className="stat-label">Ostatnia awaria</div>
+              <div className="stat-value" style={{ fontSize: 16 }}>
+                {d.monitoring.lastDownAt ? timeAgo(d.monitoring.lastDownAt) : 'brak'}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
