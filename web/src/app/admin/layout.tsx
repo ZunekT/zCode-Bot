@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { AdminTabs } from '@/components/AdminTabs';
 import { Topbar } from '@/components/Topbar';
 import { api } from '@/lib/api';
 import { requireSession } from '@/lib/session';
@@ -14,7 +15,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <>
       <Topbar session={session} active="admin" owner />
-      <main className="container page">{children}</main>
+      <main className="container page">
+        <AdminTabs />
+        {children}
+      </main>
     </>
   );
 }

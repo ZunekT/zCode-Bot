@@ -71,12 +71,98 @@ export interface VpsData {
   history: { t: number; cpu: number; mem: number; netIn: number; netOut: number }[];
 }
 
+export interface Person {
+  id: string;
+  name: string;
+  avatar: string | null;
+}
+export interface Money {
+  price: number | null;
+  discount: number;
+  total: number | null;
+  paid: number;
+  due: number | null;
+}
+export interface OrderRow extends Money {
+  id: number;
+  number: string;
+  title: string;
+  status: string;
+  statusLabel: string;
+  client: Person;
+  tasksDone?: number;
+  tasksTotal?: number;
+  deadline?: string | null;
+  createdAt?: string;
+  updatedAt: string;
+}
+export interface Overview {
+  kpi: {
+    revenueMonth: number;
+    revenuePrevMonth: number;
+    receivables: number;
+    activeOrders: number;
+    openTickets: number;
+    firstReplyMin: number | null;
+    rating: number | null;
+    reviews: number;
+    clients: number;
+  };
+  revenueByMonth: { month: string; amount: number }[];
+  ordersByStatus: { status: string; label: string; count: number }[];
+  recentOrders: OrderRow[];
+  recentPayments: { id: number; amount: number; paidAt: string; note: string | null; order: { id: number; number: string; title: string }; client: Person }[];
+  overdueInvoices: { id: number; number: string; amount: number; dueDate: string; order: { id: number; number: string; title: string }; client: Person }[];
+}
+export interface OrderDetails {
+  order: OrderRow & {
+    description: string | null;
+    currency: string;
+    discountCode: string | null;
+    repoUrl: string | null;
+    completedAt: string | null;
+    panelUrl: string | null;
+  };
+  statuses: { status: string; label: string }[];
+  tasks: { id: number; content: string; done: boolean }[];
+  payments: { id: number; amount: number; note: string | null; paidAt: string }[];
+  invoices: { id: number; number: string; amount: number; status: string; dueDate: string; issuedAt: string }[];
+  history: { from: string | null; to: string; at: string; by: string }[];
+  ticket: { id: number; status: string; url: string | null; transcriptUrl: string | null } | null;
+  review: { rating: number; content: string; approved: boolean } | null;
+}
+export interface ClientRow extends Person {
+  orders: number;
+  completed: number;
+  active: number;
+  paid: number;
+  due: number;
+  tickets: number;
+  badges: string[];
+  note: string | null;
+  lastActivity: string;
+}
+
 export interface SiteAccessData {
   launched: boolean;
   previewUsers: { id: string; name: string | null; avatar: string | null }[];
 }
 
+const adm = (userId: string) => `${user(userId)}/admin`;
+
 export const api = {
+  overview: (userId: string) => orNotFound(internal<Overview>('GET', `${adm(userId)}/overview`)),
+  orders: (userId: string, status?: string, q?: string) =>
+    orNotFound(
+      internal<{ statuses: { status: string; label: string }[]; orders: OrderRow[] }>(
+        'GET',
+        `${adm(userId)}/orders?${new URLSearchParams({ ...(status && { status }), ...(q && { q }) })}`,
+      ),
+    ),
+  order: (userId: string, id: string) => orNotFound(internal<OrderDetails>('GET', `${adm(userId)}/orders/${Number(id)}`)),
+  orderAction: (userId: string, id: string, action: string, body: unknown) =>
+    internal<{ ok: boolean }>('POST', `${adm(userId)}/orders/${Number(id)}/${action}`, body),
+  clients: (userId: string) => orNotFound(internal<{ clients: ClientRow[] }>('GET', `${adm(userId)}/clients`)),
   siteAccess: (userId: string) => internal<SiteAccessData>('GET', `${user(userId)}/admin/site`),
   saveSiteAccess: (userId: string, body: { launched?: boolean; previewUsers?: string[] }) =>
     internal<{ launched: boolean; previewUsers: string[] }>('PUT', `${user(userId)}/admin/site`, body),

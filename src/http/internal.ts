@@ -7,6 +7,7 @@ import { createLogger } from '../utils/logger.js';
 import { safeEqual } from '../modules/sdk/keys.js';
 import { sendError } from '../modules/sdk/routes.js';
 import { publicSiteRoutes } from './public-site.js';
+import { adminRoutes } from './admin.js';
 import { getAccess, setAccess } from '../modules/site/service.js';
 import {
   guildData,
@@ -191,6 +192,8 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
     reply.code(404).send({ error: 'Nie znaleziono.' });
     return null;
   };
+
+  adminRoutes(app, client, ownerCheck as never);
 
   app.get('/internal/users/:userId/admin/site', async (request, reply) => {
     try {

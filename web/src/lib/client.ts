@@ -10,10 +10,13 @@ export interface SaveResult<T> {
 }
 
 /** Zapis z panelu do API strony (cookie sesji idzie automatycznie). */
-export async function put<T>(url: string, body: unknown): Promise<SaveResult<T>> {
+export const put = <T,>(url: string, body: unknown) => send<T>('PUT', url, body);
+export const post = <T,>(url: string, body: unknown) => send<T>('POST', url, body);
+
+async function send<T>(method: 'PUT' | 'POST', url: string, body: unknown): Promise<SaveResult<T>> {
   try {
     const res = await fetch(url, {
-      method: 'PUT',
+      method,
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
     });
