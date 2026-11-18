@@ -7,6 +7,6 @@ export const metadata = { title: 'Administracja' };
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await requireSession();
   const me = await api.me(session.id);
-  if (!me.owner) notFound();
+  if (!me.admin) notFound();
   return children;
 }

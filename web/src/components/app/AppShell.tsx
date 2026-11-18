@@ -11,6 +11,7 @@ interface NavItem {
   label: string;
   icon: string;
   exact?: boolean;
+  ownerOnly?: boolean;
 }
 
 const CLIENT: NavItem[] = [
@@ -23,9 +24,10 @@ const ADMIN: NavItem[] = [
   { href: '/admin/zlecenia', label: 'Zlecenia', icon: 'cart' },
   { href: '/admin/tickety', label: 'Tickety', icon: 'ticket' },
   { href: '/admin/klienci', label: 'Klienci', icon: 'users' },
-  { href: '/admin/ewidencja', label: 'Ewidencja', icon: 'invoice' },
+  { href: '/admin/ewidencja', label: 'Ewidencja', icon: 'invoice', ownerOnly: true },
   { href: '/admin/dziennik', label: 'Dziennik', icon: 'documentation' },
-  { href: '/admin/serwer', label: 'Strona i serwer', icon: 'server' },
+  { href: '/admin/administratorzy', label: 'Administratorzy', icon: 'user_crown', ownerOnly: true },
+  { href: '/admin/serwer', label: 'Strona i serwer', icon: 'server', ownerOnly: true },
 ];
 
 const isActive = (path: string, it: NavItem) => (it.exact ? path === it.href : path === it.href || path.startsWith(`${it.href}/`));
@@ -78,10 +80,12 @@ function NavGroup({ title, items, path }: { title: string; items: NavItem[]; pat
 export function AppShell({
   user,
   owner,
+  admin,
   children,
 }: {
   user: { name: string; avatar: string };
   owner: boolean;
+  admin: boolean;
   children: ReactNode;
 }) {
   const path = usePathname();
@@ -102,7 +106,7 @@ export function AppShell({
   useLayoutEffect(() => {
     const el = nav.current?.querySelector<HTMLElement>('.nav-item[data-on="true"]');
     setInd(el ? { y: el.offsetTop, h: el.offsetHeight } : null);
-  }, [path, owner]);
+  }, [path, owner, admin]);
 
   // Poświata kart za kursorem: jeden nasłuch na cały panel, bez re-renderów.
   useEffect(() => {
@@ -159,7 +163,7 @@ export function AppShell({
         <nav ref={nav} className="app-nav">
           {ind && <span className="nav-ind" style={{ transform: `translateY(${ind.y}px)`, height: ind.h }} aria-hidden />}
           <NavGroup title="Panel klienta" items={CLIENT} path={path} />
-          {owner && <NavGroup title="Administracja" items={ADMIN} path={path} />}
+          {admin && <NavGroup title="Administracja" items={ADMIN.filter((i) => owner || !i.ownerOnly)} path={path} />}
         </nav>
         <div className="app-user">
           <img src={user.avatar} alt="" width={36} height={36} />

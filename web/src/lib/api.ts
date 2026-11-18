@@ -281,6 +281,16 @@ export const api = {
         `${adm(userId)}/audit?${new URLSearchParams({ ...(before && { before }), ...(action && { action }) })}`,
       ),
     ),
+  admins: (userId: string) =>
+    orNotFound(
+      internal<{
+        users: Person[];
+        roles: string[];
+        guildRoles: { id: string; name: string; color: number; members: number }[];
+      }>('GET', `${adm(userId)}/admins`),
+    ),
+  saveAdmins: (userId: string, body: { users?: string[]; roles?: string[] }) =>
+    internal<{ users: string[]; roles: string[] }>('PUT', `${adm(userId)}/admins`, body),
   people: (userId: string) => orNotFound(internal<{ people: Person[] }>('GET', `${adm(userId)}/people`)),
   createOrder: (userId: string, body: unknown) => internal<{ id: number; number: string }>('POST', `${adm(userId)}/orders`, body),
   editOrder: (userId: string, id: string, body: unknown) => internal<{ ok: boolean }>('PATCH', `${adm(userId)}/orders/${Number(id)}`, body),
@@ -289,7 +299,7 @@ export const api = {
   saveSiteAccess: (userId: string, body: { launched?: boolean; previewUsers?: string[] }) =>
     internal<{ launched: boolean; previewUsers: string[] }>('PUT', `${user(userId)}/admin/site`, body),
   me: cache((userId: string) =>
-    internal<{ owner: boolean; vps: boolean }>('GET', `${user(userId)}/me`).catch(() => ({ owner: false, vps: false })),
+    internal<{ owner: boolean; admin: boolean; vps: boolean }>('GET', `${user(userId)}/me`).catch(() => ({ owner: false, admin: false, vps: false })),
   ),
   vps: (userId: string, range: string) =>
     orNotFound(internal<VpsData>('GET', `${user(userId)}/admin/vps?range=${encodeURIComponent(range)}`)),

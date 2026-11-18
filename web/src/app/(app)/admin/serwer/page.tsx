@@ -5,6 +5,7 @@ import { VpsActions } from '@/components/VpsActions';
 import { SiteAccessCard } from '@/components/SiteAccessCard';
 import { Segmented } from '@/components/ui/Segmented';
 import { ApiError, api, type VpsData } from '@/lib/api';
+import { notFound } from 'next/navigation';
 import { requireSession } from '@/lib/session';
 
 const RANGES = [
@@ -49,6 +50,7 @@ function Meter({ label, value, sub }: { label: string; value: number; sub: strin
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ zakres?: string }> }) {
   const [{ zakres }, session] = await Promise.all([searchParams, requireSession()]);
+  if (!(await api.me(session.id)).owner) notFound();
   const range = RANGES.some((r) => r.key === zakres) ? zakres! : 'hour';
 
   const siteAccess = await api.siteAccess(session.id);

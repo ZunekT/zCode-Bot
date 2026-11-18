@@ -96,13 +96,18 @@ function messageView(m: Message) {
   };
 }
 
-export function adminMoreRoutes(app: FastifyInstance, client: ZxClient, ownerCheck: OwnerCheck) {
+export function adminMoreRoutes(
+  app: FastifyInstance,
+  client: ZxClient,
+  ownerCheck: OwnerCheck,
+  strictOwner: OwnerCheck,
+) {
   const base = '/internal/users/:userId/admin';
 
   // ───────────── Ewidencja sprzedaży ─────────────
   app.get(`${base}/ledger`, async (request, reply) => {
     try {
-      if (!(await ownerCheck(request.params, reply))) return;
+      if (!(await strictOwner(request.params, reply))) return;
       const q = request.query as { year?: string; quarter?: string };
       const now = new Date();
       const year = Number(q.year) || now.getFullYear();
@@ -159,7 +164,7 @@ export function adminMoreRoutes(app: FastifyInstance, client: ZxClient, ownerChe
 
   app.put(`${base}/ledger/settings`, async (request, reply) => {
     try {
-      const userId = await ownerCheck(request.params, reply);
+      const userId = await strictOwner(request.params, reply);
       if (!userId) return;
       const limit = Number((request.body as { quarterLimit?: unknown })?.quarterLimit);
       if (!(limit > 0) || limit > 1_000_000)

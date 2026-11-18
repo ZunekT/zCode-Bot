@@ -5,12 +5,14 @@ import { PersonChip } from '@/components/PersonChip';
 import { Segmented } from '@/components/ui/Segmented';
 import { api } from '@/lib/api';
 import { date, pln } from '@/lib/money';
+import { notFound } from 'next/navigation';
 import { requireSession } from '@/lib/session';
 
 export const metadata = { title: 'Ewidencja sprzedaży' };
 
 export default async function LedgerPage({ searchParams }: { searchParams: Promise<{ rok?: string; kw?: string }> }) {
   const [{ rok, kw }, session] = await Promise.all([searchParams, requireSession()]);
+  if (!(await api.me(session.id)).owner) notFound();
   const l = await api.ledger(session.id, rok, kw);
   const now = new Date();
   const years = [now.getFullYear() - 1, now.getFullYear()];

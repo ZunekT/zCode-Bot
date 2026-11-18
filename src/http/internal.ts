@@ -21,7 +21,8 @@ import {
 } from '../modules/sdk/service.js';
 import { uptime } from '../modules/monitoring/service.js';
 import { MathostError, mathost, mathostEnabled, vpsId } from '../modules/vps/mathost.js';
-import { isOwner, issues, snapshot } from '../modules/vps/service.js';
+import { issues, snapshot } from '../modules/vps/service.js';
+import { accessOf, getAdmins, isOwner, isSiteAdmin, setAdmins } from '../modules/site/admins.js';
 
 const log = createLogger('http:internal');
 
@@ -171,7 +172,9 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
       const access = await getAccess();
       if (access.launched) return { launched: true, allowed: true };
       const id = user && /^\d{17,20}$/.test(user) ? user : null;
-      const allowed = !!id && (access.previewUsers.includes(id) || (await isOwner(client, id)));
+      const allowed =
+        !!id &&
+        (access.previewUsers.includes(id) || (await isOwner(client, id)) || (await isSiteAdmin(client, id)));
       return { launched: false, allowed };
     } catch (err) {
       return sendError(reply, err);
@@ -187,8 +190,73 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
     return null;
   };
 
-  adminRoutes(app, client, ownerCheck as never);
-  adminMoreRoutes(app, client, ownerCheck as never);
+  const adminCheck = async (params: unknown, reply: { code(n: number): { send(b: unknown): unknown } }) => {
+    const { userId } = userParam(params);
+    if ((await accessOf(client, userId)).admin) return userId;
+    reply.code(404).send({ error: 'Nie znaleziono.' });
+    return null;
+  };
+
+  adminRoutes(app, client, adminCheck as never);
+  adminMoreRoutes(app, client, adminCheck as never, ownerCheck as never);
+
+  app.get('/internal/users/:userId/admin/admins', async (request, reply) => {
+    try {
+      if (!(await ownerCheck(request.params, reply))) return;
+      const a = await getAdmins();
+      const guild = client.guilds.cache.get(env.GUILD_ID);
+      const users = await Promise.all(
+        a.users.map(async (id) => {
+          const u = await client.users.fetch(id).catch(() => null);
+          return {
+            id,
+            name: u?.globalName ?? u?.username ?? id,
+            avatar: u?.displayAvatarURL({ size: 64, extension: 'png' }) ?? null,
+          };
+        }),
+      );
+      const roles = guild
+        ? [...guild.roles.cache.values()]
+            .filter((r) => r.id !== guild.id && !r.managed)
+            .sort((x, y) => y.position - x.position)
+            .map((r) => ({ id: r.id, name: r.name, color: r.color, members: r.members?.size ?? 0 }))
+        : [];
+      return { users, roles: a.roles, guildRoles: roles };
+    } catch (err) {
+      return sendError(reply, err);
+    }
+  });
+
+  app.put('/internal/users/:userId/admin/admins', async (request, reply) => {
+    try {
+      const userId = await ownerCheck(request.params, reply);
+      if (!userId) return;
+      const body = (request.body ?? {}) as { users?: unknown; roles?: unknown };
+      const before = await getAdmins();
+      const next = await setAdmins(
+        { users: body.users as string[] | undefined, roles: body.roles as string[] | undefined },
+        userId,
+      );
+      const added = next.users.filter((u) => !before.users.includes(u));
+      const removed = before.users.filter((u) => !next.users.includes(u));
+      const parts = [
+        added.length && `dodano: ${added.map((u) => `<@${u}>`).join(', ')}`,
+        removed.length && `usunięto: ${removed.map((u) => `<@${u}>`).join(', ')}`,
+        before.roles.join() !== next.roles.join() &&
+          `role: ${next.roles.map((r) => `<@&${r}>`).join(', ') || 'brak'}`,
+      ].filter(Boolean);
+      if (parts.length) {
+        await audit(client, {
+          action: 'site.admins',
+          actorId: userId,
+          summary: `Panel WWW: administratorzy – ${parts.join('; ')}`,
+        });
+      }
+      return next;
+    } catch (err) {
+      return sendError(reply, err);
+    }
+  });
 
   app.get('/internal/users/:userId/admin/site', async (request, reply) => {
     try {
@@ -244,7 +312,7 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
   app.get('/internal/users/:userId/me', async (request, reply) => {
     try {
       const { userId } = userParam(request.params);
-      return { owner: await isOwner(client, userId), vps: mathostEnabled() };
+      return { ...(await accessOf(client, userId)), vps: mathostEnabled() };
     } catch (err) {
       return sendError(reply, err);
     }

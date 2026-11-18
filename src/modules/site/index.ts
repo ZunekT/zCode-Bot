@@ -4,7 +4,7 @@ import { UserError } from '../../core/errors.js';
 import { defineCommand, defineModule } from '../../core/types.js';
 import { v2 } from '../../ui/builders/payload.js';
 import { card } from '../../ui/components/card.js';
-import { isOwner } from '../vps/service.js';
+import { getAdmins, isOwner, loadAdmins, setAdmins, type Admins } from './admins.js';
 import { getAccess, setAccess, type SiteAccess } from './service.js';
 
 const statusCard = (a: SiteAccess, title?: string) =>
@@ -78,9 +78,82 @@ const siteCommand = defineCommand({
   },
 });
 
+const adminsCard = (a: Admins, title = 'Administratorzy zxCode') =>
+  card({
+    tone: 'brand',
+    emoji: 'user_crown',
+    title,
+    description:
+      'Administratorzy mają dostęp do Administracji na zxcode.pl (zlecenia, tickety, klienci, przegląd, dziennik) i uprawnienia administracyjne w bocie. Ewidencja, VPS, start strony i ta lista – tylko właściciel.',
+    fields: [
+      { label: 'Osoby', value: a.users.length ? a.users.map((u) => `<@${u}>`).join(', ') : 'brak' },
+      { label: 'Role', value: a.roles.length ? a.roles.map((r) => `<@&${r}>`).join(', ') : 'brak' },
+    ],
+    timestamp: false,
+  });
+
+const adminsCommand = defineCommand({
+  data: new SlashCommandBuilder()
+    .setName('administratorzy')
+    .setDescription('[Właściciel] Kto ma uprawnienia administracyjne (strona + bot)')
+    .addSubcommand((s) => s.setName('lista').setDescription('Pokaż administratorów'))
+    .addSubcommand((s) =>
+      s
+        .setName('dodaj')
+        .setDescription('Nadaj komuś uprawnienia administracyjne')
+        .addUserOption((o) => o.setName('osoba').setDescription('Kto').setRequired(true)),
+    )
+    .addSubcommand((s) =>
+      s
+        .setName('usun')
+        .setDescription('Odbierz uprawnienia administracyjne')
+        .addUserOption((o) => o.setName('osoba').setDescription('Kto').setRequired(true)),
+    )
+    .addSubcommand((s) =>
+      s
+        .setName('rola')
+        .setDescription('Dodaj lub usuń rolę – każdy z tą rolą jest administratorem')
+        .addRoleOption((o) => o.setName('rola').setDescription('Rola').setRequired(true)),
+    ),
+  access: 'admin',
+  allowInMaintenance: true,
+  async run(interaction, { client }) {
+    if (!(await isOwner(client, interaction.user.id)))
+      throw new UserError('Tylko właściciel zxCode nadaje uprawnienia administracyjne.');
+    const sub = interaction.options.getSubcommand();
+    const a = await getAdmins();
+    if (sub === 'lista') return interaction.reply(v2(adminsCard(a), { ephemeral: true }));
+
+    let next: Admins;
+    let summary: string;
+    if (sub === 'rola') {
+      const role = interaction.options.getRole('rola', true);
+      const has = a.roles.includes(role.id);
+      next = await setAdmins(
+        { roles: has ? a.roles.filter((r) => r !== role.id) : [...a.roles, role.id] },
+        interaction.user.id,
+      );
+      summary = `${has ? 'Usunięto rolę administratorów' : 'Rola administratorów'}: <@&${role.id}>`;
+    } else {
+      const user = interaction.options.getUser('osoba', true);
+      if (sub === 'dodaj' && user.bot) throw new UserError('Bot nie może być administratorem.');
+      next = await setAdmins(
+        { users: sub === 'dodaj' ? [...a.users, user.id] : a.users.filter((u) => u !== user.id) },
+        interaction.user.id,
+      );
+      summary = `${sub === 'dodaj' ? 'Nadano uprawnienia administracyjne' : 'Odebrano uprawnienia administracyjne'}: <@${user.id}>`;
+    }
+    await audit(client, { action: 'site.admins', actorId: interaction.user.id, summary });
+    return interaction.reply(v2(adminsCard(next, 'Zapisano'), { ephemeral: true }));
+  },
+});
+
 export const siteModule = defineModule({
   name: 'site',
   description: 'Strona zxcode.pl: tryb „Start wkrótce” i podgląd przed startem',
   toggleable: false,
-  commands: [siteCommand],
+  commands: [siteCommand, adminsCommand],
+  async onReady() {
+    await loadAdmins();
+  },
 });

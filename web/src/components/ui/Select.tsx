@@ -53,8 +53,16 @@ export function Select(props: Single | Multi) {
   useEffect(() => {
     if (!open) return;
     const away = (e: PointerEvent) => !root.current?.contains(e.target as Node) && setOpen(false);
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || root.current?.contains(document.activeElement)) return;
+      setOpen(false);
+    };
     document.addEventListener('pointerdown', away);
-    return () => document.removeEventListener('pointerdown', away);
+    document.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('pointerdown', away);
+      document.removeEventListener('keydown', esc);
+    };
   }, [open]);
 
   // Kierunek otwarcia + fokus wyszukiwarki + podświetlenie wybranej.
@@ -79,10 +87,12 @@ export function Select(props: Single | Multi) {
       const has = props.value.includes(o.value);
       if (!has && props.max && props.value.length >= props.max) return;
       props.onChange(has ? props.value.filter((v) => v !== o.value) : [...props.value, o.value]);
+      (searchable ? search.current : root.current?.querySelector<HTMLElement>('.sel-trigger'))?.focus();
     } else {
       props.onChange(o.value);
       setOpen(false);
       setQuery('');
+      root.current?.querySelector<HTMLElement>('.sel-trigger')?.focus();
     }
   }
 
@@ -234,6 +244,7 @@ export function Select(props: Single | Multi) {
                     data-active={!o.disabled && myIdx === active}
                     className={`sel-opt${isSel ? ' sel' : ''}${o.disabled ? ' dis' : ''}`}
                     onPointerEnter={() => !o.disabled && setActive(myIdx)}
+                    onPointerDown={(e) => e.preventDefault()}
                     onClick={() => pick(o)}
                   >
                     {label(o)}

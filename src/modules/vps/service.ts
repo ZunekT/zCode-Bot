@@ -1,5 +1,4 @@
 import type { ZxClient } from '../../client.js';
-import { env } from '../../config/env.js';
 import { getConfig } from '../../core/config-service.js';
 import { getSendableChannel } from '../../core/channels.js';
 import { redis } from '../../db/redis.js';
@@ -197,8 +196,4 @@ export async function checkVps(client: ZxClient): Promise<void> {
     .catch(() => undefined);
 }
 
-export async function isOwner(client: ZxClient, userId: string): Promise<boolean> {
-  if (env.OWNER_ID) return userId === env.OWNER_ID;
-  const guild = client.guilds.cache.get(env.GUILD_ID);
-  return !!guild && guild.ownerId === userId;
-}
+export { isOwner } from '../site/admins.js';

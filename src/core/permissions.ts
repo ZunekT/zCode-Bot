@@ -1,10 +1,12 @@
 import { PermissionFlagsBits, type GuildMember } from 'discord.js';
 import type { GuildConfig } from '../generated/prisma/client.js';
 import type { AccessLevel } from './types.js';
+import { memberIsSiteAdmin } from '../modules/site/admins.js';
 
 export function isAdmin(member: GuildMember, config: GuildConfig): boolean {
   if (member.permissions.has(PermissionFlagsBits.Administrator)) return true;
   if (member.permissions.has(PermissionFlagsBits.ManageGuild)) return true;
+  if (memberIsSiteAdmin(member)) return true;
   return !!config.adminRoleId && member.roles.cache.has(config.adminRoleId);
 }
 
