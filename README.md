@@ -288,7 +288,10 @@ Na koniec dopisz moduł do `src/modules/index.ts`. Router sam sprawdzi, czy modu
 
 ## Plan
 
-1. **MVP:** ✅ rdzeń, UI, baza, `/config`, `/serwis`, tickety, FAQ, logi, weryfikacja
-2. **Biznes:** ✅ zlecenia `ZX-xxxx`, płatności ręczne i proforma, cennik z kalkulatorem, portfolio, opinie, role klienta
-3. **Automatyzacja:** ✅ ogłoszenia (planowane), changelog z GitHuba, roadmapa, monitoring botów klientów, statystyki, przypomnienia
-4. **Extra:** user-install, snippety, giveaway, propozycje, partnerstwa, Scheduled Events
+1. **MVP:** gotowe – rdzeń, UI, baza, `/config`, `/serwis`, tickety, FAQ, logi, weryfikacja
+2. **Biznes:** gotowe – zlecenia `ZX-xxxx`, płatności ręczne i proforma, cennik z kalkulatorem, portfolio, opinie, role klienta
+3. **Automatyzacja:** gotowe – ogłoszenia (planowane), changelog z GitHuba, roadmapa, monitoring botów klientów, statystyki, przypomnienia
+4. **Do zrobienia:** moderacja (`/warn`, `/mute`, `/kick`, `/ban`, historia kar), giveaway, partnerstwa
+5. **Później (opcjonalnie):** user-install (`/portfolio`, `/cennik` w DM i na innych serwerach)
+
+Świadomie poza zakresem: dashboard WWW, kopie zapasowe w bocie, Scheduled Events, snippety, propozycje, powitania, self-role.

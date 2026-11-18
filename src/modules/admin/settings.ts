@@ -17,8 +17,6 @@ export const CHANNEL_SETTINGS = {
   ogloszenia: { field: 'announcementChannelId', label: 'Ogłoszenia', emoji: 'announcement' },
   changelog: { field: 'changelogChannelId', label: 'Changelog', emoji: 'git_branch' },
   opinie: { field: 'reviewChannelId', label: 'Opinie', emoji: 'star' },
-  powitania: { field: 'welcomeChannelId', label: 'Powitania', emoji: 'user_add' },
-  propozycje: { field: 'suggestionChannelId', label: 'Propozycje', emoji: 'idea' },
   alerty: { field: 'staffAlertChannelId', label: 'Alerty dla obsługi', emoji: 'notification' },
   transkrypty: { field: 'transcriptChannelId', label: 'Transkrypty ticketów', emoji: 'documentation' },
 } as const satisfies Record<string, SettingDef>;

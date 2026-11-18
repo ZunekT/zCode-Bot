@@ -30,8 +30,6 @@ model GuildConfig {
   announcementChannelId String?
   changelogChannelId    String?
   reviewChannelId       String?
-  welcomeChannelId      String?
-  suggestionChannelId   String?
   staffAlertChannelId   String?
 
   // Role
@@ -479,24 +477,6 @@ model Punishment {
   @@index([userId])
 }
 
-enum SuggestionStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  PLANNED
-}
-
-model Suggestion {
-  id        Int              @id @default(autoincrement())
-  authorId  String
-  content   String
-  status    SuggestionStatus @default(PENDING)
-  upvotes   String[]
-  downvotes String[]
-  messageId String?
-  createdAt DateTime         @default(now())
-}
-
 model Giveaway {
   id              Int      @id @default(autoincrement())
   prize           String
@@ -535,14 +515,6 @@ model Reminder {
   createdAt DateTime @default(now())
 
   @@index([remindAt, sent])
-}
-
-model Snippet {
-  key       String   @id
-  language  String
-  title     String
-  code      String
-  createdAt DateTime @default(now())
 }
 
 // ─────────────────────────────── Weryfikacja ───────────────────────────────
