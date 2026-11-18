@@ -1,0 +1,41 @@
+{
+  "name": "zxcode-heartbeat",
+  "version": "1.0.0",
+  "description": "Monitoring bota Discord przez zxCode – jedna linijka, bot sam zgłasza, że działa.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.mjs",
+    "index.d.ts",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "discord",
+    "discord.js",
+    "bot",
+    "monitoring",
+    "heartbeat",
+    "uptime",
+    "zxcode"
+  ],
+  "license": "UNLICENSED",
+  "peerDependencies": {
+    "discord.js": ">=14"
+  },
+  "peerDependenciesMeta": {
+    "discord.js": {
+      "optional": true
+    }
+  }
+}

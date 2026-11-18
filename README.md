@@ -175,6 +175,8 @@ Klient akceptuje wycenę przyciskiem w panelu. Dzień przed terminem płatności
 | 💓 Heartbeat | bot klienta co minutę wywołuje `GET/POST /heartbeat/<token>` (gotowy kod w odpowiedzi komendy)  | bot na hostingu bez publicznego adresu; wymaga `PUBLIC_URL` |
 | 🟢 Presence  | status online konta bota na serwerze zxCode                                                     | wymaga Presence Intent i `ENABLE_PRESENCE_INTENT=true`      |
 
+**Bot klienta z heartbeatem** używa pakietu `zxcode-heartbeat` (katalog `packages/zxcode-heartbeat`): `npm install zxcode-heartbeat`, w `.env` adres `ZXCODE_HEARTBEAT_URL` z `/monitoring dodaj`, w kodzie `require('zxcode-heartbeat')(client)`. Publikacja w npm: `cd packages/zxcode-heartbeat && npm login && npm publish`.
+
 Dwa nieudane sprawdzenia z rzędu dają alert 🔴 na kanale alertów (z pingiem obsługi) i DM do klienta. Po powrocie przychodzi 🟢 z czasem przerwy. `/monitoring panel` wysyła **tablicę statusu**, która aktualizuje się sama. `/status` pokazuje ją każdemu, `/monitoring lista | sprawdz | heartbeat | usun` służą obsłudze.
 
 ## Przypomnienia i statystyki

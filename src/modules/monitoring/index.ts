@@ -7,7 +7,7 @@ import { UserError } from '../../core/errors.js';
 import { isAdmin, isStaff } from '../../core/permissions.js';
 import { defineCommand, defineJob, defineModule } from '../../core/types.js';
 import { v2, v2Message } from '../../ui/builders/payload.js';
-import { card } from '../../ui/components/card.js';
+import { card, codeBlock } from '../../ui/components/card.js';
 import { discordTime, truncate } from '../../utils/format.js';
 import {
   MODES,
@@ -39,12 +39,15 @@ async function findBot(name: string) {
   return bot;
 }
 
+/** Instrukcja dla bota klienta – pakiet npm zxcode-heartbeat. */
 const heartbeatHelp = (token: string) =>
-  `**Adres heartbeat:**\n\`${heartbeatUrl(token)}\`\n` +
   (env.PUBLIC_URL ? '' : '-# Ustaw `PUBLIC_URL` w .env, żeby link miał prawdziwy adres serwera.\n') +
-  '**Dodaj do bota klienta (discord.js):**\n```js\n' +
-  `setInterval(() => fetch('${heartbeatUrl(token)}?version=1.0.0').catch(() => {}), 60_000);\n` +
-  '```';
+  '**1.** W bocie klienta: `npm install zxcode-heartbeat`\n' +
+  '**2.** Do `.env` bota klienta:\n' +
+  codeBlock(`ZXCODE_HEARTBEAT_URL=${heartbeatUrl(token)}`, 'ini') +
+  '\n**3.** Po utworzeniu klienta discord.js:\n' +
+  codeBlock("const heartbeat = require('zxcode-heartbeat');\nheartbeat(client);", 'js') +
+  '\n-# Bot zacznie się zgłaszać po zalogowaniu. Brak zgłoszenia przez 3 min = alert.';
 
 const monitoringCommand = defineCommand({
   data: new SlashCommandBuilder()
