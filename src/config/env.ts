@@ -22,8 +22,15 @@ const schema = z.object({
   /** Wewnętrzne API dla strony zxcode.pl (tylko sieć Dockera). Bez sekretu API się nie uruchamia. */
   INTERNAL_API_SECRET: z.string().min(32, 'INTERNAL_API_SECRET musi mieć min. 32 znaki').optional(),
   INTERNAL_PORT: z.coerce.number().int().positive().default(3100),
+  /** Klucz API Mathost (mathost.eu → konto → API) – zarządzanie VPS, na którym stoi bot. */
+  MATHOST_API_KEY: z.string().min(16, 'MATHOST_API_KEY wygląda na niepełny').optional(),
+  /** ID VPS w Mathost (domyślnie wykrywany, gdy na koncie jest jeden VPS). */
+  MATHOST_VPS_ID: z.coerce.number().int().positive().optional(),
   /** Kto edytuje ustawienia bota zxCode w panelu WWW (domyślnie właściciel serwera). */
-  OWNER_ID: z.string().regex(/^\d{17,20}$/, 'OWNER_ID musi być ID użytkownika Discord').optional(),
+  OWNER_ID: z
+    .string()
+    .regex(/^\d{17,20}$/, 'OWNER_ID musi być ID użytkownika Discord')
+    .optional(),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });

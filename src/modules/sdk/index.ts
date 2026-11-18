@@ -20,15 +20,24 @@ function setupText(key: string) {
     '**2.** Do `.env` bota:\n' +
     codeBlock(`ZXCODE_KEY=${key}\nZXCODE_URL=${SDK_URL()}`, 'ini') +
     '\n**3.** W kodzie (szczegóły w README pakietu):\n' +
-    codeBlock("const { zxcode } = require('zxcode-sdk');\nconst zx = zxcode(client, { modules: { /* … */ } });", 'js') +
+    codeBlock(
+      "const { zxcode } = require('zxcode-sdk');\nconst zx = zxcode(client, { modules: { /* … */ } });",
+      'js',
+    ) +
     '\n-# Klucz widzisz tylko teraz. Zgubiony klucz wygenerujesz ponownie: `/sdk klucz`.'
   );
 }
 
 async function botAutocomplete(interaction: AutocompleteInteraction) {
   const q = interaction.options.getFocused();
-  const bots = await prisma.sdkBot.findMany({ where: { name: { contains: q, mode: 'insensitive' } }, orderBy: { name: 'asc' }, take: 25 });
-  await interaction.respond(bots.map((b) => ({ name: truncate(`${b.name} (#${b.id})`, 100), value: String(b.id) })));
+  const bots = await prisma.sdkBot.findMany({
+    where: { name: { contains: q, mode: 'insensitive' } },
+    orderBy: { name: 'asc' },
+    take: 25,
+  });
+  await interaction.respond(
+    bots.map((b) => ({ name: truncate(`${b.name} (#${b.id})`, 100), value: String(b.id) })),
+  );
 }
 
 async function findBot(raw: string) {
@@ -46,21 +55,29 @@ const sdkCommand = defineCommand({
       s
         .setName('dodaj')
         .setDescription('Dodaj bota klienta – dostaniesz klucz do .env')
-        .addStringOption((o) => o.setName('nazwa').setDescription('Nazwa bota w panelu').setRequired(true).setMaxLength(40))
-        .addUserOption((o) => o.setName('wlasciciel').setDescription('Klient – tylko on edytuje bota w panelu').setRequired(true)),
+        .addStringOption((o) =>
+          o.setName('nazwa').setDescription('Nazwa bota w panelu').setRequired(true).setMaxLength(40),
+        )
+        .addUserOption((o) =>
+          o.setName('wlasciciel').setDescription('Klient – tylko on edytuje bota w panelu').setRequired(true),
+        ),
     )
     .addSubcommand((s) => s.setName('lista').setDescription('Boty SDK i ich stan'))
     .addSubcommand((s) =>
       s
         .setName('klucz')
         .setDescription('Wygeneruj nowy klucz (stary przestaje działać)')
-        .addStringOption((o) => o.setName('bot').setDescription('Bot').setRequired(true).setAutocomplete(true)),
+        .addStringOption((o) =>
+          o.setName('bot').setDescription('Bot').setRequired(true).setAutocomplete(true),
+        ),
     )
     .addSubcommand((s) =>
       s
         .setName('usun')
         .setDescription('Usuń bota z panelu (razem z ustawieniami i monitoringiem)')
-        .addStringOption((o) => o.setName('bot').setDescription('Bot').setRequired(true).setAutocomplete(true)),
+        .addStringOption((o) =>
+          o.setName('bot').setDescription('Bot').setRequired(true).setAutocomplete(true),
+        ),
     ),
   access: 'admin',
   autocomplete: botAutocomplete,
@@ -74,16 +91,34 @@ const sdkCommand = defineCommand({
       const owner = interaction.options.getUser('wlasciciel', true);
       if (owner.bot) throw new UserError('Właścicielem musi być człowiek, nie bot.');
       const { bot, key } = await createBot(name, owner.id);
-      await audit(client, { action: 'sdk.add', actorId, targetId: owner.id, summary: `Dodano bota SDK **${name}** (#${bot.id}) dla <@${owner.id}>` });
+      await audit(client, {
+        action: 'sdk.add',
+        actorId,
+        targetId: owner.id,
+        summary: `Dodano bota SDK **${name}** (#${bot.id}) dla <@${owner.id}>`,
+      });
       return interaction.reply(
-        v2(card({ tone: 'success', emoji: 'bot', title: `Bot ${name} dodany (#${bot.id})`, description: `Właściciel: <@${owner.id}>`, body: setupText(key), timestamp: false }), {
-          ephemeral: true,
-        }),
+        v2(
+          card({
+            tone: 'success',
+            emoji: 'bot',
+            title: `Bot ${name} dodany (#${bot.id})`,
+            description: `Właściciel: <@${owner.id}>`,
+            body: setupText(key),
+            timestamp: false,
+          }),
+          {
+            ephemeral: true,
+          },
+        ),
       );
     }
 
     if (sub === 'lista') {
-      const bots = await prisma.sdkBot.findMany({ orderBy: { createdAt: 'asc' }, include: { _count: { select: { guilds: true } } } });
+      const bots = await prisma.sdkBot.findMany({
+        orderBy: { createdAt: 'asc' },
+        include: { _count: { select: { guilds: true } } },
+      });
       return interaction.reply(
         v2(
           card({
@@ -118,17 +153,39 @@ const sdkCommand = defineCommand({
     }
     if (sub === 'klucz') {
       const key = await regenerateKey(bot.id);
-      await audit(client, { action: 'sdk.key', actorId, summary: `Nowy klucz dla bota SDK **${bot.name}** (#${bot.id})` });
+      await audit(client, {
+        action: 'sdk.key',
+        actorId,
+        summary: `Nowy klucz dla bota SDK **${bot.name}** (#${bot.id})`,
+      });
       return interaction.reply(
-        v2(card({ tone: 'warning', emoji: 'lock', title: `Nowy klucz: ${bot.name}`, description: 'Stary klucz już nie działa – podmień go w `.env` bota.', body: setupText(key), timestamp: false }), {
-          ephemeral: true,
-        }),
+        v2(
+          card({
+            tone: 'warning',
+            emoji: 'lock',
+            title: `Nowy klucz: ${bot.name}`,
+            description: 'Stary klucz już nie działa – podmień go w `.env` bota.',
+            body: setupText(key),
+            timestamp: false,
+          }),
+          {
+            ephemeral: true,
+          },
+        ),
       );
     }
 
     await deleteBot(bot.id);
-    await audit(client, { action: 'sdk.delete', actorId, summary: `Usunięto bota SDK **${bot.name}** (#${bot.id})` });
-    return interaction.reply(v2(card({ tone: 'success', title: `Usunięto bota ${bot.name}`, timestamp: false }), { ephemeral: true }));
+    await audit(client, {
+      action: 'sdk.delete',
+      actorId,
+      summary: `Usunięto bota SDK **${bot.name}** (#${bot.id})`,
+    });
+    return interaction.reply(
+      v2(card({ tone: 'success', title: `Usunięto bota ${bot.name}`, timestamp: false }), {
+        ephemeral: true,
+      }),
+    );
   },
 });
 

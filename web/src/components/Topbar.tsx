@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Icon } from './Icon';
 import { avatarUrl, type Session } from '@/lib/session';
 
-export function Topbar({ session, active }: { session: Session | null; active?: 'panel' }) {
+export function Topbar({ session, active, owner }: { session: Session | null; active?: 'panel' | 'admin'; owner?: boolean }) {
   return (
     <header className="topbar">
       <div className="container topbar-inner">
@@ -17,6 +17,11 @@ export function Topbar({ session, active }: { session: Session | null; active?: 
             <Link href="/panel" aria-current={active === 'panel' ? 'page' : undefined}>
               Moje boty
             </Link>
+            {owner && (
+              <Link href="/admin" aria-current={active === 'admin' ? 'page' : undefined}>
+                Administracja
+              </Link>
+            )}
           </nav>
         )}
         <div className="spacer" />

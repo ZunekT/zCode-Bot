@@ -3,7 +3,16 @@
  * Panel może zapisać tylko to, co bot zadeklarował – z kontrolą typów i istnienia kanałów/ról.
  */
 
-export const FIELD_TYPES = ['boolean', 'text', 'textarea', 'number', 'select', 'channel', 'role', 'color'] as const;
+export const FIELD_TYPES = [
+  'boolean',
+  'text',
+  'textarea',
+  'number',
+  'select',
+  'channel',
+  'role',
+  'color',
+] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 export const CHANNEL_TYPES = ['text', 'voice', 'category', 'announcement', 'forum', 'stage'] as const;
@@ -70,7 +79,16 @@ export type ConfigValues = Record<string, ModuleValues>;
 const KEY_RE = /^[a-zA-Z0-9_]{1,32}$/;
 const SNOWFLAKE_RE = /^\d{17,20}$/;
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
-const LIMITS = { modules: 50, fields: 60, options: 25, multiple: 25, label: 80, description: 300, text: 2000, textarea: 6000 };
+const LIMITS = {
+  modules: 50,
+  fields: 60,
+  options: 25,
+  multiple: 25,
+  label: 80,
+  description: 300,
+  text: 2000,
+  textarea: 6000,
+};
 
 const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : undefined);
 
@@ -91,7 +109,10 @@ export function sanitizeSchema(input: unknown): { schema: BotSchema; warnings: s
     seenModules.add(key);
     const fields: SchemaField[] = [];
     const seenFields = new Set<string>(['enabled']);
-    for (const f of (Array.isArray(m.fields) ? m.fields : []).slice(0, LIMITS.fields) as Record<string, unknown>[]) {
+    for (const f of (Array.isArray(m.fields) ? m.fields : []).slice(0, LIMITS.fields) as Record<
+      string,
+      unknown
+    >[]) {
       const fkey = str(f?.key, 32);
       const type = f?.type as FieldType;
       if (!fkey || !KEY_RE.test(fkey) || seenFields.has(fkey) || !FIELD_TYPES.includes(type)) {
@@ -116,7 +137,10 @@ export function sanitizeSchema(input: unknown): { schema: BotSchema; warnings: s
       if (type === 'select') {
         field.options = (Array.isArray(f.options) ? f.options : [])
           .slice(0, LIMITS.options)
-          .map((o: Record<string, unknown>) => ({ value: str(o?.value, 100) ?? '', label: str(o?.label, LIMITS.label) ?? '' }))
+          .map((o: Record<string, unknown>) => ({
+            value: str(o?.value, 100) ?? '',
+            label: str(o?.label, LIMITS.label) ?? '',
+          }))
           .filter((o) => o.value);
         if (!field.options.length) {
           warnings.push(`Moduł ${key}: pole ${fkey} typu select nie ma opcji`);
@@ -124,7 +148,9 @@ export function sanitizeSchema(input: unknown): { schema: BotSchema; warnings: s
         }
       }
       if (type === 'channel' && Array.isArray(f.channelTypes)) {
-        field.channelTypes = f.channelTypes.filter((t): t is ChannelKind => CHANNEL_TYPES.includes(t as ChannelKind));
+        field.channelTypes = f.channelTypes.filter((t): t is ChannelKind =>
+          CHANNEL_TYPES.includes(t as ChannelKind),
+        );
       }
       // Wartość domyślna przechodzi tę samą walidację (bez sprawdzania istnienia kanałów/ról).
       if (f.default !== undefined) {
@@ -172,7 +198,9 @@ function one(field: SchemaField, v: unknown, guild: GuildData | null): Check {
         ? { ok: true, value: v }
         : { ok: false, error: 'wartość spoza listy' };
     case 'color':
-      return typeof v === 'string' && COLOR_RE.test(v) ? { ok: true, value: v.toLowerCase() } : { ok: false, error: 'kolor w formacie #rrggbb' };
+      return typeof v === 'string' && COLOR_RE.test(v)
+        ? { ok: true, value: v.toLowerCase() }
+        : { ok: false, error: 'kolor w formacie #rrggbb' };
     case 'channel': {
       if (typeof v !== 'string' || !SNOWFLAKE_RE.test(v)) return { ok: false, error: 'nieprawidłowy kanał' };
       if (guild) {
@@ -186,7 +214,8 @@ function one(field: SchemaField, v: unknown, guild: GuildData | null): Check {
     }
     case 'role': {
       if (typeof v !== 'string' || !SNOWFLAKE_RE.test(v)) return { ok: false, error: 'nieprawidłowa rola' };
-      if (guild && !guild.roles.some((r) => r.id === v)) return { ok: false, error: 'rola nie istnieje na serwerze' };
+      if (guild && !guild.roles.some((r) => r.id === v))
+        return { ok: false, error: 'rola nie istnieje na serwerze' };
       return { ok: true, value: v };
     }
   }
@@ -240,7 +269,8 @@ export function validateValues(
     const mv = raw as Record<string, unknown>;
     const out: ModuleValues = {};
     if (mod.toggle && mv.enabled !== undefined) {
-      if (typeof mv.enabled !== 'boolean') errors.push({ path: `${mod.key}.enabled`, message: 'oczekiwano tak/nie' });
+      if (typeof mv.enabled !== 'boolean')
+        errors.push({ path: `${mod.key}.enabled`, message: 'oczekiwano tak/nie' });
       else out.enabled = mv.enabled;
     }
     for (const field of mod.fields) {
@@ -282,7 +312,9 @@ export function validatePermissions(
 }
 
 /** Czyści dane serwera przysłane przez bota. */
-export function sanitizeGuild(g: Record<string, unknown>): { id: string; name: string; icon: string | null; data: GuildData } | null {
+export function sanitizeGuild(
+  g: Record<string, unknown>,
+): { id: string; name: string; icon: string | null; data: GuildData } | null {
   const id = str(g?.id, 20);
   if (!id || !SNOWFLAKE_RE.test(id)) return null;
   const channels = (Array.isArray(g.channels) ? g.channels : [])
@@ -290,7 +322,9 @@ export function sanitizeGuild(g: Record<string, unknown>): { id: string; name: s
     .map((c: Record<string, unknown>) => ({
       id: str(c?.id, 20) ?? '',
       name: str(c?.name, 100) ?? '',
-      type: (CHANNEL_TYPES as readonly string[]).includes(String(c?.type)) ? (c.type as ChannelKind) : ('other' as const),
+      type: (CHANNEL_TYPES as readonly string[]).includes(String(c?.type))
+        ? (c.type as ChannelKind)
+        : ('other' as const),
       parentId: str(c?.parentId, 20) ?? null,
       position: Number(c?.position) || 0,
     }))

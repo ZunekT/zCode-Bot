@@ -40,7 +40,8 @@ export class ValidationFailed extends UserError {
 }
 
 const json = (v: unknown) => v as Prisma.InputJsonValue;
-const schemaOf = (bot: Pick<SdkBot, 'schema'>): BotSchema => (bot.schema as BotSchema | null) ?? { modules: [] };
+const schemaOf = (bot: Pick<SdkBot, 'schema'>): BotSchema =>
+  (bot.schema as BotSchema | null) ?? { modules: [] };
 const commandsOf = (bot: Pick<SdkBot, 'commands'>): string[] =>
   Array.isArray(bot.commands) ? (bot.commands as { name: string }[]).map((c) => c.name) : [];
 
@@ -54,8 +55,11 @@ export async function createBot(name: string, ownerId: string): Promise<{ bot: S
 
   // Monitoring (tryb heartbeat) – SDK zgłasza się co minutę.
   let monitorName = name;
-  if (await prisma.monitoredBot.findUnique({ where: { name: monitorName } })) monitorName = `${name} (SDK #${bot.id})`;
-  const monitored = await prisma.monitoredBot.create({ data: { name: monitorName, mode: 'heartbeat', ownerId } });
+  if (await prisma.monitoredBot.findUnique({ where: { name: monitorName } }))
+    monitorName = `${name} (SDK #${bot.id})`;
+  const monitored = await prisma.monitoredBot.create({
+    data: { name: monitorName, mode: 'heartbeat', ownerId },
+  });
 
   const saved = await prisma.sdkBot.update({
     where: { id: bot.id },
@@ -74,7 +78,8 @@ export async function regenerateKey(botId: number): Promise<string> {
 export async function deleteBot(botId: number): Promise<void> {
   const bot = await prisma.sdkBot.delete({ where: { id: botId } });
   sdkHub.closeStreams(botId);
-  if (bot.monitoredBotId) await prisma.monitoredBot.delete({ where: { id: bot.monitoredBotId } }).catch(() => undefined);
+  if (bot.monitoredBotId)
+    await prisma.monitoredBot.delete({ where: { id: bot.monitoredBotId } }).catch(() => undefined);
 }
 
 export async function authenticate(key: string | undefined): Promise<SdkBot | null> {
@@ -86,10 +91,16 @@ export async function authenticate(key: string | undefined): Promise<SdkBot | nu
 
 async function touch(bot: SdkBot, version?: string | null) {
   const now = new Date();
-  await prisma.sdkBot.update({ where: { id: bot.id }, data: { lastSeenAt: now, ...(version && { botVersion: version.slice(0, 40) }) } });
+  await prisma.sdkBot.update({
+    where: { id: bot.id },
+    data: { lastSeenAt: now, ...(version && { botVersion: version.slice(0, 40) }) },
+  });
   if (bot.monitoredBotId) {
     await prisma.monitoredBot
-      .update({ where: { id: bot.monitoredBotId }, data: { lastHeartbeatAt: now, ...(version && { version: version.slice(0, 40) }) } })
+      .update({
+        where: { id: bot.monitoredBotId },
+        data: { lastHeartbeatAt: now, ...(version && { version: version.slice(0, 40) }) },
+      })
       .catch(() => undefined);
   }
 }
@@ -99,7 +110,14 @@ async function upsertGuilds(botId: number, guilds: unknown[], replaceAll: boolea
   for (const g of clean.slice(0, 200)) {
     await prisma.sdkGuild.upsert({
       where: { botId_guildId: { botId, guildId: g.id } },
-      create: { botId, guildId: g.id, name: g.name, icon: g.icon, channels: json(g.data.channels), roles: json(g.data.roles) },
+      create: {
+        botId,
+        guildId: g.id,
+        name: g.name,
+        icon: g.icon,
+        channels: json(g.data.channels),
+        roles: json(g.data.roles),
+      },
       update: { name: g.name, icon: g.icon, channels: json(g.data.channels), roles: json(g.data.roles) },
     });
   }
@@ -122,7 +140,10 @@ export async function hello(bot: SdkBot, body: HelloPayload) {
   const { schema, warnings } = sanitizeSchema(body.schema);
   const commands = (Array.isArray(body.commands) ? body.commands : [])
     .slice(0, 200)
-    .map((c: Record<string, unknown>) => ({ name: String(c?.name ?? '').slice(0, 32), description: String(c?.description ?? '').slice(0, 100) }))
+    .map((c: Record<string, unknown>) => ({
+      name: String(c?.name ?? '').slice(0, 32),
+      description: String(c?.description ?? '').slice(0, 100),
+    }))
     .filter((c) => /^[\w-]{1,32}$/.test(c.name));
 
   const updated = await prisma.sdkBot.update({
@@ -138,7 +159,8 @@ export async function hello(bot: SdkBot, body: HelloPayload) {
   });
   if (Array.isArray(body.guilds)) await upsertGuilds(bot.id, body.guilds, true);
   await touch(updated, body.bot?.version);
-  if (warnings.length) log.warn(`Bot #${bot.id} (${bot.name}): ${warnings.length} ostrzeżeń schematu`, warnings.slice(0, 5));
+  if (warnings.length)
+    log.warn(`Bot #${bot.id} (${bot.name}): ${warnings.length} ostrzeżeń schematu`, warnings.slice(0, 5));
 
   const configs = await prisma.sdkConfig.findMany({ where: { botId: bot.id } });
   return {
@@ -146,14 +168,22 @@ export async function hello(bot: SdkBot, body: HelloPayload) {
     warnings,
     profile: (updated.profile as Profile | null) ?? {},
     profileRevision: updated.profileRevision,
-    configs: configs.map((c) => ({ guildId: c.guildId, values: c.values, permissions: c.permissions, revision: c.revision })),
+    configs: configs.map((c) => ({
+      guildId: c.guildId,
+      values: c.values,
+      permissions: c.permissions,
+      revision: c.revision,
+    })),
   };
 }
 
 export async function syncGuilds(bot: SdkBot, body: { guilds?: unknown[]; removed?: unknown[] }) {
   if (Array.isArray(body.guilds)) await upsertGuilds(bot.id, body.guilds, false);
-  const removed = (Array.isArray(body.removed) ? body.removed : []).filter((x): x is string => typeof x === 'string');
-  if (removed.length) await prisma.sdkGuild.deleteMany({ where: { botId: bot.id, guildId: { in: removed } } });
+  const removed = (Array.isArray(body.removed) ? body.removed : []).filter(
+    (x): x is string => typeof x === 'string',
+  );
+  if (removed.length)
+    await prisma.sdkGuild.deleteMany({ where: { botId: bot.id, guildId: { in: removed } } });
 }
 
 export async function heartbeat(bot: SdkBot, body: { version?: string }) {
@@ -161,14 +191,21 @@ export async function heartbeat(bot: SdkBot, body: { version?: string }) {
 }
 
 export async function setConnected(botId: number, connected: boolean) {
-  await prisma.sdkBot.update({ where: { id: botId }, data: { connected, lastSeenAt: new Date() } }).catch(() => undefined);
+  await prisma.sdkBot
+    .update({ where: { id: botId }, data: { connected, lastSeenAt: new Date() } })
+    .catch(() => undefined);
 }
 
 export async function profileResult(bot: SdkBot, body: { revision?: number; ok?: boolean; error?: string }) {
   const profile = ((bot.profile as Profile | null) ?? {}) as Profile;
   if (body.revision !== bot.profileRevision) return; // wynik starego żądania
   profile.request = null;
-  profile.lastResult = { revision: bot.profileRevision, ok: body.ok === true, error: body.error?.slice(0, 300), at: new Date().toISOString() };
+  profile.lastResult = {
+    revision: bot.profileRevision,
+    ok: body.ok === true,
+    error: body.error?.slice(0, 300),
+    at: new Date().toISOString(),
+  };
   await prisma.sdkBot.update({ where: { id: bot.id }, data: { profile: json(profile) } });
 }
 
@@ -176,7 +213,12 @@ export async function profileResult(bot: SdkBot, body: { revision?: number; ok?:
 
 export async function guildData(botId: number, guildId: string): Promise<GuildData | null> {
   const g = await prisma.sdkGuild.findUnique({ where: { botId_guildId: { botId, guildId } } });
-  return g ? { channels: g.channels as unknown as GuildData['channels'], roles: g.roles as unknown as GuildData['roles'] } : null;
+  return g
+    ? {
+        channels: g.channels as unknown as GuildData['channels'],
+        roles: g.roles as unknown as GuildData['roles'],
+      }
+    : null;
 }
 
 /**
@@ -194,7 +236,8 @@ export async function setConfig(
   const bot = await prisma.sdkBot.findUnique({ where: { id: botId } });
   if (!bot) throw new UserError('Bot nie istnieje.');
   const guild = await guildData(botId, guildId);
-  if (!guild && opts.requireGuild !== false) throw new UserError('Bot nie jest na tym serwerze (albo jeszcze go nie zgłosił).');
+  if (!guild && opts.requireGuild !== false)
+    throw new UserError('Bot nie jest na tym serwerze (albo jeszcze go nie zgłosił).');
 
   const current = await prisma.sdkConfig.findUnique({ where: { botId_guildId: { botId, guildId } } });
   const data: { values?: Prisma.InputJsonValue; permissions?: Prisma.InputJsonValue } = {};
@@ -219,13 +262,22 @@ export async function setConfig(
     update: { ...data, revision: { increment: 1 }, updatedBy },
   });
   if (opts.notify !== false) {
-    sdkHub.send(botId, { type: 'config', guildId, values: saved.values, permissions: saved.permissions, revision: saved.revision });
+    sdkHub.send(botId, {
+      type: 'config',
+      guildId,
+      values: saved.values,
+      permissions: saved.permissions,
+      revision: saved.revision,
+    });
   }
   return saved;
 }
 
 /** Profil bota z panelu: status/aktywność (trwałe) oraz zmiana nazwy/avatara (jednorazowo). */
-export async function setProfile(botId: number, input: { presence?: unknown; username?: unknown; avatar?: unknown }) {
+export async function setProfile(
+  botId: number,
+  input: { presence?: unknown; username?: unknown; avatar?: unknown },
+) {
   const bot = await prisma.sdkBot.findUnique({ where: { id: botId } });
   if (!bot) throw new UserError('Bot nie istnieje.');
   const profile = ((bot.profile as Profile | null) ?? {}) as Profile;
@@ -235,12 +287,14 @@ export async function setProfile(botId: number, input: { presence?: unknown; use
   if (input.presence !== undefined) {
     const p = input.presence as Record<string, unknown>;
     const status = p?.status as Presence['status'];
-    if (!PRESENCE_STATUSES.includes(status)) errors.push({ path: 'presence.status', message: 'nieznany status' });
+    if (!PRESENCE_STATUSES.includes(status))
+      errors.push({ path: 'presence.status', message: 'nieznany status' });
     let activity: Presence['activity'] = null;
     const a = p?.activity as Record<string, unknown> | null | undefined;
     if (a && a.text) {
       const type = a.type as NonNullable<Presence['activity']>['type'];
-      if (!ACTIVITY_TYPES.includes(type)) errors.push({ path: 'presence.activity.type', message: 'nieznany typ aktywności' });
+      if (!ACTIVITY_TYPES.includes(type))
+        errors.push({ path: 'presence.activity.type', message: 'nieznany typ aktywności' });
       const text = String(a.text).trim().slice(0, 128);
       activity = { type, text };
     }
@@ -248,19 +302,24 @@ export async function setProfile(botId: number, input: { presence?: unknown; use
   }
   if (input.username !== undefined && input.username !== null && input.username !== '') {
     const name = String(input.username).trim();
-    if (name.length < 2 || name.length > 32) errors.push({ path: 'username', message: 'nazwa: od 2 do 32 znaków' });
+    if (name.length < 2 || name.length > 32)
+      errors.push({ path: 'username', message: 'nazwa: od 2 do 32 znaków' });
     else request.username = name;
   }
   if (input.avatar !== undefined && input.avatar !== null && input.avatar !== '') {
     const m = String(input.avatar).match(/^data:image\/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$/);
     if (!m) errors.push({ path: 'avatar', message: 'avatar musi być obrazkiem PNG/JPG/GIF/WEBP' });
-    else if (Buffer.byteLength(m[2]!, 'base64') > MAX_AVATAR_BYTES) errors.push({ path: 'avatar', message: 'avatar może mieć maksymalnie 1 MB' });
+    else if (Buffer.byteLength(m[2]!, 'base64') > MAX_AVATAR_BYTES)
+      errors.push({ path: 'avatar', message: 'avatar może mieć maksymalnie 1 MB' });
     else request.avatar = String(input.avatar);
   }
   if (errors.length) throw new ValidationFailed(errors);
   profile.request = Object.keys(request).length ? request : null;
 
-  const saved = await prisma.sdkBot.update({ where: { id: botId }, data: { profile: json(profile), profileRevision: { increment: 1 } } });
+  const saved = await prisma.sdkBot.update({
+    where: { id: botId },
+    data: { profile: json(profile), profileRevision: { increment: 1 } },
+  });
   sdkHub.send(botId, { type: 'profile', profile, revision: saved.profileRevision });
   return { profile, revision: saved.profileRevision };
 }

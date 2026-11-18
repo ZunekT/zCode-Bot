@@ -46,7 +46,38 @@ async function orNotFound<T>(p: Promise<T>): Promise<T> {
   }
 }
 
+export interface VpsData {
+  vps: {
+    id: number;
+    name: string;
+    plan: string;
+    ip: string | null;
+    status: string;
+    uptimeSec: number;
+    cpuPct: number;
+    cpus: number;
+    mem: { used: number; total: number; fromAgent: boolean };
+    disk: { used: number; total: number } | null;
+    net: { in: number; out: number };
+    bandwidthMonth: number;
+    expiresAt: string;
+    autoRenew: boolean;
+    suspended: string | null;
+    price: string | null;
+    backups: { volid: string; ctime?: number; size?: number; notes?: string }[];
+  };
+  issues: { key: string; text: string }[];
+  range: 'hour' | 'day' | 'week' | 'month';
+  history: { t: number; cpu: number; mem: number; netIn: number; netOut: number }[];
+}
+
 export const api = {
+  me: (userId: string) =>
+    internal<{ owner: boolean; vps: boolean }>('GET', `${user(userId)}/me`).catch(() => ({ owner: false, vps: false })),
+  vps: (userId: string, range: string) =>
+    orNotFound(internal<VpsData>('GET', `${user(userId)}/admin/vps?range=${encodeURIComponent(range)}`)),
+  vpsAction: (userId: string, action: 'reboot' | 'backup') =>
+    internal<{ ok: boolean }>('POST', `${user(userId)}/admin/vps/${action}`, {}),
   bots: (userId: string) => internal<{ bots: PublicBot[] }>('GET', `${user(userId)}/bots`).then((r) => r.bots),
   bot: (userId: string, botId: string) => orNotFound(internal<BotDetails>('GET', `${user(userId)}/bots/${Number(botId)}`)),
   guild: (userId: string, botId: string, guildId: string) =>

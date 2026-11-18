@@ -122,14 +122,14 @@ export function diffBlock(lines: [DiffSign, string][]): string {
  */
 export function tableBlock(
   rows: [string, string][],
-  opts: { lang?: string; separatorBefore?: number[] } = {},
+  opts: { lang?: string; separatorBefore?: number[]; align?: 'left' | 'right' } = {},
 ): string {
   const width = Math.max(...rows.map(([k]) => k.length)) + 2;
   const valueWidth = Math.max(...rows.map(([, v]) => v.length));
   const lines: string[] = [];
   rows.forEach(([k, v], i) => {
     if (opts.separatorBefore?.includes(i)) lines.push('─'.repeat(width + valueWidth));
-    lines.push(`${k.padEnd(width)}${v.padStart(valueWidth)}`);
+    lines.push(`${k.padEnd(width)}${opts.align === 'left' ? v : v.padStart(valueWidth)}`.trimEnd());
   });
   return codeBlock(lines.join('\n'), opts.lang ?? '');
 }

@@ -3,7 +3,17 @@ import type { SdkBot } from '../../generated/prisma/client.js';
 import { UserError } from '../../core/errors.js';
 import { createLogger } from '../../utils/logger.js';
 import { sdkHub } from './hub.js';
-import { ValidationFailed, authenticate, heartbeat, hello, profileResult, setConfig, setConnected, syncGuilds, type HelloPayload } from './service.js';
+import {
+  ValidationFailed,
+  authenticate,
+  heartbeat,
+  hello,
+  profileResult,
+  setConfig,
+  setConnected,
+  syncGuilds,
+  type HelloPayload,
+} from './service.js';
 
 const log = createLogger('sdk:http');
 
@@ -15,7 +25,8 @@ declare module 'fastify' {
 
 /** Wspólna obsługa błędów: błędy walidacji -> 400 z listą pól, reszta -> 500. */
 export function sendError(reply: FastifyReply, err: unknown) {
-  if (err instanceof ValidationFailed) return reply.code(400).send({ error: 'validation', errors: err.errors });
+  if (err instanceof ValidationFailed)
+    return reply.code(400).send({ error: 'validation', errors: err.errors });
   if (err instanceof UserError) return reply.code(400).send({ error: err.message });
   log.error('Błąd API SDK', err);
   return reply.code(500).send({ error: 'Błąd serwera' });
@@ -65,7 +76,10 @@ export async function sdkRoutes(app: FastifyInstance): Promise<void> {
 
   app.post('/sdk/v1/profile/result', async (request, reply) => {
     try {
-      await profileResult(request.sdkBot!, (request.body ?? {}) as { revision?: number; ok?: boolean; error?: string });
+      await profileResult(
+        request.sdkBot!,
+        (request.body ?? {}) as { revision?: number; ok?: boolean; error?: string },
+      );
       return { ok: true };
     } catch (err) {
       return sendError(reply, err);

@@ -16,6 +16,7 @@ import { statsModule } from './stats/index.js';
 import { systemModule } from './system/index.js';
 import { ticketsModule } from './tickets/index.js';
 import { verificationModule } from './verification/index.js';
+import { vpsModule } from './vps/index.js';
 
 /**
  * Lista wszystkich modułów bota. Nowy moduł = nowy katalog w src/modules + wpis tutaj.
@@ -39,4 +40,5 @@ export const modules: BotModule[] = [
   remindersModule,
   statsModule,
   sdkModule,
+  vpsModule,
 ];

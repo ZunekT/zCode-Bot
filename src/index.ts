@@ -49,7 +49,13 @@ async function main() {
   const shutdown = async (signal: string) => {
     logger.info(`Otrzymano ${signal}, zamykam…`);
     stopScheduler();
-    await Promise.allSettled([http.close(), internal?.close(), client.destroy(), prisma.$disconnect(), redis.quit()]);
+    await Promise.allSettled([
+      http.close(),
+      internal?.close(),
+      client.destroy(),
+      prisma.$disconnect(),
+      redis.quit(),
+    ]);
     process.exit(0);
   };
   process.once('SIGINT', () => void shutdown('SIGINT'));

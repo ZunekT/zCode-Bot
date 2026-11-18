@@ -44,16 +44,43 @@ interface Binding {
 
 const TEXT: ChannelKind[] = ['text', 'announcement'];
 const ch = (key: string, label: string, types: ChannelKind[] = TEXT, description?: string): SchemaField => ({
-  key, type: 'channel', label, channelTypes: types, ...(description && { description }),
+  key,
+  type: 'channel',
+  label,
+  channelTypes: types,
+  ...(description && { description }),
 });
 const role = (key: string, label: string, description?: string): SchemaField => ({
-  key, type: 'role', label, ...(description && { description }),
+  key,
+  type: 'role',
+  label,
+  ...(description && { description }),
 });
-const num = (key: string, label: string, min: number, max: number, def: number, description?: string): SchemaField => ({
-  key, type: 'number', label, min, max, integer: true, default: def, required: true, ...(description && { description }),
+const num = (
+  key: string,
+  label: string,
+  min: number,
+  max: number,
+  def: number,
+  description?: string,
+): SchemaField => ({
+  key,
+  type: 'number',
+  label,
+  min,
+  max,
+  integer: true,
+  default: def,
+  required: true,
+  ...(description && { description }),
 });
 const bool = (key: string, label: string, def: boolean, description?: string): SchemaField => ({
-  key, type: 'boolean', label, default: def, required: true, ...(description && { description }),
+  key,
+  type: 'boolean',
+  label,
+  default: def,
+  required: true,
+  ...(description && { description }),
 });
 
 interface ModuleDef {
@@ -76,7 +103,10 @@ const MODULES: ModuleDef[] = [
       [ch('audyt', 'Kanał audytu', TEXT, 'Akcje administracji i zmiany z panelu'), 'auditChannelId'],
       [ch('logi', 'Logi ticketów i zleceń'), 'logChannelId'],
       [bool('serwis', 'Tryb serwisowy', false, 'Bot odpowiada tylko administracji'), 'maintenance'],
-      [{ key: 'serwis_tresc', type: 'textarea', label: 'Komunikat trybu serwisowego', maxLength: 1000 }, 'maintenanceMessage'],
+      [
+        { key: 'serwis_tresc', type: 'textarea', label: 'Komunikat trybu serwisowego', maxLength: 1000 },
+        'maintenanceMessage',
+      ],
     ],
   },
   {
@@ -87,8 +117,21 @@ const MODULES: ModuleDef[] = [
       [ch('kategoria', 'Kategoria ticketów', ['category']), 'ticketCategoryId'],
       [ch('archiwum', 'Archiwum ticketów', ['category']), 'archiveCategoryId'],
       [ch('transkrypty', 'Kanał transkryptów'), 'transcriptChannelId'],
-      [num('auto_zamkniecie', 'Auto-zamknięcie (godziny)', 1, 720, 48, 'Po ilu godzinach bez odpowiedzi zamknąć ticket'), 'ticketAutoCloseHours'],
-      [num('sla', 'SLA (godziny)', 1, 168, 12, 'Po ilu godzinach oczekiwania klienta pingować obsługę'), 'ticketSlaHours'],
+      [
+        num(
+          'auto_zamkniecie',
+          'Auto-zamknięcie (godziny)',
+          1,
+          720,
+          48,
+          'Po ilu godzinach bez odpowiedzi zamknąć ticket',
+        ),
+        'ticketAutoCloseHours',
+      ],
+      [
+        num('sla', 'SLA (godziny)', 1, 168, 12, 'Po ilu godzinach oczekiwania klienta pingować obsługę'),
+        'ticketSlaHours',
+      ],
     ],
   },
   {
@@ -100,7 +143,11 @@ const MODULES: ModuleDef[] = [
       [role('niezweryfikowany', 'Rola przed weryfikacją', 'Opcjonalna'), 'unverifiedRoleId'],
       [
         {
-          key: 'tryb', type: 'select', label: 'Tryb weryfikacji', required: true, default: 'captcha',
+          key: 'tryb',
+          type: 'select',
+          label: 'Tryb weryfikacji',
+          required: true,
+          default: 'captcha',
           options: Object.entries(MODE_LABELS).map(([value, label]) => ({ value, label })),
         },
         'verificationMode',
@@ -122,7 +169,17 @@ const MODULES: ModuleDef[] = [
         { log: t },
       ]),
       [
-        { ...ch('pomijane', 'Pomijane kanały i kategorie', ['text', 'voice', 'category', 'announcement', 'forum', 'stage']), multiple: true },
+        {
+          ...ch('pomijane', 'Pomijane kanały i kategorie', [
+            'text',
+            'voice',
+            'category',
+            'announcement',
+            'forum',
+            'stage',
+          ]),
+          multiple: true,
+        },
         'logIgnoredChannels',
       ],
     ],
@@ -131,7 +188,12 @@ const MODULES: ModuleDef[] = [
     key: 'orders',
     label: 'Zlecenia i płatności',
     toggle: 'orders',
-    fields: [[{ key: 'dane_przelewu', type: 'textarea', label: 'Dane do przelewu (proforma)', maxLength: 1000 }, 'paymentDetails']],
+    fields: [
+      [
+        { key: 'dane_przelewu', type: 'textarea', label: 'Dane do przelewu (proforma)', maxLength: 1000 },
+        'paymentDetails',
+      ],
+    ],
   },
   {
     key: 'clients',
@@ -142,14 +204,34 @@ const MODULES: ModuleDef[] = [
       [role('staly_klient', 'Rola stałego klienta'), 'loyalClientRoleId'],
     ],
   },
-  { key: 'announcements', label: 'Ogłoszenia', toggle: 'announcements', fields: [[ch('kanal', 'Kanał ogłoszeń'), 'announcementChannelId']] },
-  { key: 'changelog', label: 'Changelog', toggle: 'changelog', fields: [[ch('kanal', 'Kanał changeloga'), 'changelogChannelId']] },
-  { key: 'reviews', label: 'Opinie', toggle: 'reviews', fields: [[ch('kanal', 'Kanał opinii'), 'reviewChannelId']] },
+  {
+    key: 'announcements',
+    label: 'Ogłoszenia',
+    toggle: 'announcements',
+    fields: [[ch('kanal', 'Kanał ogłoszeń'), 'announcementChannelId']],
+  },
+  {
+    key: 'changelog',
+    label: 'Changelog',
+    toggle: 'changelog',
+    fields: [[ch('kanal', 'Kanał changeloga'), 'changelogChannelId']],
+  },
+  {
+    key: 'reviews',
+    label: 'Opinie',
+    toggle: 'reviews',
+    fields: [[ch('kanal', 'Kanał opinii'), 'reviewChannelId']],
+  },
   {
     key: 'monitoring',
     label: 'Monitoring botów',
     toggle: 'monitoring',
-    fields: [[ch('alerty', 'Alerty dla obsługi', TEXT, 'Powiadomienia o awariach botów klientów'), 'staffAlertChannelId']],
+    fields: [
+      [
+        ch('alerty', 'Alerty dla obsługi', TEXT, 'Powiadomienia o awariach botów klientów'),
+        'staffAlertChannelId',
+      ],
+    ],
   },
 ];
 
@@ -164,7 +246,9 @@ const SIMPLE_TOGGLES: Record<string, string> = {
 
 const BINDINGS: Binding[] = MODULES.flatMap((m) =>
   m.fields.map(([field, target]) =>
-    typeof target === 'string' ? { module: m.key, field, column: target } : { module: m.key, field, logType: target.log },
+    typeof target === 'string'
+      ? { module: m.key, field, column: target }
+      : { module: m.key, field, logType: target.log },
   ),
 );
 
@@ -180,7 +264,14 @@ export function selfSchema(botModules: BotModule[]): BotSchema {
   }));
   for (const [key, label] of Object.entries(SIMPLE_TOGGLES)) {
     if (!descriptions.has(key)) continue;
-    mods.push({ key, label, description: descriptions.get(key), toggle: true, defaultEnabled: true, fields: [] });
+    mods.push({
+      key,
+      label,
+      description: descriptions.get(key),
+      toggle: true,
+      defaultEnabled: true,
+      fields: [],
+    });
   }
   return { modules: mods };
 }
@@ -266,7 +357,13 @@ function snapshot(guild: Guild) {
     icon: guild.iconURL({ size: 128 }),
     channels: [...guild.channels.cache.values()]
       .filter((c) => !c.isThread())
-      .map((c) => ({ id: c.id, name: c.name, type: KINDS[c.type] ?? 'other', parentId: c.parentId, position: c.rawPosition })),
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        type: KINDS[c.type] ?? 'other',
+        parentId: c.parentId,
+        position: c.rawPosition,
+      })),
     roles: [...guild.roles.cache.values()]
       .filter((r) => r.id !== guild.id)
       .map((r) => ({ id: r.id, name: r.name, color: r.color, position: r.position, managed: r.managed })),
@@ -290,7 +387,13 @@ async function ensureSelfBot(client: ZxClient, guild: Guild): Promise<SdkBot> {
   }
   // Klucz losowy i nigdzie niezapisany – bot zxCode łączy się w procesie, nie przez HTTP.
   return prisma.sdkBot.create({
-    data: { name: 'zxCode', ownerId, appId, keyHash: hashKey(randomBytes(32).toString('hex')), keyPrefix: 'wbudowany' },
+    data: {
+      name: 'zxCode',
+      ownerId,
+      appId,
+      keyHash: hashKey(randomBytes(32).toString('hex')),
+      keyPrefix: 'wbudowany',
+    },
   });
 }
 
@@ -336,15 +439,21 @@ async function applyProfile(client: ZxClient, profile: Profile, revision: number
     user.setPresence({
       status: profile.presence.status,
       activities: a?.text
-        ? [a.type === 'custom' ? { name: 'Custom Status', state: a.text, type: 4 } : { name: a.text, type: types[a.type] }]
+        ? [
+            a.type === 'custom'
+              ? { name: 'Custom Status', state: a.text, type: 4 }
+              : { name: a.text, type: types[a.type] },
+          ]
         : [],
     });
   }
   if (initial || !profile.request || (!profile.request.username && !profile.request.avatar)) return;
   let error: string | undefined;
   try {
-    if (profile.request.username && profile.request.username !== user.username) await user.setUsername(profile.request.username);
-    if (profile.request.avatar) await user.setAvatar(Buffer.from(profile.request.avatar.split(',')[1] ?? '', 'base64'));
+    if (profile.request.username && profile.request.username !== user.username)
+      await user.setUsername(profile.request.username);
+    if (profile.request.avatar)
+      await user.setAvatar(Buffer.from(profile.request.avatar.split(',')[1] ?? '', 'base64'));
   } catch (err) {
     error = (err as Error).message;
     log.warn('Nie udało się zmienić profilu bota', err);
@@ -373,7 +482,11 @@ export async function startSelfSdk(client: ZxClient, botModules: BotModule[]): P
   const res = await hello(selfBot, {
     sdk: { version: 'wbudowany' },
     bot: { version: pkg.version },
-    app: { id: client.user.id, username: client.user.username, avatar: client.user.displayAvatarURL({ size: 256 }) },
+    app: {
+      id: client.user.id,
+      username: client.user.username,
+      avatar: client.user.displayAvatarURL({ size: 256 }),
+    },
     schema,
     commands,
     guilds: [snapshot(guild)],
@@ -402,7 +515,9 @@ export async function startSelfSdk(client: ZxClient, botModules: BotModule[]): P
       timer = null;
       const current = client.guilds.cache.get(env.GUILD_ID);
       if (current && selfBot) {
-        syncGuilds(selfBot, { guilds: [snapshot(current)] }).catch((err) => log.warn('Synchronizacja kanałów/ról', err));
+        syncGuilds(selfBot, { guilds: [snapshot(current)] }).catch((err) =>
+          log.warn('Synchronizacja kanałów/ról', err),
+        );
       }
     }, 3_000);
   };

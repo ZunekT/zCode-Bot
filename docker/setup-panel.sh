@@ -3,7 +3,7 @@
 #   bash docker/setup-panel.sh
 # Co robi:
 #   1. dopisuje do .env brakujące sekrety (generowane automatycznie) i adres strony,
-#   2. pyta o Client Secret aplikacji Discord (wpisywany niewidocznie, nie trafia do historii),
+#   2. pyta o Client Secret aplikacji Discord i klucz API Mathost (wpisywane niewidocznie),
 #   3. dodaje zxcode.pl i www.zxcode.pl do Caddy (HTTPS) i przeładowuje Caddy,
 #   4. buduje i uruchamia bota oraz stronę.
 set -euo pipefail
@@ -28,6 +28,15 @@ if ! has DISCORD_CLIENT_SECRET; then
   [ ${#secret} -ge 20 ] || { echo "To nie wygląda na Client Secret – uruchom skrypt ponownie."; exit 1; }
   put DISCORD_CLIENT_SECRET "$secret"
   echo "+ DISCORD_CLIENT_SECRET"
+fi
+
+if ! has MATHOST_API_KEY; then
+  echo
+  echo "Mathost → konto → API → klucz API (zarządzanie VPS: stan, restart, kopie). Enter = pomiń."
+  read -rsp "Wklej klucz API Mathost: " mkey
+  echo
+  mkey="$(printf '%s' "$mkey" | tr -cd 'A-Za-z0-9_.-')"
+  if [ -n "$mkey" ]; then put MATHOST_API_KEY "$mkey"; echo "+ MATHOST_API_KEY"; fi
 fi
 
 CADDY=/etc/caddy/Caddyfile

@@ -6,8 +6,17 @@ import { audit } from '../core/audit.js';
 import { createLogger } from '../utils/logger.js';
 import { safeEqual } from '../modules/sdk/keys.js';
 import { sendError } from '../modules/sdk/routes.js';
-import { guildData, ownedBot, publicBot, setConfig, setProfile, type Profile } from '../modules/sdk/service.js';
+import {
+  guildData,
+  ownedBot,
+  publicBot,
+  setConfig,
+  setProfile,
+  type Profile,
+} from '../modules/sdk/service.js';
 import { uptime } from '../modules/monitoring/service.js';
+import { MathostError, mathost, mathostEnabled, vpsId } from '../modules/vps/mathost.js';
+import { isOwner, issues, snapshot } from '../modules/vps/service.js';
 
 const log = createLogger('http:internal');
 
@@ -27,7 +36,8 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
 
   app.addHook('onRequest', async (request, reply) => {
     const given = request.headers['x-internal-secret'];
-    if (typeof given !== 'string' || !safeEqual(given, secret)) return reply.code(401).send({ error: 'unauthorized' });
+    if (typeof given !== 'string' || !safeEqual(given, secret))
+      return reply.code(401).send({ error: 'unauthorized' });
   });
 
   const userParam = (p: unknown) => {
@@ -42,7 +52,11 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
   app.get('/internal/users/:userId/bots', async (request, reply) => {
     try {
       const { userId } = userParam(request.params);
-      const bots = await prisma.sdkBot.findMany({ where: { ownerId: userId }, orderBy: { createdAt: 'asc' }, include: { _count: { select: { guilds: true } } } });
+      const bots = await prisma.sdkBot.findMany({
+        where: { ownerId: userId },
+        orderBy: { createdAt: 'asc' },
+        include: { _count: { select: { guilds: true } } },
+      });
       return { bots: bots.map((b) => ({ ...publicBot(b), guildCount: b._count.guilds })) };
     } catch (err) {
       return sendError(reply, err);
@@ -55,7 +69,11 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
       const { userId, botId } = userParam(request.params);
       const bot = await ownedBot(botId, userId);
       const [guilds, monitored] = await Promise.all([
-        prisma.sdkGuild.findMany({ where: { botId }, orderBy: { name: 'asc' }, select: { guildId: true, name: true, icon: true } }),
+        prisma.sdkGuild.findMany({
+          where: { botId },
+          orderBy: { name: 'asc' },
+          select: { guildId: true, name: true, icon: true },
+        }),
         bot.monitoredBotId ? prisma.monitoredBot.findUnique({ where: { id: bot.monitoredBotId } }) : null,
       ]);
       return {
@@ -66,7 +84,12 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
         profile: (bot.profile as Profile | null) ?? {},
         profileRevision: bot.profileRevision,
         monitoring: monitored
-          ? { online: monitored.online, uptime: uptime(monitored), lastDownAt: monitored.lastDownAt, version: monitored.version }
+          ? {
+              online: monitored.online,
+              uptime: uptime(monitored),
+              lastDownAt: monitored.lastDownAt,
+              version: monitored.version,
+            }
           : null,
       };
     } catch (err) {
@@ -87,7 +110,13 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
       ]);
       if (!guild || !data) return reply.code(404).send({ error: 'Bot nie jest na tym serwerze.' });
       return {
-        guild: { id: guild.guildId, name: guild.name, icon: guild.icon, channels: data.channels, roles: data.roles },
+        guild: {
+          id: guild.guildId,
+          name: guild.name,
+          icon: guild.icon,
+          channels: data.channels,
+          roles: data.roles,
+        },
         values: config?.values ?? {},
         permissions: config?.permissions ?? {},
         revision: config?.revision ?? 0,
@@ -123,10 +152,97 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
       const { userId, botId } = userParam(request.params);
       const bot = await ownedBot(botId, userId);
       const result = await setProfile(botId, (request.body ?? {}) as Record<string, unknown>);
-      await audit(client, { action: 'sdk.profile', actorId: userId, summary: `Panel WWW: zmiana profilu bota **${bot.name}**` });
+      await audit(client, {
+        action: 'sdk.profile',
+        actorId: userId,
+        summary: `Panel WWW: zmiana profilu bota **${bot.name}**`,
+      });
       return result;
     } catch (err) {
       return sendError(reply, err);
+    }
+  });
+
+  // ───────────── Administracja (tylko właściciel zxCode) ─────────────
+
+  app.get('/internal/users/:userId/me', async (request, reply) => {
+    try {
+      const { userId } = userParam(request.params);
+      return { owner: await isOwner(client, userId), vps: mathostEnabled() };
+    } catch (err) {
+      return sendError(reply, err);
+    }
+  });
+
+  /** Zwraca false (i 404) dla każdego poza właścicielem – strona nie zdradza, że panel istnieje. */
+  const ownerOnly = async (
+    request: { params: unknown },
+    reply: { code(n: number): { send(b: unknown): unknown } },
+  ) => {
+    const { userId } = userParam(request.params);
+    if (!(await isOwner(client, userId))) {
+      reply.code(404).send({ error: 'Nie znaleziono.' });
+      return null;
+    }
+    if (!mathostEnabled()) {
+      reply.code(503).send({ error: 'Zarządzanie VPS wyłączone – brak MATHOST_API_KEY w .env bota.' });
+      return null;
+    }
+    return userId;
+  };
+  const mathostError = (reply: { code(n: number): { send(b: unknown): unknown } }, err: unknown) =>
+    err instanceof MathostError
+      ? reply.code(502).send({ error: err.message })
+      : sendError(reply as never, err);
+
+  app.get('/internal/users/:userId/admin/vps', async (request, reply) => {
+    try {
+      if (!(await ownerOnly(request, reply))) return;
+      const tf = (request.query as { range?: string }).range;
+      const range = tf === 'day' || tf === 'week' || tf === 'month' ? tf : 'hour';
+      const id = await vpsId();
+      const [s, history] = await Promise.all([snapshot(), mathost.history(id, range).catch(() => [])]);
+      const points = history
+        .filter((p) => typeof p.cpu === 'number')
+        .map((p) => ({
+          t: p.time,
+          cpu: Math.min(100, Math.round((p.cpu ?? 0) * 1000) / 10),
+          mem: p.maxmem ? Math.round(((p.mem ?? 0) / p.maxmem) * 1000) / 10 : 0,
+          netIn: Math.round(p.netin ?? 0),
+          netOut: Math.round(p.netout ?? 0),
+        }));
+      return { vps: s, issues: issues(s), range, history: points };
+    } catch (err) {
+      return mathostError(reply, err);
+    }
+  });
+
+  app.post('/internal/users/:userId/admin/vps/:action', async (request, reply) => {
+    try {
+      const userId = await ownerOnly(request, reply);
+      if (!userId) return;
+      const { action } = request.params as { action: string };
+      const id = await vpsId();
+      if (action === 'reboot') {
+        await audit(client, {
+          action: 'vps.reboot',
+          actorId: userId,
+          summary: 'Panel WWW: restart VPS (Mathost)',
+        });
+        await mathost.reboot(id);
+      } else if (action === 'backup') {
+        await mathost.createBackup(id);
+        await audit(client, {
+          action: 'vps.backup',
+          actorId: userId,
+          summary: 'Panel WWW: kopia zapasowa VPS (Mathost)',
+        });
+      } else {
+        return reply.code(404).send({ error: 'Nieznana akcja.' });
+      }
+      return { ok: true };
+    } catch (err) {
+      return mathostError(reply, err);
     }
   });
 

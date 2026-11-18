@@ -28,6 +28,19 @@ zakres `identify`), sesja w podpisanym ciasteczku – strona nie ma własnej baz
   zmiany trafiają na żywo.
 - **Serwer → Uprawnienia komend** – role, które mogą używać danej komendy.
 
+## Administracja (tylko właściciel)
+
+Zakładka **Administracja** widoczna tylko dla właściciela (`OWNER_ID` albo właściciel serwera zxCode);
+dla innych `/admin` zwraca 404. Wymaga `MATHOST_API_KEY`.
+
+- stan VPS: CPU, RAM, dysk, czas działania, sieć, wykresy (godzina / doba / tydzień / miesiąc),
+- ważność, cena, auto-odnawianie, transfer, kopie zapasowe,
+- **Kopia zapasowa** i **Restart VPS** (z potwierdzeniem, wpis w audycie).
+
+To samo na Discordzie: `/vps status | restart | kopia` (status – administracja, restart i kopia – właściciel).
+Co 5 min bot sprawdza VPS i ostrzega na kanale alertów obsługi: dysk ≥ 85%, RAM ≥ 90%, CPU ≥ 90% przez
+10 min, wygaśnięcie w ciągu 7 dni bez auto-odnawiania, zawieszenie (każdy alert najwyżej raz na 12 h).
+
 ## Bezpieczeństwo
 
 - Zapis tylko z nagłówkiem `Origin` strony (CSRF), sesja HMAC-SHA256, ciasteczko `HttpOnly`, `Secure`, `SameSite=Lax`.
