@@ -69,7 +69,6 @@ export async function onMessageUpdate(
 ): Promise<void> {
   if (await shouldSkip(after)) return;
   if (after.partial) after = await after.fetch().catch(() => after);
-  // Discord wysyła update także przy dociągnięciu podglądu linku – interesuje nas tylko zmiana treści.
   if (!before.partial && before.content === after.content) return;
   const author = after.author;
 

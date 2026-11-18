@@ -5,9 +5,6 @@ import { env } from '../../config/env.js';
 import { UserError } from '../../core/errors.js';
 import { prisma } from '../../db/prisma.js';
 
-// Administratorzy zxCode (poza właścicielem): osoby dodane po ID i wszyscy z wybranymi rolami Discorda.
-// Mają dostęp do Administracji na stronie i uprawnienia administracyjne w bocie.
-
 const KEY = 'admins';
 const MAX = 50;
 const SNOWFLAKE = /^\d{17,20}$/;

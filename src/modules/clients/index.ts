@@ -56,7 +56,6 @@ const profileCommand = defineCommand({
             ? `${reviews.length} (śr. ${(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)} / 5)`
             : null,
         },
-        // Wydana kwota tylko dla właściciela profilu i obsługi.
         { emoji: 'money', label: 'Łącznie wpłacono', value: self || staff ? formatMoney(spent) : null },
         {
           emoji: 'calendar',

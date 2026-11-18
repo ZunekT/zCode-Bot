@@ -260,7 +260,6 @@ export async function editOrder(
   await locked(id, async () => {
     const before = await getOrder(id);
     const after = await prisma.order.update({ where: { id }, data });
-    // Rabat procentowy przeliczamy po zmianie ceny.
     if (data.price !== undefined && before.discountCode) {
       const dc = await prisma.discountCode.findUnique({ where: { code: before.discountCode } });
       if (dc && after.price !== null) {
@@ -511,7 +510,6 @@ export async function applyDiscountToOrder(client: ZxClient, id: number, code: s
   const dc = await findValidDiscount(code);
   const value = discountValue(dc, Number(order.price));
 
-  // Zużycie kodu warunkowo – dwa równoległe użycia nie przekroczą limitu.
   const { count } = await prisma.discountCode.updateMany({
     where: { code: dc.code, OR: [{ maxUses: null }, { uses: { lt: dc.maxUses ?? 0 } }] },
     data: { uses: { increment: 1 } },

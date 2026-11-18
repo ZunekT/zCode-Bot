@@ -3,7 +3,8 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduced = () =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export function RevealObserver() {
   const pathname = usePathname();
@@ -25,7 +26,6 @@ export function RevealObserver() {
     );
     const observe = () => els().forEach((el) => io.observe(el));
     observe();
-    // Treść dociągnięta później (np. po nawigacji) też ma się pojawić.
     const mo = new MutationObserver(observe);
     mo.observe(document.body, { childList: true, subtree: true });
     return () => {
@@ -59,7 +59,15 @@ export function useTicker(ms: number, active: boolean) {
   return tick;
 }
 
-export function CountUp({ to, decimals = 0, suffix = '' }: { to: number; decimals?: number; suffix?: string }) {
+export function CountUp({
+  to,
+  decimals = 0,
+  suffix = '',
+}: {
+  to: number;
+  decimals?: number;
+  suffix?: string;
+}) {
   const fmt = (v: number) =>
     v.toLocaleString('pl-PL', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   const [ref, on] = useOnScreen<HTMLSpanElement>('0px');
@@ -124,7 +132,12 @@ export function FaqList({
         const id = `faq-${f.id}`;
         return (
           <div key={f.id} className={`faq-item${isOpen ? ' open' : ''}`}>
-            <button className="faq-q" aria-expanded={isOpen} aria-controls={id} onClick={() => setOpen(isOpen ? null : f.id)}>
+            <button
+              className="faq-q"
+              aria-expanded={isOpen}
+              aria-controls={id}
+              onClick={() => setOpen(isOpen ? null : f.id)}
+            >
               {f.question}
               <span className="faq-plus" aria-hidden />
             </button>
@@ -192,7 +205,16 @@ export function PanelMock() {
               <div className="bm-field">
                 Rola na start
                 <div className="bm-input">
-                  <span style={{ width: 8, height: 8, borderRadius: 9, background: '#2ecc8f', marginRight: 8, flexShrink: 0 }} />
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 9,
+                      background: '#2ecc8f',
+                      marginRight: 8,
+                      flexShrink: 0,
+                    }}
+                  />
                   @Gracz
                 </div>
               </div>

@@ -85,7 +85,7 @@ export function parseDate(input: string, now = new Date()): Date | null {
   if (month < 0 || month > 11) return null;
   const year = m[3] ? Number(m[3].length === 2 ? `20${m[3]}` : m[3]) : today.year;
   let date = zonedDate(year, month, day, 23, 59);
-  if (zonedParts(date).day !== day) return null; // np. 31.02
+  if (zonedParts(date).day !== day) return null;
   if (!m[3] && date.getTime() < now.getTime()) date = zonedDate(year + 1, month, day, 23, 59);
   return date;
 }

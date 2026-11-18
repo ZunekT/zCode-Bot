@@ -233,7 +233,6 @@ const changelogCommand = defineCommand({
       return interaction.reply(v2(panel, { ephemeral: true }));
     }
 
-    // grupa „projekt” – administracja
     if (!isAdmin(member, config)) throw new UserError('Projektami zarządza administracja.', 'Brak uprawnień');
     if (sub === 'lista') {
       const projects = await prisma.changelogProject.findMany({ orderBy: { name: 'asc' } });
@@ -606,7 +605,6 @@ export const changelogModule = defineModule({
       id: 'changelog:page',
       type: 'button',
       async run(interaction, args) {
-        // customId: changelog:page:<projekt>:<strona>:<kierunek>
         const page = Number(args[args.length - 2]);
         const project = args.slice(0, -2).join(':');
         await interaction.update(v2Message(await historyPage(project, page)));

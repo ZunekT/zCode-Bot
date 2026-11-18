@@ -18,7 +18,6 @@ export class UserError extends Error {
 export async function safeReply(interaction: RepliableInteraction, payload: V2Payload): Promise<void> {
   try {
     if (interaction.deferred && !interaction.replied) {
-      // Zastępujemy „Bot myśli…” – edycja nie przyjmuje flagi Ephemeral (zostaje z deferReply).
       await interaction.editReply({ ...payload, flags: ['IsComponentsV2'] });
     } else if (interaction.replied) {
       await interaction.followUp(payload);
@@ -40,7 +39,6 @@ export async function handleInteractionError(
     return;
   }
 
-  // 10062 Unknown interaction – za późno na odpowiedź, nic nie da się zrobić.
   if (err instanceof DiscordAPIError && err.code === 10062) {
     log.warn(`Interakcja wygasła (${where})`);
     return;

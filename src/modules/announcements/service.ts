@@ -149,7 +149,6 @@ export async function updatePublished(client: ZxClient, a: Announcement): Promis
   const msg = await channel.messages.fetch(a.messageId).catch(() => null);
   if (!msg) throw new UserError('Opublikowana wiadomość została usunięta.');
   const { panel, files } = await renderAnnouncement(client, a);
-  // Edycja nie pinguje ponownie.
   await msg.edit({ ...v2Message(panel, { files }), attachments: [] });
 }
 
@@ -163,7 +162,6 @@ export async function publishDue(client: ZxClient): Promise<void> {
       log.info(`Opublikowano zaplanowane ogłoszenie #${a.id}`);
     } catch (err) {
       log.error(`Nie udało się opublikować ogłoszenia #${a.id}`, err);
-      // Wracamy do szkicu, żeby nie próbować co minutę bez końca.
       await prisma.announcement.update({ where: { id: a.id }, data: { status: 'DRAFT' } });
     }
   }

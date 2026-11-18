@@ -33,7 +33,6 @@ export async function ticketStatsPanel(period: PeriodKey): Promise<Panel> {
     .map((t) => t.firstStaffReplyAt!.getTime() - t.openedAt.getTime());
   const resolution = closed.map((t) => t.closedAt!.getTime() - t.openedAt.getTime());
 
-  // Ranking obsługi wg przejętych ticketów
   const staff = new Map<string, Ticket[]>();
   for (const t of tickets) if (t.claimedBy) staff.set(t.claimedBy, [...(staff.get(t.claimedBy) ?? []), t]);
   const ranking = [...staff.entries()]

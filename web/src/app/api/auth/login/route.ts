@@ -15,7 +15,6 @@ export async function GET(request: Request) {
   url.searchParams.set('prompt', 'none');
 
   const res = NextResponse.redirect(url);
-  // Tylko ścieżki wewnątrz strony – bez otwartego przekierowania.
   const safeNext = next && /^\/(?!\/)[\w\-/]*$/.test(next) ? next : '/panel';
   res.cookies.set(STATE_COOKIE, `${state}|${safeNext}`, {
     httpOnly: true,

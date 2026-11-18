@@ -17,9 +17,9 @@ import { randomCode } from './captcha.js';
 const log = createLogger('verification');
 const DAY = 86_400_000;
 
-export const CAPTCHA_TTL = 300; // s
+export const CAPTCHA_TTL = 300;
 export const MAX_ATTEMPTS = 3;
-export const FAIL_BLOCK = 10 * 60; // s
+export const FAIL_BLOCK = 10 * 60;
 
 const keys = {
   captcha: (userId: string) => `zx:captcha:${userId}`,
@@ -174,8 +174,6 @@ export async function grantAccess(
     }),
   );
 }
-
-// ───────────────────────────── Ochrona przed rajdem ─────────────────────────────
 
 const recentJoins: number[] = [];
 

@@ -56,7 +56,6 @@ export function SettingsEditor({
   );
   const dirty = dirtyModules.length > 0;
 
-  // Ostrzeżenie przy zamykaniu karty z niezapisanymi zmianami.
   useEffect(() => {
     if (!dirty) return;
     const h = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -64,7 +63,6 @@ export function SettingsEditor({
     return () => window.removeEventListener('beforeunload', h);
   }, [dirty]);
 
-  // Zakładka z adresu (#m-tickety) – odświeżenie lub link otwiera ten sam moduł.
   useEffect(() => {
     const key = window.location.hash.replace(/^#m-/, '');
     if (schema.modules.some((m) => m.key === key)) setActive(key);
@@ -81,7 +79,6 @@ export function SettingsEditor({
   function set(mod: SchemaModule, key: string, v: unknown) {
     setValues((prev) => {
       const next = { ...prev, [mod.key]: { ...(prev[mod.key] ?? {}), [key]: v } };
-      // Pole wróciło do zapisanej wartości, której nie było w bazie → usuwamy, żeby nie liczyło się jako zmiana.
       if (
         saved[mod.key]?.[key] === undefined &&
         same(
@@ -121,7 +118,6 @@ export function SettingsEditor({
       setBarError(res.error ?? 'Nie udało się zapisać.');
       const first = Object.keys(map)[0];
       if (first) {
-        // Błąd może być w innym module – przełączamy na niego i pokazujemy pole.
         setActive(first.split('.')[0]!);
         setTimeout(
           () =>
@@ -183,74 +179,76 @@ export function SettingsEditor({
       </nav>
 
       <div role="tabpanel">
-        {schema.modules.filter((mod) => mod.key === active).map((mod) => {
-          const stored = values[mod.key];
-          const enabled = isEnabled(mod, stored);
-          return (
-            <section
-              key={mod.key}
-              id={`m-${mod.key}`}
-              className={`card module tab-in${enabled ? '' : ' off'}`}
-            >
-              <div className="module-head">
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h2>{mod.label}</h2>
-                  {mod.description && <p>{mod.description}</p>}
+        {schema.modules
+          .filter((mod) => mod.key === active)
+          .map((mod) => {
+            const stored = values[mod.key];
+            const enabled = isEnabled(mod, stored);
+            return (
+              <section
+                key={mod.key}
+                id={`m-${mod.key}`}
+                className={`card module tab-in${enabled ? '' : ' off'}`}
+              >
+                <div className="module-head">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h2>{mod.label}</h2>
+                    {mod.description && <p>{mod.description}</p>}
+                  </div>
+                  {mod.toggle && (
+                    <button
+                      type="button"
+                      role="switch"
+                      className="switch"
+                      aria-checked={enabled}
+                      aria-label={`${mod.label}: ${enabled ? 'włączony' : 'wyłączony'}`}
+                      onClick={() => set(mod, 'enabled', !enabled)}
+                    />
+                  )}
                 </div>
-                {mod.toggle && (
-                  <button
-                    type="button"
-                    role="switch"
-                    className="switch"
-                    aria-checked={enabled}
-                    aria-label={`${mod.label}: ${enabled ? 'włączony' : 'wyłączony'}`}
-                    onClick={() => set(mod, 'enabled', !enabled)}
-                  />
-                )}
-              </div>
-              {mod.fields.length > 0 && (
-                <div className="module-fields">
-                  {mod.fields.map((f) => {
-                    const path = `${mod.key}.${f.key}`;
-                    const err = errors[path];
-                    const wide = f.type === 'textarea' || f.multiple;
-                    const id = `f-${path}`;
-                    const input = (
-                      <FieldInput
-                        id={id}
-                        field={f}
-                        value={shown(f, stored)}
-                        onChange={(v) => set(mod, f.key, v)}
-                        channels={channels}
-                        roles={roles}
-                      />
-                    );
-                    return (
-                      <div key={f.key} className={`field${wide ? ' wide' : ''}${err ? ' invalid' : ''}`}>
-                        {f.type === 'boolean' ? (
-                          <div className="field-row">
+                {mod.fields.length > 0 && (
+                  <div className="module-fields">
+                    {mod.fields.map((f) => {
+                      const path = `${mod.key}.${f.key}`;
+                      const err = errors[path];
+                      const wide = f.type === 'textarea' || f.multiple;
+                      const id = `f-${path}`;
+                      const input = (
+                        <FieldInput
+                          id={id}
+                          field={f}
+                          value={shown(f, stored)}
+                          onChange={(v) => set(mod, f.key, v)}
+                          channels={channels}
+                          roles={roles}
+                        />
+                      );
+                      return (
+                        <div key={f.key} className={`field${wide ? ' wide' : ''}${err ? ' invalid' : ''}`}>
+                          {f.type === 'boolean' ? (
+                            <div className="field-row">
+                              <label className="field-label" htmlFor={id}>
+                                {f.label}
+                              </label>
+                              {input}
+                            </div>
+                          ) : (
                             <label className="field-label" htmlFor={id}>
                               {f.label}
+                              {f.required && <span className="req">*</span>}
                             </label>
-                            {input}
-                          </div>
-                        ) : (
-                          <label className="field-label" htmlFor={id}>
-                            {f.label}
-                            {f.required && <span className="req">*</span>}
-                          </label>
-                        )}
-                        {f.description && <span className="field-desc">{f.description}</span>}
-                        {f.type !== 'boolean' && input}
-                        {err && <span className="field-error">{err}</span>}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-          );
-        })}
+                          )}
+                          {f.description && <span className="field-desc">{f.description}</span>}
+                          {f.type !== 'boolean' && input}
+                          {err && <span className="field-error">{err}</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            );
+          })}
       </div>
 
       <div

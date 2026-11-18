@@ -87,7 +87,6 @@ export function clientOrderRoutes(app: FastifyInstance, client: ZxClient) {
             },
           })
         : null;
-      // Cudze i nieistniejące – ta sama odpowiedź.
       if (!o || o.userId !== uid) return reply.code(404).send({ error: 'Nie znaleziono zlecenia.' });
       const t = totalsOf(o);
       const config = await getConfig();
@@ -125,7 +124,6 @@ export function clientOrderRoutes(app: FastifyInstance, client: ZxClient) {
           o.ticket?.status !== 'CLOSED' && o.ticket?.status !== 'ARCHIVED'
             ? channelUrl(o.ticket?.channelId ?? null)
             : null,
-        // Dane do przelewu tylko gdy jest coś do zapłaty.
         payment:
           (t.due ?? 0) > 0
             ? { details: config.paymentDetails, title: `${formatOrderId(o.id)} ${o.title}`.slice(0, 80) }

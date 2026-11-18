@@ -46,7 +46,6 @@ async function deliverDue(client: ZxClient): Promise<void> {
     take: 50,
   });
   for (const r of due) {
-    // Najpierw oznaczamy – restart w trakcie nie wyśle przypomnienia dwa razy.
     const { count } = await prisma.reminder.updateMany({
       where: { id: r.id, sent: false },
       data: { sent: true },

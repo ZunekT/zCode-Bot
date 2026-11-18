@@ -132,7 +132,6 @@ export const vpsModule = defineModule({
       allowInMaintenance: true,
       async run(interaction, _args, { client }) {
         await requireOwner(interaction);
-        // Najpierw odpowiedź i audyt – po restarcie bot przez chwilę nie będzie działał.
         await interaction.update(
           v2Message(
             card({

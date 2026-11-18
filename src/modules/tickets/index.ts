@@ -31,14 +31,12 @@ export const ticketsModule = defineModule({
   ],
 
   async onReady(client) {
-    // Kanały usunięte, gdy bot był wyłączony – zamykamy ich tickety.
     const withChannel = await prisma.ticket.findMany({
       where: { channelId: { not: null } },
       select: { channelId: true },
     });
     let orphaned = 0;
     for (const { channelId } of withChannel) {
-      // Tylko „Unknown Channel” oznacza usunięty kanał – inne błędy (sieć, limity) pomijamy.
       const missing = await client.channels.fetch(channelId!).then(
         () => false,
         (err: unknown) => err instanceof DiscordAPIError && err.code === RESTJSONErrorCodes.UnknownChannel,
@@ -50,7 +48,6 @@ export const ticketsModule = defineModule({
     }
     const active = await ticketChannels.load();
 
-    // Odśwież panele aktywnych ticketów (np. po aktualizacji wyglądu bota).
     const tickets = await prisma.ticket.findMany({ where: { channelId: { in: ticketChannels.ids() } } });
     for (const t of tickets) await refreshControlPanel(client, t);
     log.info(`Aktywne tickety: ${active}${orphaned ? `, zamknięto ${orphaned} z usuniętym kanałem` : ''}`);

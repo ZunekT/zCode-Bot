@@ -47,7 +47,6 @@ const sqlOf = async (name: string) => {
   return { sql, checksum: createHash('sha256').update(sql).digest('hex') };
 };
 
-// Baza utworzona wcześniej ręcznie (psql -f …init/migration.sql): zaznacz pierwszą migrację jako wykonaną.
 if (!hadTable && names[0] && (await exists('GuildConfig'))) {
   const { checksum } = await sqlOf(names[0]);
   await record(names[0], checksum);

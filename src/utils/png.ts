@@ -63,14 +63,14 @@ function chunk(type: string, data: Buffer): Buffer {
 export function encodePng(px: Uint8Array, width: number, height: number): Buffer {
   const raw = Buffer.alloc((width * 3 + 1) * height);
   for (let y = 0; y < height; y++) {
-    raw[y * (width * 3 + 1)] = 0; // filtr: brak
+    raw[y * (width * 3 + 1)] = 0;
     Buffer.from(px.buffer, px.byteOffset + y * width * 3, width * 3).copy(raw, y * (width * 3 + 1) + 1);
   }
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(width, 0);
   ihdr.writeUInt32BE(height, 4);
-  ihdr[8] = 8; // bit depth
-  ihdr[9] = 2; // RGB
+  ihdr[8] = 8;
+  ihdr[9] = 2;
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk('IHDR', ihdr),

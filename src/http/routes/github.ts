@@ -16,7 +16,6 @@ function verifySignature(rawBody: Buffer, signature: string | undefined): boolea
 }
 
 export async function githubRoutes(app: FastifyInstance): Promise<void> {
-  // Surowe body jest potrzebne do weryfikacji podpisu HMAC.
   app.addContentTypeParser('application/json', { parseAs: 'buffer' }, (_req, body, done) => done(null, body));
 
   app.post('/webhooks/github', async (request, reply) => {

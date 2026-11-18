@@ -352,7 +352,6 @@ export const verificationModule = defineModule({
           return interaction.reply(v2(blocked, { ephemeral: true }));
         }
 
-        // Błędny lub wygasły kod – zawsze nowy obrazek (utrudnia zgadywanie).
         const warning =
           result.reason === 'expired'
             ? `${e('calendar')} Kod wygasł – oto nowy.`

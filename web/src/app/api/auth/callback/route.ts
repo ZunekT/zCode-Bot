@@ -40,9 +40,13 @@ export async function GET(request: Request) {
     cache: 'no-store',
   });
   if (!userRes.ok) return fail('discord');
-  const user = (await userRes.json()) as { id: string; username: string; global_name: string | null; avatar: string | null };
+  const user = (await userRes.json()) as {
+    id: string;
+    username: string;
+    global_name: string | null;
+    avatar: string | null;
+  };
 
-  // Token Discorda unieważniamy od razu – nie jest nam dalej potrzebny.
   void fetch('https://discord.com/api/v10/oauth2/token/revoke', {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -57,7 +61,12 @@ export async function GET(request: Request) {
   const res = NextResponse.redirect(new URL(next, env.siteUrl));
   res.cookies.set(
     SESSION_COOKIE,
-    encodeSession({ id: user.id, username: user.username, globalName: user.global_name, avatar: user.avatar }),
+    encodeSession({
+      id: user.id,
+      username: user.username,
+      globalName: user.global_name,
+      avatar: user.avatar,
+    }),
     cookieOptions(),
   );
   res.cookies.delete({ name: STATE_COOKIE, path: '/api/auth' });

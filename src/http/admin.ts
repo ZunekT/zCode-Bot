@@ -37,7 +37,6 @@ const channelUrl = (channelId: string | null) =>
 export function adminRoutes(app: FastifyInstance, client: ZxClient, ownerCheck: OwnerCheck) {
   const base = '/internal/users/:userId/admin';
 
-  // ───────────── Przegląd ─────────────
   app.get(`${base}/overview`, async (request, reply) => {
     try {
       if (!(await ownerCheck(request.params, reply))) return;
@@ -166,7 +165,6 @@ export function adminRoutes(app: FastifyInstance, client: ZxClient, ownerCheck: 
     }
   });
 
-  // ───────────── Zlecenia ─────────────
   app.get(`${base}/orders`, async (request, reply) => {
     try {
       if (!(await ownerCheck(request.params, reply))) return;
@@ -323,7 +321,6 @@ export function adminRoutes(app: FastifyInstance, client: ZxClient, ownerCheck: 
     }
   });
 
-  // ───────────── Klienci ─────────────
   app.get(`${base}/clients`, async (request, reply) => {
     try {
       if (!(await ownerCheck(request.params, reply))) return;

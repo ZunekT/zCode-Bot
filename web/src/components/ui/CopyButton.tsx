@@ -13,9 +13,7 @@ export function CopyButton({ text, label = 'Kopiuj' }: { text: string; label?: s
           await navigator.clipboard.writeText(text);
           setOk(true);
           setTimeout(() => setOk(false), 1500);
-        } catch {
-          /* brak uprawnień do schowka */
-        }
+        } catch {}
       }}
     >
       {ok ? 'Skopiowano' : label}

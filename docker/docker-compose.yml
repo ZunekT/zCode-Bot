@@ -11,7 +11,7 @@ services:
       DATABASE_URL: postgresql://zxcode:${POSTGRES_PASSWORD:-zxcode}@postgres:5432/zxcode
       REDIS_URL: redis://redis:6379
       HTTP_PORT: 3000
-    # Port dostępny tylko lokalnie – z internetu wchodzi się przez Caddy (HTTPS).
+
     ports:
       - '127.0.0.1:${HTTP_PORT:-3000}:3000'
     depends_on:
@@ -20,7 +20,6 @@ services:
       redis:
         condition: service_healthy
 
-  # Strona zxcode.pl z panelem klienta. Rozmawia z botem przez wewnętrzne API (port 3100, tylko sieć Dockera).
   web:
     build:
       context: ..

@@ -12,12 +12,9 @@ const REQUEST_TIMEOUT = 15_000;
 const GUILD_SYNC_DEBOUNCE = 3_000;
 const WS_READY = 0;
 
-// discord.js ChannelType -> nazwy używane w panelu
 const CHANNEL_KINDS = { 0: 'text', 2: 'voice', 4: 'category', 5: 'announcement', 13: 'stage', 15: 'forum' };
-// discord.js ActivityType
-const ACTIVITY = { playing: 0, listening: 2, watching: 3, custom: 4, competing: 5 };
 
-// ───────────────────────────── Pola ustawień ─────────────────────────────
+const ACTIVITY = { playing: 0, listening: 2, watching: 3, custom: 4, competing: 5 };
 
 function makeField(type, opts = {}) {
   if (!opts.label) throw new TypeError(`zxcode-sdk: pole typu ${type} wymaga „label”`);
@@ -42,11 +39,14 @@ const field = {
 function buildSchema(modules) {
   const out = [];
   for (const [key, mod] of Object.entries(modules ?? {})) {
-    if (!/^[a-zA-Z0-9_]{1,32}$/.test(key)) throw new TypeError(`zxcode-sdk: nieprawidłowy klucz modułu „${key}” (a-z, 0-9, _)`);
+    if (!/^[a-zA-Z0-9_]{1,32}$/.test(key))
+      throw new TypeError(`zxcode-sdk: nieprawidłowy klucz modułu „${key}” (a-z, 0-9, _)`);
     const fields = [];
     for (const [fkey, f] of Object.entries(mod.fields ?? {})) {
-      if (!f || !f.__zxField) throw new TypeError(`zxcode-sdk: ${key}.${fkey} – użyj field.text(), field.channel() itd.`);
-      if (fkey === 'enabled') throw new TypeError(`zxcode-sdk: ${key}.enabled jest zarezerwowane (użyj toggle: true w module)`);
+      if (!f || !f.__zxField)
+        throw new TypeError(`zxcode-sdk: ${key}.${fkey} – użyj field.text(), field.channel() itd.`);
+      if (fkey === 'enabled')
+        throw new TypeError(`zxcode-sdk: ${key}.enabled jest zarezerwowane (użyj toggle: true w module)`);
       const { __zxField, types, ...rest } = f;
       void __zxField;
       void types;
@@ -76,17 +76,18 @@ function readVersion() {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
-// ───────────────────────────── Klient SDK ─────────────────────────────
-
 class ZxCode extends EventEmitter {
   constructor(client, options = {}) {
     super();
-    if (!client || typeof client.once !== 'function') throw new TypeError('zxcode-sdk: pierwszym argumentem musi być klient discord.js');
+    if (!client || typeof client.once !== 'function')
+      throw new TypeError('zxcode-sdk: pierwszym argumentem musi być klient discord.js');
 
     this.client = client;
     this.key = (options.key ?? process.env.ZXCODE_KEY ?? '').trim();
     if (!KEY_RE.test(this.key)) {
-      throw new Error('zxcode-sdk: brak albo nieprawidłowy klucz. Ustaw ZXCODE_KEY (klucz z /sdk dodaj na serwerze zxCode) albo podaj { key }.');
+      throw new Error(
+        'zxcode-sdk: brak albo nieprawidłowy klucz. Ustaw ZXCODE_KEY (klucz z /sdk dodaj na serwerze zxCode) albo podaj { key }.',
+      );
     }
     this.url = (options.url ?? process.env.ZXCODE_URL ?? DEFAULT_URL).replace(/\/$/, '');
     this.version = options.version ?? readVersion();
@@ -95,7 +96,10 @@ class ZxCode extends EventEmitter {
     this.applyPresence = options.presence !== false;
     this.denyMessage = options.denyMessage ?? 'Nie masz uprawnień do tej komendy.';
     this.debug = options.debug === true;
-    this.cacheFile = options.cacheFile === false ? null : (options.cacheFile ?? path.join(process.cwd(), '.zxcode-cache.json'));
+    this.cacheFile =
+      options.cacheFile === false
+        ? null
+        : (options.cacheFile ?? path.join(process.cwd(), '.zxcode-cache.json'));
 
     this.configs = new Map();
     this.profile = {};
@@ -118,8 +122,6 @@ class ZxCode extends EventEmitter {
       client.once('ready', go);
     }
   }
-
-  // ───────────── Publiczne API ─────────────
 
   get(guildId, pathStr) {
     const [mod, key] = String(pathStr).split('.');
@@ -151,7 +153,9 @@ class ZxCode extends EventEmitter {
     if (!rule?.roles?.length) return true;
     if (member.permissions?.has?.('Administrator')) return true;
     const roles = member.roles?.cache;
-    return rule.roles.some((id) => (roles?.has ? roles.has(id) : Array.isArray(member.roles) && member.roles.includes(id)));
+    return rule.roles.some((id) =>
+      roles?.has ? roles.has(id) : Array.isArray(member.roles) && member.roles.includes(id),
+    );
   }
 
   async guard(interaction, message = this.denyMessage) {
@@ -161,9 +165,7 @@ class ZxCode extends EventEmitter {
       const payload = { content: message, flags: 64 };
       if (interaction.deferred || interaction.replied) await interaction.followUp(payload);
       else await interaction.reply(payload);
-    } catch {
-      /* interakcja wygasła */
-    }
+    } catch {}
     return false;
   }
 
@@ -181,8 +183,6 @@ class ZxCode extends EventEmitter {
     this.connected = false;
   }
 
-  // ───────────── Wewnętrzne ─────────────
-
   _log(...args) {
     if (this.debug) console.log('[zxcode-sdk]', ...args);
   }
@@ -195,18 +195,28 @@ class ZxCode extends EventEmitter {
   async _request(method, route, body) {
     const res = await fetch(`${this.url}${route}`, {
       method,
-      headers: { authorization: `Bearer ${this.key}`, 'content-type': 'application/json', 'user-agent': `zxcode-sdk/${SDK_VERSION}` },
+      headers: {
+        authorization: `Bearer ${this.key}`,
+        'content-type': 'application/json',
+        'user-agent': `zxcode-sdk/${SDK_VERSION}`,
+      },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT),
     });
     const data = await res.json().catch(() => ({}));
     if (res.status === 401) {
-      const err = new Error('Nieprawidłowy klucz zxCode (ZXCODE_KEY) – sprawdź .env albo wygeneruj nowy: /sdk klucz');
+      const err = new Error(
+        'Nieprawidłowy klucz zxCode (ZXCODE_KEY) – sprawdź .env albo wygeneruj nowy: /sdk klucz',
+      );
       err.code = 'UNAUTHORIZED';
       throw err;
     }
     if (!res.ok) {
-      const err = new Error(data.error === 'validation' ? data.errors.map((e) => `${e.path}: ${e.message}`).join('; ') : (data.error ?? `HTTP ${res.status}`));
+      const err = new Error(
+        data.error === 'validation'
+          ? data.errors.map((e) => `${e.path}: ${e.message}`).join('; ')
+          : (data.error ?? `HTTP ${res.status}`),
+      );
       err.status = res.status;
       throw err;
     }
@@ -220,7 +230,13 @@ class ZxCode extends EventEmitter {
       icon: typeof guild.iconURL === 'function' ? guild.iconURL({ size: 128 }) : null,
       channels: [...(guild.channels?.cache?.values() ?? [])]
         .filter((c) => !c.isThread?.())
-        .map((c) => ({ id: c.id, name: c.name, type: CHANNEL_KINDS[c.type] ?? 'other', parentId: c.parentId ?? null, position: c.rawPosition ?? c.position ?? 0 })),
+        .map((c) => ({
+          id: c.id,
+          name: c.name,
+          type: CHANNEL_KINDS[c.type] ?? 'other',
+          parentId: c.parentId ?? null,
+          position: c.rawPosition ?? c.position ?? 0,
+        })),
       roles: [...(guild.roles?.cache?.values() ?? [])]
         .filter((r) => r.id !== guild.id)
         .map((r) => ({ id: r.id, name: r.name, color: r.color, position: r.position, managed: r.managed })),
@@ -231,13 +247,15 @@ class ZxCode extends EventEmitter {
     const list = new Map();
     try {
       const cmds = await this.client.application?.commands?.fetch();
-      for (const c of cmds?.values() ?? []) list.set(c.name, { name: c.name, description: c.description ?? '' });
+      for (const c of cmds?.values() ?? [])
+        list.set(c.name, { name: c.name, description: c.description ?? '' });
     } catch (err) {
       this._log('nie udało się pobrać komend', err.message);
     }
     for (const c of this.extraCommands) {
       const name = typeof c === 'string' ? c : c.name;
-      if (name && !list.has(name)) list.set(name, { name, description: typeof c === 'string' ? '' : (c.description ?? '') });
+      if (name && !list.has(name))
+        list.set(name, { name, description: typeof c === 'string' ? '' : (c.description ?? '') });
     }
     return [...list.values()];
   }
@@ -261,16 +279,25 @@ class ZxCode extends EventEmitter {
   _applyConfig({ guildId, values, permissions, revision }) {
     const prev = this.configs.get(guildId);
     if (prev && prev.revision > revision) return;
-    this.configs.set(guildId, { values: values ?? {}, permissions: permissions ?? {}, revision: revision ?? 0 });
-    // Zdarzenie „change” dla każdego zmienionego modułu.
+    this.configs.set(guildId, {
+      values: values ?? {},
+      permissions: permissions ?? {},
+      revision: revision ?? 0,
+    });
     for (const mod of this.schema.modules) {
       const before = prev?.values?.[mod.key];
       const after = values?.[mod.key];
       if (!same(before, after)) {
-        this.emit('change', { guildId, module: mod.key, values: this.module(guildId, mod.key), previous: before ?? {} });
+        this.emit('change', {
+          guildId,
+          module: mod.key,
+          values: this.module(guildId, mod.key),
+          previous: before ?? {},
+        });
       }
     }
-    if (prev && !same(prev.permissions, permissions)) this.emit('permissions', { guildId, permissions: permissions ?? {} });
+    if (prev && !same(prev.permissions, permissions))
+      this.emit('permissions', { guildId, permissions: permissions ?? {} });
   }
 
   async _applyProfile(profile, revision) {
@@ -283,7 +310,11 @@ class ZxCode extends EventEmitter {
     if (this.applyPresence && profile.presence?.status) {
       const a = profile.presence.activity;
       const activities = a?.text
-        ? [a.type === 'custom' ? { name: 'Custom Status', state: a.text, type: ACTIVITY.custom } : { name: a.text, type: ACTIVITY[a.type] ?? 0 }]
+        ? [
+            a.type === 'custom'
+              ? { name: 'Custom Status', state: a.text, type: ACTIVITY.custom }
+              : { name: a.text, type: ACTIVITY[a.type] ?? 0 },
+          ]
         : [];
       try {
         user.setPresence({ status: profile.presence.status, activities });
@@ -295,7 +326,8 @@ class ZxCode extends EventEmitter {
     if (isNew && profile.request && (profile.request.username || profile.request.avatar)) {
       let error;
       try {
-        if (profile.request.username && profile.request.username !== user.username) await user.setUsername(profile.request.username);
+        if (profile.request.username && profile.request.username !== user.username)
+          await user.setUsername(profile.request.username);
         if (profile.request.avatar) {
           const b64 = profile.request.avatar.split(',')[1] ?? '';
           await user.setAvatar(Buffer.from(b64, 'base64'));
@@ -304,7 +336,9 @@ class ZxCode extends EventEmitter {
         error = err.message ?? String(err);
         this._warn('nie udało się zmienić profilu bota', err);
       }
-      await this._request('POST', '/sdk/v1/profile/result', { revision, ok: !error, error }).catch(() => undefined);
+      await this._request('POST', '/sdk/v1/profile/result', { revision, ok: !error, error }).catch(
+        () => undefined,
+      );
     }
     this.emit('profile', profile);
   }
@@ -313,10 +347,11 @@ class ZxCode extends EventEmitter {
     if (this._started) return;
     this._started = true;
 
-    // Heartbeat dla monitoringu – tylko gdy bot jest naprawdę połączony z Discordem.
     const hb = setInterval(() => {
       if (!this.client.isReady?.() || this.client.ws?.status !== WS_READY) return;
-      this._request('POST', '/sdk/v1/heartbeat', { version: this.version }).catch((err) => this._log('heartbeat', err.message));
+      this._request('POST', '/sdk/v1/heartbeat', { version: this.version }).catch((err) =>
+        this._log('heartbeat', err.message),
+      );
     }, HEARTBEAT_MS);
     hb.unref?.();
     this._timers.add(hb);
@@ -332,7 +367,7 @@ class ZxCode extends EventEmitter {
         }
         this.emit('ready');
         delay = 1_000;
-        await this._listen(); // wraca po zerwaniu połączenia
+        await this._listen();
       } catch (err) {
         if (this.stopped) break;
         if (err.code === 'UNAUTHORIZED') {
@@ -356,7 +391,11 @@ class ZxCode extends EventEmitter {
   async _listen() {
     this._abort = new AbortController();
     const res = await fetch(`${this.url}/sdk/v1/events`, {
-      headers: { authorization: `Bearer ${this.key}`, accept: 'text/event-stream', 'user-agent': `zxcode-sdk/${SDK_VERSION}` },
+      headers: {
+        authorization: `Bearer ${this.key}`,
+        accept: 'text/event-stream',
+        'user-agent': `zxcode-sdk/${SDK_VERSION}`,
+      },
       signal: this._abort.signal,
     });
     if (res.status === 401) {
@@ -432,8 +471,14 @@ class ZxCode extends EventEmitter {
       const ids = [...this._pendingGuilds];
       this._pendingGuilds.clear();
       if (!this.connected) return;
-      const guilds = ids.map((id) => this.client.guilds.cache.get(id)).filter(Boolean).map((g) => this._guildSnapshot(g));
-      if (guilds.length) this._request('POST', '/sdk/v1/guilds', { guilds }).catch((err) => this._log('sync serwerów', err.message));
+      const guilds = ids
+        .map((id) => this.client.guilds.cache.get(id))
+        .filter(Boolean)
+        .map((g) => this._guildSnapshot(g));
+      if (guilds.length)
+        this._request('POST', '/sdk/v1/guilds', { guilds }).catch((err) =>
+          this._log('sync serwerów', err.message),
+        );
     }, GUILD_SYNC_DEBOUNCE);
     this._guildTimer.unref?.();
   }
@@ -443,18 +488,21 @@ class ZxCode extends EventEmitter {
     try {
       const data = JSON.parse(fs.readFileSync(this.cacheFile, 'utf8'));
       if (data.key !== this.key.slice(0, 12)) return;
-      for (const c of data.configs ?? []) this.configs.set(c.guildId, { values: c.values, permissions: c.permissions, revision: c.revision });
+      for (const c of data.configs ?? [])
+        this.configs.set(c.guildId, { values: c.values, permissions: c.permissions, revision: c.revision });
       this.profile = data.profile ?? {};
-    } catch {
-      /* brak pliku przy pierwszym starcie */
-    }
+    } catch {}
   }
 
   _saveCache() {
     if (!this.cacheFile) return;
     const configs = [...this.configs.entries()].map(([guildId, c]) => ({ guildId, ...c }));
     try {
-      fs.writeFileSync(this.cacheFile, JSON.stringify({ key: this.key.slice(0, 12), configs, profile: this.profile }), 'utf8');
+      fs.writeFileSync(
+        this.cacheFile,
+        JSON.stringify({ key: this.key.slice(0, 12), configs, profile: this.profile }),
+        'utf8',
+      );
     } catch (err) {
       this._log('zapis cache', err.message);
     }

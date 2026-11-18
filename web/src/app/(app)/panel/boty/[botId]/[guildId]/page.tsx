@@ -21,7 +21,6 @@ export default async function GuildPage({
   const perms = tab === 'uprawnienia';
   const base = `/panel/boty/${d.bot.id}/${s.guild.id}`;
   const canEdit = d.access.perms.includes(perms ? 'commands' : 'settings');
-  // Dostęp zawężony do wybranych modułów: pokazujemy tylko te moduły.
   const allowed = d.access.modules;
   const schema =
     canEdit && allowed ? { modules: d.schema.modules.filter((m) => allowed.includes(m.key)) } : d.schema;

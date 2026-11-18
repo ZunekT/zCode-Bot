@@ -1,11 +1,10 @@
-# Strona zxcode.pl (Next.js). Budowane z katalogu głównego repo: docker/docker-compose.yml → usługa „web”.
 FROM node:22-alpine AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
 COPY web ./
-# Emotki i grafiki zxCode (te same co w bocie) → public/
+
 COPY assets /assets
 RUN npm run build
 

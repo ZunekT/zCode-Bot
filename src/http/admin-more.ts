@@ -36,8 +36,6 @@ async function person(client: ZxClient, id: string) {
 const round = (v: number) => Math.round(v * 100) / 100;
 const channelUrl = (id: string | null) => (id ? `https://discord.com/channels/${env.GUILD_ID}/${id}` : null);
 
-// ───────────────────────────── Ewidencja i limit ─────────────────────────────
-
 const DEFAULT_QUARTER_LIMIT = 10813.5;
 
 async function ledgerSettings() {
@@ -52,8 +50,6 @@ async function ledgerSettings() {
 const quarterOf = (d: Date) => Math.floor(d.getMonth() / 3) + 1;
 const quarterRange = (year: number, q: number) =>
   [new Date(year, (q - 1) * 3, 1), new Date(year, q * 3, 1)] as const;
-
-// ───────────────────────────── Tickety ─────────────────────────────
 
 const TICKET_STATUS: Record<TicketStatus, string> = {
   OPEN: 'Otwarty',
@@ -104,7 +100,6 @@ export function adminMoreRoutes(
 ) {
   const base = '/internal/users/:userId/admin';
 
-  // ───────────── Ewidencja sprzedaży ─────────────
   app.get(`${base}/ledger`, async (request, reply) => {
     try {
       if (!(await strictOwner(request.params, reply))) return;
@@ -130,7 +125,6 @@ export function adminMoreRoutes(
           note: p.note,
         })),
       );
-      // Dzienne sumy – tak wygląda uproszczona ewidencja sprzedaży.
       const days = new Map<string, number>();
       for (const r of rows) {
         const k = r.date.toISOString().slice(0, 10);
@@ -185,7 +179,6 @@ export function adminMoreRoutes(
     }
   });
 
-  // ───────────── Tickety ─────────────
   app.get(`${base}/tickets`, async (request, reply) => {
     try {
       if (!(await ownerCheck(request.params, reply))) return;
@@ -340,7 +333,6 @@ export function adminMoreRoutes(
     }
   });
 
-  // ───────────── Zlecenia: tworzenie, edycja, zadania, proformy ─────────────
   app.post(`${base}/orders`, async (request, reply) => {
     try {
       const actorId = await ownerCheck(request.params, reply);
@@ -455,7 +447,6 @@ export function adminMoreRoutes(
     }
   });
 
-  // ───────────── Dziennik zmian ─────────────
   app.get(`${base}/audit`, async (request, reply) => {
     try {
       if (!(await ownerCheck(request.params, reply))) return;

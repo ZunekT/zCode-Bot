@@ -274,7 +274,6 @@ const statusCommand = defineCommand({
   data: new SlashCommandBuilder().setName('status').setDescription('Status botów zxCode'),
   cooldown: 5,
   async run(interaction, { config }) {
-    // Klient widzi swoje boty na górze; reszta tablicy jest publiczna.
     const bots = await prisma.monitoredBot.findMany({ orderBy: { name: 'asc' } });
     const own = bots.filter((b) => b.ownerId === interaction.user.id);
     const panel = statusBoard(

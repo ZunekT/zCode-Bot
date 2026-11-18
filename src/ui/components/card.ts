@@ -61,8 +61,6 @@ export function stars(n: number): string {
 
 export const quote = (text: string) => `> ${text.replace(/\n/g, '\n> ')}`;
 
-// ───────────────────────────── Bloki kodu ─────────────────────────────
-
 export const escapeCode = (text: string) => text.replace(/```/g, 'ʼʼʼ');
 
 export function codeBlock(content: string, lang = ''): string {

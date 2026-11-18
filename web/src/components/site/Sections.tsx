@@ -32,7 +32,17 @@ export function SectionHead({
   );
 }
 
-export function PageHero({ kicker, title, lead, children }: { kicker: string; title: React.ReactNode; lead?: string; children?: React.ReactNode }) {
+export function PageHero({
+  kicker,
+  title,
+  lead,
+  children,
+}: {
+  kicker: string;
+  title: React.ReactNode;
+  lead?: string;
+  children?: React.ReactNode;
+}) {
   return (
     <section className="page-hero">
       <div className="bg" aria-hidden style={{ height: 700 }}>
@@ -51,9 +61,19 @@ export function PageHero({ kicker, title, lead, children }: { kicker: string; ti
   );
 }
 
-// ───────────────────────────── Technologie ─────────────────────────────
-
-const TECH = ['discord.js v14', 'TypeScript', 'Node.js', 'PostgreSQL', 'Redis', 'Docker', 'Prisma', 'Components v2', 'REST API', 'Webhooki', 'GitHub'];
+const TECH = [
+  'discord.js v14',
+  'TypeScript',
+  'Node.js',
+  'PostgreSQL',
+  'Redis',
+  'Docker',
+  'Prisma',
+  'Components v2',
+  'REST API',
+  'Webhooki',
+  'GitHub',
+];
 
 export function TechStrip() {
   return (
@@ -69,15 +89,15 @@ export function TechStrip() {
   );
 }
 
-// ───────────────────────────── Statystyki ─────────────────────────────
-
 export function Stats({ stats }: { stats: SiteData['stats'] }) {
   const uptimeDecimals = stats.uptime !== null && stats.uptime < 99.995 ? (stats.uptime >= 99 ? 2 : 1) : 0;
   const items = [
     stats.ordersCompleted >= 1 && { v: stats.ordersCompleted, label: 'zrealizowanych zleceń' },
     stats.clients >= 1 && { v: stats.clients, label: 'zadowolonych klientów' },
-    stats.rating !== null && stats.reviews >= 1 && { v: stats.rating, d: 1, s: '/5', label: `średnia z ${stats.reviews} opinii` },
-    stats.uptime !== null && stats.botsMonitored >= 1 && { v: stats.uptime, d: uptimeDecimals, s: '%', label: 'dostępności botów' },
+    stats.rating !== null &&
+      stats.reviews >= 1 && { v: stats.rating, d: 1, s: '/5', label: `średnia z ${stats.reviews} opinii` },
+    stats.uptime !== null &&
+      stats.botsMonitored >= 1 && { v: stats.uptime, d: uptimeDecimals, s: '%', label: 'dostępności botów' },
     stats.members !== null && stats.members >= 10 && { v: stats.members, label: 'osób na serwerze zxCode' },
   ].filter(Boolean) as { v: number; d?: number; s?: string; label: string }[];
   if (items.length < 2) return null;
@@ -100,18 +120,23 @@ export function Stats({ stats }: { stats: SiteData['stats'] }) {
   );
 }
 
-// ───────────────────────────── Usługi (bento) ─────────────────────────────
-
 function UptimeBars() {
   const bars = Array.from({ length: 36 }, (_, i) => (i === 24 ? 0.45 : 0.75 + ((i * 37) % 25) / 100));
   return (
     <div className="tile-visual" aria-hidden>
       <div className="uptime-bars">
         {bars.map((h, i) => (
-          <i key={i} className={h < 0.6 ? 'bad' : undefined} style={{ height: `${h * 100}%`, '--i': i } as CSSProperties} />
+          <i
+            key={i}
+            className={h < 0.6 ? 'bad' : undefined}
+            style={{ height: `${h * 100}%`, '--i': i } as CSSProperties}
+          />
         ))}
       </div>
-      <div className="small muted" style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between' }}>
+      <div
+        className="small muted"
+        style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between' }}
+      >
         <span>30 dni temu</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span className="live-dot" /> teraz
@@ -141,9 +166,23 @@ export function Services() {
                 <Icon name="bot" size={26} />
               </div>
               <h3>Boty na zamówienie</h3>
-              <p>Projektujemy bota pod Twoją społeczność – od prostych narzędzi po rozbudowane systemy z bazą danych.</p>
+              <p>
+                Projektujemy bota pod Twoją społeczność – od prostych narzędzi po rozbudowane systemy z bazą
+                danych.
+              </p>
               <div className="chips2">
-                {['Tickety', 'Ekonomia', 'Serwery RP', 'Moderacja', 'Weryfikacja', 'Giveaway', 'Statystyki', 'Logi', 'Sklep', 'Poziomy'].map((c) => (
+                {[
+                  'Tickety',
+                  'Ekonomia',
+                  'Serwery RP',
+                  'Moderacja',
+                  'Weryfikacja',
+                  'Giveaway',
+                  'Statystyki',
+                  'Logi',
+                  'Sklep',
+                  'Poziomy',
+                ].map((c) => (
                   <span key={c}>{c}</span>
                 ))}
               </div>
@@ -165,7 +204,10 @@ export function Services() {
                 <Icon name="server" size={26} />
               </div>
               <h3>Monitoring 24/7</h3>
-              <p>Sprawdzamy bota co minutę. Przy awarii dostajemy alert i reagujemy, zanim zauważą to użytkownicy.</p>
+              <p>
+                Sprawdzamy bota co minutę. Przy awarii dostajemy alert i reagujemy, zanim zauważą to
+                użytkownicy.
+              </p>
               <UptimeBars />
             </Spotlight>
           </Reveal>
@@ -178,17 +220,31 @@ export function Services() {
               <p>TypeScript, discord.js v14 i najnowsze komponenty Discorda. Kod, który da się rozwijać.</p>
               <div className="code-mini tile-visual">
                 <span className="k">const</span> zx = <span className="f">zxcode</span>(client, {'{'}
-                {'\n'}  modules: {'{'} <span className="s">powitania</span>, <span className="s">ekonomia</span> {'}'},{'\n'}
+                {'\n'} modules: {'{'} <span className="s">powitania</span>,{' '}
+                <span className="s">ekonomia</span> {'}'},{'\n'}
                 {'}'});{'\n'}
                 <span className="c">{'// ustawienia z panelu – na żywo'}</span>
-                {'\n'}zx.<span className="f">get</span>(guild.id, <span className="s">&apos;ekonomia.waluta&apos;</span>);
+                {'\n'}zx.<span className="f">get</span>(guild.id,{' '}
+                <span className="s">&apos;ekonomia.waluta&apos;</span>);
               </div>
             </Spotlight>
           </Reveal>
           {[
-            ['cloud_upload', 'Hosting i wdrożenie', 'Uruchamiamy bota na stabilnym serwerze i dbamy o aktualizacje.'],
-            ['git_branch', 'Integracje', 'API, webhooki, płatności, GitHub – bot połączy się z tym, czego używasz.'],
-            ['support', 'Opieka i rozwój', 'Poprawki, nowe funkcje i changelog. Jesteśmy dostępni na Discordzie.'],
+            [
+              'cloud_upload',
+              'Hosting i wdrożenie',
+              'Uruchamiamy bota na stabilnym serwerze i dbamy o aktualizacje.',
+            ],
+            [
+              'git_branch',
+              'Integracje',
+              'API, webhooki, płatności, GitHub – bot połączy się z tym, czego używasz.',
+            ],
+            [
+              'support',
+              'Opieka i rozwój',
+              'Poprawki, nowe funkcje i changelog. Jesteśmy dostępni na Discordzie.',
+            ],
           ].map(([icon, title, text], i) => (
             <Reveal key={title} className="cell" delay={i * 0.06}>
               <Spotlight>
@@ -206,13 +262,20 @@ export function Services() {
   );
 }
 
-// ───────────────────────────── Proces ─────────────────────────────
-
 const STEPS = [
-  { title: 'Ticket na Discordzie', text: 'Opisujesz, czego potrzebujesz. Dopytamy o szczegóły i zaproponujemy rozwiązanie.' },
+  {
+    title: 'Ticket na Discordzie',
+    text: 'Opisujesz, czego potrzebujesz. Dopytamy o szczegóły i zaproponujemy rozwiązanie.',
+  },
   { title: 'Wycena i termin', text: 'Dostajesz konkretną cenę, zakres i termin. Zaczynamy po akceptacji.' },
-  { title: 'Realizacja', text: 'Postęp widzisz w panelu zlecenia. Testujesz bota na swoim serwerze przed odbiorem.' },
-  { title: 'Wdrożenie i opieka', text: 'Uruchamiamy bota, dajemy dostęp do panelu i pilnujemy, żeby działał.' },
+  {
+    title: 'Realizacja',
+    text: 'Postęp widzisz w panelu zlecenia. Testujesz bota na swoim serwerze przed odbiorem.',
+  },
+  {
+    title: 'Wdrożenie i opieka',
+    text: 'Uruchamiamy bota, dajemy dostęp do panelu i pilnujemy, żeby działał.',
+  },
 ];
 
 export function Process() {
@@ -243,8 +306,6 @@ export function Process() {
     </section>
   );
 }
-
-// ───────────────────────────── Realizacje ─────────────────────────────
 
 export function PortfolioGrid({ items, compact }: { items: SiteData['portfolio']; compact?: boolean }) {
   return (
@@ -326,8 +387,6 @@ export function PortfolioPreview({ items }: { items: SiteData['portfolio'] }) {
   );
 }
 
-// ───────────────────────────── Cennik ─────────────────────────────
-
 export function PricingCards({ packages }: { packages: SiteData['packages'] }) {
   if (!packages.length) {
     return (
@@ -396,8 +455,6 @@ export function Addons({ addons }: { addons: SiteData['addons'] }) {
   );
 }
 
-// ───────────────────────────── Opinie ─────────────────────────────
-
 export function ReviewCard({ r }: { r: SiteData['reviews'][number] }) {
   return (
     <figure className="review">
@@ -406,10 +463,18 @@ export function ReviewCard({ r }: { r: SiteData['reviews'][number] }) {
         <p>{r.content}</p>
       </blockquote>
       <figcaption className="review-author">
-        <img src={r.avatar && DISCORD_CDN.test(r.avatar) ? r.avatar : '/emojis/user.png'} alt="" loading="lazy" width={36} height={36} />
+        <img
+          src={r.avatar && DISCORD_CDN.test(r.avatar) ? r.avatar : '/emojis/user.png'}
+          alt=""
+          loading="lazy"
+          width={36}
+          height={36}
+        />
         <span>
           {r.author}
-          <small>{new Date(r.createdAt).toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' })}</small>
+          <small>
+            {new Date(r.createdAt).toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' })}
+          </small>
         </span>
       </figcaption>
     </figure>
@@ -472,8 +537,6 @@ export function ReviewsGrid({ reviews }: { reviews: SiteData['reviews'] }) {
   );
 }
 
-// ───────────────────────────── Pokaz panelu ─────────────────────────────
-
 export function PanelShowcase() {
   return (
     <section id="panel" className="section cv" style={{ scrollMarginTop: 60 }}>
@@ -515,15 +578,11 @@ export function PanelShowcase() {
   );
 }
 
-// ───────────────────────────── FAQ ─────────────────────────────
-
 export interface FaqEntry {
   id: number | string;
   question: string;
   answer: string;
 }
-
-// ───────────────────────────── CTA ─────────────────────────────
 
 export function FinalCta({ title, lead }: { title?: React.ReactNode; lead?: string }) {
   return (

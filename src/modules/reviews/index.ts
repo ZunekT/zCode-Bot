@@ -112,7 +112,6 @@ export const reviewsModule = defineModule({
             })
             .build(),
         );
-        // Reset menu, gdyby klient zamknął okienko.
         await interaction.message.edit(v2Message(reviewRequestPanel(order))).catch(() => undefined);
       },
     }),
@@ -131,7 +130,7 @@ export const reviewsModule = defineModule({
 
         const review = await prisma.review
           .create({ data: { orderId, userId: interaction.user.id, rating, content } })
-          .catch(() => null); // unikalne orderId – druga opinia się nie zapisze
+          .catch(() => null);
         if (!review) throw new UserError('To zlecenie ma już Twoją opinię.', 'Już ocenione');
 
         const thanks = card({

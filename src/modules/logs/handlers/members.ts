@@ -97,7 +97,7 @@ export async function onVoiceStateUpdate(
   before: VoiceState,
   after: VoiceState,
 ): Promise<void> {
-  if (before.channelId === after.channelId) return; // wyciszenia/streamy pomijamy
+  if (before.channelId === after.channelId) return;
   const member = after.member ?? before.member;
   if (!member || member.user.bot) return;
   const config = await getConfig();

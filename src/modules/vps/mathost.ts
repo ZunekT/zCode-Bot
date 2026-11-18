@@ -51,8 +51,6 @@ async function call<T>(method: 'GET' | 'POST', path: string, body?: unknown): Pr
   return data as T;
 }
 
-// ───────────────────────────── Typy (tylko używane pola) ─────────────────────────────
-
 export interface MathostService {
   id: string;
   type: 'VPS' | 'DOCKER' | string;
@@ -114,8 +112,6 @@ export interface VpsBackup {
   size?: number;
   notes?: string;
 }
-
-// ───────────────────────────── Wywołania ─────────────────────────────
 
 export const mathost = {
   services: () => call<MathostService[]>('GET', '/account/services'),

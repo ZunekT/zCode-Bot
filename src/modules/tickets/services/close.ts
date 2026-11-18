@@ -58,7 +58,6 @@ export async function closeTicket(
       });
       if (current.channelId) ticketChannels.delete(current.channelId);
 
-      // Kanał usunięty ręcznie – zostaje tylko zapis w bazie.
       if (!channel) {
         ticket = await prisma.ticket.update({ where: { id: ticketId }, data: { channelId: null } });
         return { ticket, archived: false, transcriptUrl: null };
@@ -67,7 +66,6 @@ export async function closeTicket(
       const owner = await client.users.fetch(ticket.userId).catch(() => null);
       const ownerAvatar = owner?.displayAvatarURL({ size: 128 });
 
-      // ── Transkrypt ──
       const fileName = `ticket-${padNumber(ticket.id)}.html`;
       let transcript: Buffer | null = null;
       try {
@@ -98,8 +96,6 @@ export async function closeTicket(
       }
       ticket = await prisma.ticket.update({ where: { id: ticketId }, data: { transcriptUrl } });
 
-      // ── DM do klienta: karta z oceną + osobno transkrypt ──
-      // Osobne wiadomości, żeby kartę oceny dało się później edytować bez ruszania załącznika.
       if (owner) {
         try {
           await owner.send(v2Message(closedDmPanel(ticket, channel.guild.name)));
@@ -118,7 +114,6 @@ export async function closeTicket(
         }
       }
 
-      // ── Archiwum albo usunięcie ──
       const archive = await getCategory(channel.guild, config.archiveCategoryId);
       const archived = !!archive && hasRoom(archive);
 

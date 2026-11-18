@@ -28,7 +28,7 @@ export function barChart(bars: number[], line: number[] = [], width = 640, heigh
     const x = pad.l + slot * i + (slot - barW) / 2;
     const color = i === bars.length - 1 ? LIGHT : BLUE;
     c.rect(x, pad.t + h - bh, barW, bh, color, 0.95);
-    c.rect(x, pad.t + h - bh, barW, 2, WHITE, 0.35); // połysk
+    c.rect(x, pad.t + h - bh, barW, 2, WHITE, 0.35);
   });
 
   if (line.length > 1) {

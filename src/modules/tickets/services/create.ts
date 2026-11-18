@@ -135,7 +135,6 @@ export async function createTicket(
       });
       await control.pin().catch(() => undefined);
 
-      // Załączniki z formularza – przesyłamy ponownie, bo linki z modala wygasają.
       if (form.files.length) {
         const files = attachmentFiles(form.files);
         const panel = card({
@@ -184,7 +183,6 @@ export async function createTicket(
 
       return channel;
     } catch (err) {
-      // Sprzątanie po nieudanym tworzeniu – nie zostawiamy „sierot”.
       await prisma.ticket.delete({ where: { id: ticket.id } }).catch(() => undefined);
       if (channelId) await interaction.guild.channels.delete(channelId).catch(() => undefined);
       throw err;

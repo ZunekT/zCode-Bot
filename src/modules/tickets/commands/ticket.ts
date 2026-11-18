@@ -98,7 +98,6 @@ export const ticketCommand = defineCommand({
           interaction.options.getChannel('kanal', false, [ChannelType.GuildText]) ?? interaction.channel;
         if (!target?.isSendable()) throw new UserError('Nie mogę pisać na tym kanale.');
         const msg = await target.send(v2Message(publicPanel(), { files: [bannerFile()] }));
-        // Panel z select menu – handler `ticket:category` (components.ts).
         await audit(client, {
           action: 'tickets.panel',
           actorId: member.id,

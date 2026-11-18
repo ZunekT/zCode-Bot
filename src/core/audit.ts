@@ -24,7 +24,6 @@ export async function audit(client: ZxClient, entry: AuditEntry): Promise<void> 
         action: entry.action,
         actorId: entry.actorId,
         targetId: entry.targetId,
-        // Opis zapisujemy też w bazie – dziennik zmian na stronie.
         details: {
           summary: entry.summary,
           ...(entry.details && typeof entry.details === 'object' && !Array.isArray(entry.details)

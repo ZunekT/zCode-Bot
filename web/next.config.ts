@@ -1,7 +1,5 @@
 import type { NextConfig } from 'next';
 
-// Next.js wstrzykuje skrypty inline (dane RSC), więc script-src potrzebuje 'unsafe-inline';
-// reszta jest zamknięta: zero zewnętrznych skryptów, ramek, wtyczek i wysyłki formularzy poza domenę.
 const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
@@ -21,13 +19,16 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     formats: ['image/avif', 'image/webp'],
-    localPatterns: [{ pathname: '/api/portfolio/**' }, { pathname: '/emojis/**' }, { pathname: '/branding/**' }],
+    localPatterns: [
+      { pathname: '/api/portfolio/**' },
+      { pathname: '/emojis/**' },
+      { pathname: '/branding/**' },
+    ],
     remotePatterns: [{ protocol: 'https', hostname: 'cdn.discordapp.com' }],
     minimumCacheTTL: 86400,
   },
   async headers() {
     return [
-      // Emotki i grafiki zmieniają się rzadko – przeglądarka trzyma je tydzień.
       {
         source: '/:dir(emojis|branding)/:file*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }],
@@ -40,7 +41,10 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Content-Security-Policy', value: csp },
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()' },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()',
+          },
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
         ],
       },

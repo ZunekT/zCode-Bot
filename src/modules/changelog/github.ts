@@ -28,7 +28,6 @@ export function parseReleaseBody(body: string): Sections {
     const line = raw.trim();
     const heading = line.match(/^#{1,6}\s+(.+)$/);
     if (heading) {
-      // „What's Changed” to ogólny nagłówek automatycznych notatek GitHuba – nie przesądza o sekcji.
       current = /what'?s changed/i.test(heading[1]!)
         ? null
         : (HEADING_KEYS.find(([re]) => re.test(heading[1]!))?.[1] ?? null);
@@ -36,13 +35,11 @@ export function parseReleaseBody(body: string): Sections {
     }
     const bullet = line.match(/^[-*+•]\s+(.+)$/);
     if (!bullet) continue;
-    // Automatyczne notatki GitHuba: „feat: X by @user in https://…/pull/12”
     let text = bullet[1]!
       .replace(/\s+by @[\w-]+ in https?:\/\/\S+$/i, '')
       .replace(/\*\*Full Changelog\*\*.*/i, '')
       .trim();
     let key: SectionKey = current ?? 'changed';
-    // Prefiks commita („feat:”, „fix:”) jest dokładniejszy niż nagłówek sekcji.
     for (const [re, k] of PREFIX_KEYS) {
       if (re.test(text)) {
         text = text.replace(re, '');

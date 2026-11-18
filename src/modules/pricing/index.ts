@@ -366,7 +366,6 @@ const pricingCommand = defineCommand({
       );
     }
 
-    // group === 'rabat'
     if (sub === 'lista') {
       const codes = await prisma.discountCode.findMany({ orderBy: { createdAt: 'desc' }, take: 25 });
       return interaction.reply(

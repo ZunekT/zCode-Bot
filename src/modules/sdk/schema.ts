@@ -141,7 +141,6 @@ export function sanitizeSchema(input: unknown): { schema: BotSchema; warnings: s
           CHANNEL_TYPES.includes(t as ChannelKind),
         );
       }
-      // Wartość domyślna przechodzi tę samą walidację (bez sprawdzania istnienia kanałów/ról).
       if (f.default !== undefined) {
         const check = validateField(field, f.default, null);
         if (check.ok) field.default = check.value;

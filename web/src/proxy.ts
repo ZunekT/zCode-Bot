@@ -23,7 +23,6 @@ async function access(userId: string | null): Promise<{ allowed: boolean; launch
     lastLaunched = v.launched;
     return v;
   } catch {
-    // Bot niedostępny: ostatni znany stan, a bez niego – strona ukryta (bezpieczniej).
     if (hit) return hit;
     return { allowed: lastLaunched === true, launched: lastLaunched === true };
   }
@@ -49,7 +48,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Wszystko poza: plikami Next, grafikami, logowaniem i samą stroną „Start wkrótce”.
     '/((?!_next/|emojis/|branding/|favicon\\.ico$|robots\\.txt$|api/auth/|api/portfolio/|zaloguj$|wkrotce$).*)',
   ],
 };

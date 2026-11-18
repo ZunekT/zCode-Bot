@@ -31,10 +31,16 @@ export function Modal({
     };
   }, [open, busy, onClose]);
   if (!open) return null;
-  // Portal do <body>: okno nie dziedziczy warstw (z-index, transform) karty, w której je otwarto.
   return createPortal(
     <div className="modal-back2" role="presentation" onClick={() => !busy && onClose()}>
-      <div ref={ref} className="modal2 glass" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={ref}
+        className="modal2 glass"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2>{title}</h2>
         {children}
         {actions && <div className="modal-actions">{actions}</div>}

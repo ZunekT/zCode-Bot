@@ -317,15 +317,11 @@ export function valuesToUpdate(values: ConfigValues, config: GuildConfig): Prism
   return data as Prisma.GuildConfigUpdateInput;
 }
 
-// ───────────────────────────── Uprawnienia komend z panelu ─────────────────────────────
-
 let permissions: Record<string, { roles: string[] }> = {};
 
 export function panelCommandRoles(commandName: string): string[] | null {
   return permissions[commandName]?.roles?.length ? permissions[commandName]!.roles : null;
 }
-
-// ───────────────────────────── Połączenie ─────────────────────────────
 
 const KINDS: Partial<Record<ChannelType, ChannelKind>> = {
   [ChannelType.GuildText]: 'text',
@@ -371,7 +367,6 @@ async function ensureSelfBot(client: ZxClient, guild: Guild): Promise<SdkBot> {
       ? existing
       : prisma.sdkBot.update({ where: { id: existing.id }, data: { ownerId } });
   }
-  // Klucz losowy i nigdzie niezapisany – bot zxCode łączy się w procesie, nie przez HTTP.
   return prisma.sdkBot.create({
     data: {
       name: 'zxCode',
@@ -491,7 +486,6 @@ export async function startSelfSdk(client: ZxClient, botModules: BotModule[]): P
     pushConfig(config).catch((err) => log.warn('Nie udało się zsynchronizować ustawień z panelem', err));
   });
 
-  // Kanały i role do wyboru w panelu – aktualizowane po zmianach na serwerze (zbiorczo co 3 s).
   let timer: NodeJS.Timeout | null = null;
   const queue = (g: Guild | null | undefined) => {
     if (g?.id !== env.GUILD_ID || timer) return;

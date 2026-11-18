@@ -6,7 +6,6 @@ export async function acquireLock(name: string, ttlSeconds = 10): Promise<(() =>
   const ok = await redis.set(key, token, 'EX', ttlSeconds, 'NX');
   if (ok !== 'OK') return null;
   return async () => {
-    // Zwalniamy tylko własną blokadę.
     await redis.eval(
       "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end",
       1,

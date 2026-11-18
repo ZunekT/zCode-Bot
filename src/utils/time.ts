@@ -13,7 +13,7 @@ const partsFmt = new Intl.DateTimeFormat('en-US', {
 
 export interface ZonedParts {
   year: number;
-  month: number; // 0-11
+  month: number;
   day: number;
   hour: number;
   minute: number;
@@ -109,7 +109,7 @@ export function parseWhen(input: string, now = new Date()): Date | null {
     if (!t || month < 0 || month > 11 || day < 1 || day > 31) return null;
     const year = abs[3] ? Number(abs[3].length === 2 ? `20${abs[3]}` : abs[3]) : today.year;
     let d = zonedDate(year, month, day, t[0], t[1]);
-    if (zonedParts(d).day !== day) return null; // np. 31.02
+    if (zonedParts(d).day !== day) return null;
     if (!abs[3] && d.getTime() <= now.getTime()) d = zonedDate(year + 1, month, day, t[0], t[1]);
     return d;
   }

@@ -38,7 +38,6 @@ async function guard(
   allowDM = false,
   commandName?: string,
 ): Promise<Context | null> {
-  // Interakcje z DM (np. ocena ticketu) – tylko moduł i tryb serwisowy, bez uprawnień serwerowych.
   if (allowDM && !interaction.inGuild()) {
     const config = await getConfig(env.GUILD_ID);
     if (!isModuleEnabled(config, module.name) && module.toggleable !== false) return null;
@@ -78,7 +77,6 @@ async function guard(
     return null;
   }
 
-  // Uprawnienia ustawione w panelu WWW zastępują domyślne dla tej komendy.
   const panelRoles = commandName ? panelCommandRoles(commandName) : null;
   const allowed = panelRoles
     ? admin || panelRoles.some((id) => member.roles.cache.has(id))
@@ -101,7 +99,6 @@ async function guard(
 }
 
 export async function routeInteraction(client: ZxClient, interaction: Interaction): Promise<void> {
-  // ── Autocomplete ──
   if (interaction.isAutocomplete()) {
     const entry = client.commands.get(interaction.commandName);
     if (!entry || entry.command.kind === 'user' || entry.command.kind === 'message') return;
@@ -115,7 +112,6 @@ export async function routeInteraction(client: ZxClient, interaction: Interactio
     return;
   }
 
-  // ── Komendy (slash + context menu) ──
   if (interaction.isChatInputCommand() || interaction.isContextMenuCommand()) {
     const entry = client.commands.get(interaction.commandName);
     if (!entry) return;
@@ -143,7 +139,6 @@ export async function routeInteraction(client: ZxClient, interaction: Interactio
         }
       }
 
-      // Rodzaj interakcji i komendy są zgodne (nazwy komend są unikalne), więc rzutowanie jest bezpieczne.
       const kind = command.kind ?? 'slash';
       if (kind === 'slash' && interaction.isChatInputCommand())
         await (command as SlashCommand).run(interaction as never, ctx);
@@ -157,7 +152,6 @@ export async function routeInteraction(client: ZxClient, interaction: Interactio
     return;
   }
 
-  // ── Komponenty (przyciski, select menu, modale) ──
   if (interaction.isButton() || interaction.isAnySelectMenu() || interaction.isModalSubmit()) {
     const { key, args } = parseCustomId(interaction.customId);
     const entry = client.components.get(key);
@@ -183,7 +177,6 @@ export async function routeInteraction(client: ZxClient, interaction: Interactio
       const access = 'access' in handler ? handler.access : undefined;
       const ctx = await guard(interaction, client, module, access, handler.allowInMaintenance, dm);
       if (!ctx) return;
-      // Typ został sprawdzony wyżej (typeMatches).
       await handler.run(interaction as never, args, ctx);
     } catch (err) {
       await handleInteractionError(interaction, err, where);

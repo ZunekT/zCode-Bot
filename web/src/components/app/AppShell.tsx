@@ -30,7 +30,8 @@ const ADMIN: NavItem[] = [
   { href: '/admin/serwer', label: 'Strona i serwer', icon: 'server', ownerOnly: true },
 ];
 
-const isActive = (path: string, it: NavItem) => (it.exact ? path === it.href : path === it.href || path.startsWith(`${it.href}/`));
+const isActive = (path: string, it: NavItem) =>
+  it.exact ? path === it.href : path === it.href || path.startsWith(`${it.href}/`);
 
 function RouteProgress() {
   const pathname = usePathname();
@@ -67,7 +68,13 @@ function NavGroup({ title, items, path }: { title: string; items: NavItem[]; pat
       {items.map((it) => {
         const on = isActive(path, it);
         return (
-          <Link key={it.href} href={it.href} className="nav-item" data-on={on} aria-current={on ? 'page' : undefined}>
+          <Link
+            key={it.href}
+            href={it.href}
+            className="nav-item"
+            data-on={on}
+            aria-current={on ? 'page' : undefined}
+          >
             <Icon name={it.icon} size={18} />
             <span>{it.label}</span>
           </Link>
@@ -102,13 +109,11 @@ export function AppShell({
     return () => window.removeEventListener('keydown', esc);
   }, [open]);
 
-  // Wskaźnik aktywnej pozycji – przesuwa się (transform) do aktywnego linku.
   useLayoutEffect(() => {
     const el = nav.current?.querySelector<HTMLElement>('.nav-item[data-on="true"]');
     setInd(el ? { y: el.offsetTop, h: el.offsetHeight } : null);
   }, [path, owner, admin]);
 
-  // Poświata kart za kursorem: jeden nasłuch na cały panel, bez re-renderów.
   useEffect(() => {
     if (!matchMedia('(hover: hover)').matches) return;
     let last: HTMLElement | null = null;
@@ -137,7 +142,12 @@ export function AppShell({
       </div>
 
       <header className="app-top glass">
-        <button className="app-burger" aria-label={open ? 'Zamknij menu' : 'Menu'} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <button
+          className="app-burger"
+          aria-label={open ? 'Zamknij menu' : 'Menu'}
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+        >
           <span />
           <span />
           <span />
@@ -161,9 +171,17 @@ export function AppShell({
           </span>
         </Link>
         <nav ref={nav} className="app-nav">
-          {ind && <span className="nav-ind" style={{ transform: `translateY(${ind.y}px)`, height: ind.h }} aria-hidden />}
+          {ind && (
+            <span
+              className="nav-ind"
+              style={{ transform: `translateY(${ind.y}px)`, height: ind.h }}
+              aria-hidden
+            />
+          )}
           <NavGroup title="Panel klienta" items={CLIENT} path={path} />
-          {admin && <NavGroup title="Administracja" items={ADMIN.filter((i) => owner || !i.ownerOnly)} path={path} />}
+          {admin && (
+            <NavGroup title="Administracja" items={ADMIN.filter((i) => owner || !i.ownerOnly)} path={path} />
+          )}
         </nav>
         <div className="app-user">
           <img src={user.avatar} alt="" width={36} height={36} />
@@ -176,7 +194,13 @@ export function AppShell({
           <form action="/api/auth/logout" method="post">
             <button className="icon-btn" type="submit" aria-label="Wyloguj" title="Wyloguj">
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden>
-                <path d="M8 4H5a1 1 0 00-1 1v10a1 1 0 001 1h3M13 14l4-4-4-4M17 10H8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M8 4H5a1 1 0 00-1 1v10a1 1 0 001 1h3M13 14l4-4-4-4M17 10H8"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
           </form>

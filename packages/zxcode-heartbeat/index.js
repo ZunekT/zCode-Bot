@@ -4,12 +4,11 @@ const URL_RE = /^https?:\/\/[^\s/]+(?:\/[^\s]*)?\/heartbeat\/[a-f0-9]{48}$/i;
 const MIN_INTERVAL = 15_000;
 const DEFAULT_INTERVAL = 60_000;
 const REQUEST_TIMEOUT = 10_000;
-const WS_READY = 0; // discord.js: Status.Ready
+const WS_READY = 0;
 
 function readVersion() {
   if (process.env.npm_package_version) return process.env.npm_package_version;
   try {
-    // package.json bota (katalog, z którego go uruchomiono)
     return require(require('node:path').join(process.cwd(), 'package.json')).version;
   } catch {
     return undefined;
@@ -41,7 +40,6 @@ function heartbeat(client, options = {}) {
     typeof client.isReady === 'function' ? client.isReady() && client.ws?.status === WS_READY : false;
 
   async function beat() {
-    // Zgłaszamy się tylko, gdy bot jest naprawdę połączony z Discordem – sam działający proces to za mało.
     if (!isConnected()) {
       log('pomijam – bot nie jest połączony z Discordem');
       return false;
@@ -62,7 +60,6 @@ function heartbeat(client, options = {}) {
       return true;
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
-      // Błąd zgłaszamy raz na serię, żeby nie zaśmiecać logów bota co minutę.
       if (!failing) {
         failing = true;
         if (options.onError) options.onError(error);
@@ -77,7 +74,6 @@ function heartbeat(client, options = {}) {
     log(`start – co ${interval / 1000}s`);
     void beat();
     timer = setInterval(() => void beat(), interval);
-    // Heartbeat nie powinien trzymać procesu przy życiu po wyłączeniu bota.
     if (typeof timer.unref === 'function') timer.unref();
   }
 
@@ -89,7 +85,6 @@ function heartbeat(client, options = {}) {
 
   if (typeof client.isReady === 'function' && client.isReady()) start();
   else {
-    // discord.js 14.22+ używa „clientReady”, starsze wersje „ready”.
     client.once('clientReady', start);
     client.once('ready', start);
   }

@@ -55,7 +55,6 @@ export function BotAccessEditor({
   const [busy, setBusy] = useState<string | null>(null);
   const mine: BotAccess = data.me;
   const manager = mine.perms.includes('access');
-  // Moduły i serwery, które mogę przydzielić (ograniczone moim własnym zakresem).
   const myModules = mine.modules ? modules.filter((m) => mine.modules!.includes(m.key)) : modules;
   const myGuilds = mine.guilds ? guilds.filter((g) => mine.guilds!.includes(g.key)) : guilds;
   const labelOf = (list: Named[], key: string) => list.find((x) => x.key === key)?.label ?? key;

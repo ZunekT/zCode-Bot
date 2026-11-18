@@ -7,10 +7,6 @@ import { card } from '../../ui/components/card.js';
 import { createLogger } from '../../utils/logger.js';
 import { schemaOf } from './service.js';
 
-// Współdzielenie bota w panelu: właściciel (klient, który go kupił) ma wszystko i nadaje dostęp innym.
-// Dostęp można zawęzić do wybranych modułów (ustawienia) i wybranych serwerów (ustawienia + uprawnienia komend).
-// Osoba z uprawnieniem „access” zarządza dostępem innych, ale tylko w granicach własnych uprawnień i zakresu.
-
 const log = createLogger('sdk:members');
 
 export const BOT_PERMS = ['settings', 'commands', 'profile', 'access'] as const;
@@ -32,9 +28,7 @@ export interface BotAccess {
   bot: SdkBot;
   owner: boolean;
   perms: BotPerm[];
-  /** null = wszystkie moduły */
   modules: string[] | null;
-  /** null = wszystkie serwery */
   guilds: string[] | null;
 }
 
@@ -43,7 +37,6 @@ const scope = (list: readonly string[]) => (list.length ? [...list] : null);
 
 export async function botAccess(botId: number, userId: string): Promise<BotAccess> {
   const bot = Number.isSafeInteger(botId) ? await prisma.sdkBot.findUnique({ where: { id: botId } }) : null;
-  // Brak bota i brak dostępu zwracają ten sam komunikat – nie zdradzamy, że bot istnieje.
   if (!bot) throw new UserError('Nie znaleziono bota.');
   if (bot.ownerId === userId) return { bot, owner: true, perms: [...BOT_PERMS], modules: null, guilds: null };
   const member = await prisma.sdkBotMember.findUnique({ where: { botId_userId: { botId, userId } } });
@@ -63,7 +56,6 @@ export function requirePerm(a: BotAccess, perm: BotPerm): void {
 
 export const canSeeGuild = (a: BotAccess, guildId: string) => !a.guilds || a.guilds.includes(guildId);
 
-// Serwer spoza zakresu wygląda jak nieistniejący.
 export function requireGuild(a: BotAccess, guildId: string): void {
   if (!canSeeGuild(a, guildId)) throw new UserError('Bot nie jest na tym serwerze.');
 }
@@ -96,7 +88,6 @@ function parseList(input: unknown, allowed: Set<string>, what: string): string[]
   return [...new Set(input as string[])];
 }
 
-// Zarządzający bez pełnych uprawnień nie może nadać ani odebrać czegoś, czego sam nie ma.
 function assertWithin(
   a: BotAccess,
   t: { permissions: readonly BotPerm[]; modules: readonly string[]; guilds: readonly string[] },
@@ -107,7 +98,6 @@ function assertWithin(
       `Nie możesz zarządzać uprawnieniem, którego sam nie masz: ${extra.map((p) => PERM_LABELS[p]).join(', ')}.`,
     );
   }
-  // Pusta lista u celu = „wszystko”, więc ktoś z zawężonym zakresem musi wskazać konkretne moduły/serwery.
   const check = (mine: string[] | null, theirs: readonly string[], what: string) => {
     if (!mine) return;
     if (!theirs.length || theirs.some((x) => !mine.includes(x))) {
@@ -163,7 +153,6 @@ export async function setMember(
 
   const botGuilds = await prisma.sdkGuild.findMany({ where: { botId: a.bot.id }, select: { guildId: true } });
   const moduleKeys = new Set(schemaOf(a.bot).modules.map((m) => m.key));
-  // Zakres ma sens tylko przy uprawnieniach, których dotyczy – inaczej zapisujemy pustą listę.
   const modules = permissions.includes('settings') ? parseList(input.modules, moduleKeys, 'moduły') : [];
   const guilds =
     permissions.includes('settings') || permissions.includes('commands')
@@ -226,7 +215,6 @@ export async function removeMember(a: BotAccess, actorId: string, targetId: stri
   const key = { botId_userId: { botId: a.bot.id, userId: targetId } };
   const existing = await prisma.sdkBotMember.findUnique({ where: key });
   if (!existing) throw new UserError('Ta osoba nie ma dostępu do bota.');
-  // Każdy może sam zrezygnować z dostępu; usuwanie innych wymaga „access” w granicach własnych uprawnień.
   if (targetId !== actorId) {
     requirePerm(a, 'access');
     assertWithin(a, {

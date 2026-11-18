@@ -27,7 +27,7 @@ async function checkSla(client: ZxClient) {
 
   for (const ticket of candidates) {
     const clientAt = ticket.lastClientMsgAt!;
-    if (ticket.lastStaffMsgAt && ticket.lastStaffMsgAt >= clientAt) continue; // obsługa już odpisała
+    if (ticket.lastStaffMsgAt && ticket.lastStaffMsgAt >= clientAt) continue;
 
     const target =
       (await getSendableChannel(client, config.staffAlertChannelId)) ??
@@ -56,7 +56,7 @@ async function checkAutoClose(client: ZxClient) {
 
   for (const ticket of candidates) {
     const staffAt = ticket.lastStaffMsgAt!.getTime();
-    if (ticket.lastClientMsgAt && ticket.lastClientMsgAt.getTime() > staffAt) continue; // czeka obsługa, nie klient
+    if (ticket.lastClientMsgAt && ticket.lastClientMsgAt.getTime() > staffAt) continue;
 
     if (!ticket.closeWarnedAt) {
       if (now - staffAt < idleMs) continue;

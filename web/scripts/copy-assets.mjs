@@ -1,4 +1,3 @@
-// Kopiuje emotki i grafiki zxCode z ../assets do public/ (te same co w bocie).
 import { cpSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';

@@ -19,15 +19,12 @@ class SdkHub {
   addStream(botId: number, res: ServerResponse): void {
     if (!this.streams.has(botId)) this.streams.set(botId, new Set());
     const set = this.streams.get(botId)!;
-    // Limit połączeń na bota: przy nadmiarze zamykamy najstarsze (zwykle martwe po restarcie bota).
     while (set.size >= MAX_STREAMS_PER_BOT) {
       const oldest = set.values().next().value as ServerResponse;
       set.delete(oldest);
       try {
         oldest.end();
-      } catch {
-        /* już zamknięte */
-      }
+      } catch {}
     }
     set.add(res);
   }
@@ -72,9 +69,7 @@ class SdkHub {
       try {
         res.write(`event: revoked\ndata: {"type":"revoked"}\n\n`);
         res.end();
-      } catch {
-        /* już zamknięte */
-      }
+      } catch {}
     }
     this.streams.delete(botId);
   }
@@ -84,9 +79,7 @@ class SdkHub {
       for (const res of set) {
         try {
           res.write(': ping\n\n');
-        } catch {
-          /* rozłączony – usunie go zdarzenie close */
-        }
+        } catch {}
       }
     }
   }

@@ -44,14 +44,11 @@ export const schemaOf = (bot: Pick<SdkBot, 'schema'>): BotSchema =>
 const commandsOf = (bot: Pick<SdkBot, 'commands'>): string[] =>
   Array.isArray(bot.commands) ? (bot.commands as { name: string }[]).map((c) => c.name) : [];
 
-// ───────────────────────────── Zarządzanie botami ─────────────────────────────
-
 export async function createBot(name: string, ownerId: string): Promise<{ bot: SdkBot; key: string }> {
   const temp = hashKey(`pending-${Date.now()}-${Math.random()}`);
   const bot = await prisma.sdkBot.create({ data: { name, ownerId, keyHash: temp, keyPrefix: '' } });
   const { key, hash, prefix } = generateKey(bot.id);
 
-  // Monitoring (tryb heartbeat) – SDK zgłasza się co minutę.
   let monitorName = name;
   if (await prisma.monitoredBot.findUnique({ where: { name: monitorName } }))
     monitorName = `${name} (SDK #${bot.id})`;
@@ -84,8 +81,6 @@ export async function authenticate(key: string | undefined): Promise<SdkBot | nu
   if (!key || !KEY_RE.test(key)) return null;
   return prisma.sdkBot.findUnique({ where: { keyHash: hashKey(key) } });
 }
-
-// ───────────────────────────── Zdarzenia od bota ─────────────────────────────
 
 async function touch(bot: SdkBot, version?: string | null) {
   const now = new Date();
@@ -195,7 +190,7 @@ export async function setConnected(botId: number, connected: boolean) {
 
 export async function profileResult(bot: SdkBot, body: { revision?: number; ok?: boolean; error?: string }) {
   const profile = ((bot.profile as Profile | null) ?? {}) as Profile;
-  if (body.revision !== bot.profileRevision) return; // wynik starego żądania
+  if (body.revision !== bot.profileRevision) return;
   profile.request = null;
   profile.lastResult = {
     revision: bot.profileRevision,
@@ -205,8 +200,6 @@ export async function profileResult(bot: SdkBot, body: { revision?: number; ok?:
   };
   await prisma.sdkBot.update({ where: { id: bot.id }, data: { profile: json(profile) } });
 }
-
-// ───────────────────────────── Ustawienia ─────────────────────────────
 
 export async function guildData(botId: number, guildId: string): Promise<GuildData | null> {
   const g = await prisma.sdkGuild.findUnique({ where: { botId_guildId: { botId, guildId } } });
@@ -238,7 +231,6 @@ export async function setConfig(
   if (input.values !== undefined) {
     const { values, errors } = validateValues(schemaOf(bot), input.values, guild);
     if (errors.length) throw new ValidationFailed(errors);
-    // Scalanie pole po polu: zapis części modułu nie kasuje pozostałych pól (null czyści pole).
     const merged: ConfigValues = { ...((current?.values as ConfigValues | null) ?? {}) };
     for (const [mod, fields] of Object.entries(values)) merged[mod] = { ...(merged[mod] ?? {}), ...fields };
     data.values = json(merged);
@@ -315,8 +307,6 @@ export async function setProfile(
   sdkHub.send(botId, { type: 'profile', profile, revision: saved.profileRevision });
   return { profile, revision: saved.profileRevision };
 }
-
-// ───────────────────────────── Odczyt dla panelu ─────────────────────────────
 
 export function publicBot(bot: SdkBot) {
   return {

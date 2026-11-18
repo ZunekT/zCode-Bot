@@ -27,7 +27,6 @@ function markdown(raw: string, message: Message): string {
   s = s.replace(/^(?:&gt;){3} ([\s\S]*)$/m, '<blockquote>$1</blockquote>');
   s = s.replace(/^&gt; (.*)$/gm, '<blockquote>$1</blockquote>');
   s = s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
-  // Wzmianki i emotki
   s = s.replace(/&lt;@!?(\d+)&gt;/g, (_m, id: string) => {
     const u = message.mentions.users.get(id);
     return `<span class="mention">@${esc(u?.displayName ?? u?.username ?? id)}</span>`;

@@ -1,4 +1,3 @@
-# Tylko baza i Redis do lokalnego developmentu (bot odpalasz przez `npm run dev`).
 name: zxcode-dev
 
 services:

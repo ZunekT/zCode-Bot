@@ -342,7 +342,6 @@ function formatChange(c: { key: string; old?: unknown; new?: unknown }): string 
   const label = KEY_LABELS[c.key] ?? c.key;
 
   if (c.key === 'permissions' || c.key === 'allow' || c.key === 'deny') {
-    // Dziennik podaje uprawnienia jako liczbę w stringu.
     const bits = (v: unknown) => (typeof v === 'string' || typeof v === 'number' ? BigInt(v) : 0n);
     const { added, removed } = permissionDiff(bits(c.old), bits(c.new));
     if (!added.length && !removed.length) return null;
@@ -429,7 +428,6 @@ export async function onAuditLogEntry(
 ): Promise<void> {
   const meta = ACTIONS[entry.action];
   if (!meta) return;
-  // Akcje samego bota (kanały ticketów, rola po weryfikacji…) bot loguje sam – tu by dublowały.
   if (entry.executorId && entry.executorId === client.user?.id) return;
 
   const config = await getConfig();
@@ -442,7 +440,6 @@ export async function onAuditLogEntry(
   let emoji = meta.emoji;
   let changes = entry.changes;
 
-  // Zmiana członka: wyciszenie (timeout) i wyciszenie/ogłuszenie serwerowe to moderacja.
   if (entry.action === A.MemberUpdate) {
     const timeout = changes.find((c) => c.key === 'communication_disabled_until');
     if (timeout) {

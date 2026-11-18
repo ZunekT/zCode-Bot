@@ -153,7 +153,6 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
       requireGuild(access, guildId);
       if (body.values !== undefined) {
         requirePerm(access, 'settings');
-        // Osoba z dostępem do wybranych modułów może zapisać tylko te moduły.
         if (body.values && typeof body.values === 'object' && !Array.isArray(body.values))
           requireModules(access, Object.keys(body.values));
         else if (access.modules) requireModules(access, ['?']);
@@ -189,8 +188,6 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
       return sendError(reply, err);
     }
   });
-
-  // ───────────── Współdzielenie bota ─────────────
 
   app.get('/internal/users/:userId/bots/:botId/members', async (request, reply) => {
     try {
@@ -242,8 +239,6 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
     }
   });
 
-  // ───────────── Dostęp do strony (tryb „Start wkrótce”) ─────────────
-
   app.get('/internal/site/access', async (request, reply) => {
     try {
       const user = (request.query as { user?: string }).user;
@@ -258,8 +253,6 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
       return sendError(reply, err);
     }
   });
-
-  // ───────────── Administracja (tylko właściciel zxCode) ─────────────
 
   const ownerCheck = async (params: unknown, reply: { code(n: number): { send(b: unknown): unknown } }) => {
     const { userId } = userParam(params);
@@ -384,8 +377,6 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
       return sendError(reply, err);
     }
   });
-
-  // ───────────── Administracja: VPS ─────────────
 
   app.get('/internal/users/:userId/me', async (request, reply) => {
     try {

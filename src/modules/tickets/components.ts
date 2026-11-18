@@ -196,7 +196,6 @@ async function runAction(
 }
 
 export const ticketComponents: ComponentHandler[] = [
-  // ── Panel pomocy: wybór kategorii ──
   defineComponent({
     id: 'ticket:category',
     type: 'select',
@@ -206,7 +205,6 @@ export const ticketComponents: ComponentHandler[] = [
         await assertCanOpen(interaction.member, category, config);
         await interaction.showModal(ticketForm(category));
       } finally {
-        // W tle – odpowiedź (modal albo komunikat o błędzie) musi zdążyć w 3 s.
         void resetPublicPanel(interaction);
       }
     },
@@ -223,7 +221,6 @@ export const ticketComponents: ComponentHandler[] = [
     },
   }),
 
-  // ── Panel ticketu: menu akcji ──
   defineComponent({
     id: 'ticket:action',
     type: 'select',
@@ -236,7 +233,6 @@ export const ticketComponents: ComponentHandler[] = [
         if (!action || !(action in CONTROL_ACTIONS)) throw new UserError('Nieznana akcja.');
         result = await runAction(interaction, action, id, client, config);
       } finally {
-        // Reset menu w tle (gdy nie zrobiliśmy już interaction.update z nowym panelem).
         if (result !== 'updated') {
           void prisma.ticket
             .findUnique({ where: { id } })
@@ -331,7 +327,6 @@ export const ticketComponents: ComponentHandler[] = [
     },
   }),
 
-  // ── Zamykanie ──
   defineComponent({
     id: 'ticket:closeSubmit',
     type: 'modal',
@@ -358,7 +353,7 @@ export const ticketComponents: ComponentHandler[] = [
             }),
           ),
         )
-        .catch(() => undefined); // kanał mógł już zniknąć
+        .catch(() => undefined);
     },
   }),
 
@@ -384,7 +379,6 @@ export const ticketComponents: ComponentHandler[] = [
     },
   }),
 
-  // ── Archiwum ──
   defineComponent({
     id: 'ticket:reopen',
     type: 'button',
@@ -451,7 +445,6 @@ export const ticketComponents: ComponentHandler[] = [
     },
   }),
 
-  // ── Ocena w DM ──
   defineComponent({
     id: 'ticket:rate',
     type: 'dmSelect',
@@ -478,7 +471,6 @@ export const ticketComponents: ComponentHandler[] = [
           })
           .build(),
       );
-      // Reset menu – gdyby klient zamknął okienko, może wybrać ocenę jeszcze raz.
       const guildName = client.guilds.cache.get(env.GUILD_ID)?.name ?? 'zxCode';
       await interaction.message.edit(v2Message(closedDmPanel(ticket, guildName))).catch(() => undefined);
     },
@@ -496,7 +488,6 @@ export const ticketComponents: ComponentHandler[] = [
       if (ticket.userId !== interaction.user.id) throw new UserError('Ocenić może tylko autor ticketu.');
       const comment = interaction.fields.getTextInputValue('comment').trim() || null;
 
-      // updateMany z warunkiem rating=null – druga ocena (np. podwójne wysłanie) niczego nie nadpisze.
       const { count } = await prisma.ticket.updateMany({
         where: { id, rating: null },
         data: { rating, ratingComment: comment },

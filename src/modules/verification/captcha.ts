@@ -1,7 +1,6 @@
 import { randomInt } from 'node:crypto';
 import { Canvas, type RGB } from '../../utils/png.js';
 
-// Bez znaków mylących się ze sobą (0/O, 1/I, 2/Z, 5/S, 8/B).
 export const CAPTCHA_CHARSET = 'ACDEFGHJKLMNPRTUVWXY3479';
 
 const GLYPHS: Record<string, string[]> = {
@@ -59,7 +58,6 @@ function drawGlyph(c: Canvas, ch: string, cx: number, cy: number, angle: number,
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
   const half = Math.ceil(Math.hypot(gw, gh) / 2);
-  // Odwrotne mapowanie: dla każdego piksela wyniku sprawdzamy, czy po „odkręceniu” trafia w piksel litery.
   for (let y = -half; y <= half; y++) {
     for (let x = -half; x <= half; x++) {
       const gx = (x * cos + y * sin + gw / 2) / SCALE;
@@ -73,7 +71,6 @@ function drawGlyph(c: Canvas, ch: string, cx: number, cy: number, angle: number,
 export function renderCaptcha(code: string): Buffer {
   const c = new Canvas(W, H);
 
-  // Tło: ciemny gradient w barwach zxCode + ziarno
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const t = (x / W + y / H) / 2;
@@ -81,7 +78,6 @@ export function renderCaptcha(code: string): Buffer {
       c.set(x, y, [10 + n, 13 + 20 * t + n, 20 + 50 * t + n]);
     }
   }
-  // Linie w tle
   for (let i = 0; i < 6; i++) {
     c.line(rand(0, W), rand(0, H), rand(0, W), rand(0, H), PALETTE[randomInt(PALETTE.length)]!, 1, 0.35);
   }
@@ -98,7 +94,6 @@ export function renderCaptcha(code: string): Buffer {
     );
   });
 
-  // Linie przecinające znaki i kropki szumu
   for (let i = 0; i < 3; i++) {
     c.line(0, rand(20, H - 20), W, rand(20, H - 20), PALETTE[randomInt(PALETTE.length)]!, 2, 0.55);
   }

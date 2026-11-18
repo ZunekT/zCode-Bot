@@ -1,6 +1,3 @@
-// zxCode Bot – schemat bazy danych
-// Bot działa na jednym serwerze, ale GuildConfig trzyma guildId, żeby nie wiązać configu z .env.
-
 generator client {
   provider            = "prisma-client"
   output              = "../src/generated/prisma"
@@ -12,19 +9,15 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─────────────────────────────── Konfiguracja ───────────────────────────────
-
 model GuildConfig {
   guildId String @id
 
-  // Tickety
   ticketCategoryId     String?
   archiveCategoryId    String?
   transcriptChannelId  String?
   ticketAutoCloseHours Int     @default(48)
   ticketSlaHours       Int     @default(12)
 
-  // Kanały
   logChannelId          String?
   auditChannelId        String?
   announcementChannelId String?
@@ -32,18 +25,15 @@ model GuildConfig {
   reviewChannelId       String?
   staffAlertChannelId   String?
 
-  // Role
   staffRoleId       String?
   adminRoleId       String?
   clientRoleId      String?
   loyalClientRoleId String?
   verifiedRoleId    String?
 
-  // Logi serwera: typ logu -> ID kanału (np. { "messages": "123" }) i kanały/kategorie pomijane w logach
   logChannels        Json     @default("{}")
   logIgnoredChannels String[] @default([])
 
-  // Weryfikacja
   unverifiedRoleId              String?
   verificationMode              String  @default("captcha")
   verificationMinAccountAgeDays Int     @default(0)
@@ -52,24 +42,18 @@ model GuildConfig {
   antiRaidJoins                 Int     @default(10)
   antiRaidSeconds               Int     @default(30)
 
-  // Moduły włączone/wyłączone (nazwa modułu -> bool)
   modules Json @default("{}")
 
-  // Tablica statusu monitorowanych botów (aktualizowana automatycznie)
   statusBoardChannelId String?
   statusBoardMessageId String?
 
-  // Tryb serwisowy
   maintenance        Boolean @default(false)
   maintenanceMessage String?
 
-  // Dane do przelewu na proformie
   paymentDetails String?
 
   updatedAt DateTime @updatedAt
 }
-
-// ─────────────────────────────── Tickety ───────────────────────────────
 
 enum TicketCategory {
   ORDER
@@ -97,14 +81,12 @@ enum TicketPriority {
 model Ticket {
   id               Int            @id @default(autoincrement())
   channelId        String?        @unique
-  // Wiadomość z panelem sterowania w kanale ticketu (aktualizowana przy przejęciu, priorytecie itd.)
   controlMessageId String?
   userId           String
   category         TicketCategory
   status           TicketStatus   @default(OPEN)
   priority         TicketPriority @default(NORMAL)
   subject          String?
-  // Odpowiedzi z formularza (modal) – zależne od kategorii
   formData         Json?
 
   claimedBy String?
@@ -159,8 +141,6 @@ model FaqArticle {
   createdAt DateTime @default(now())
 }
 
-// ─────────────────────────────── Zlecenia i płatności ───────────────────────────────
-
 enum OrderStatus {
   QUOTE
   ACCEPTED
@@ -173,7 +153,6 @@ enum OrderStatus {
 }
 
 model Order {
-  // Numer sprawy wyświetlany jako ZX-0042 (utils/format.ts -> formatOrderId)
   id             Int         @id @default(autoincrement())
   userId         String
   title          String
@@ -185,7 +164,6 @@ model Order {
   repoUrl        String?
   discountCode   String?
   discountAmount Decimal?    @db.Decimal(10, 2)
-  // Panel zlecenia (zwykle w kanale ticketu)
   panelChannelId String?
   panelMessageId String?
 
@@ -243,7 +221,6 @@ enum InvoiceStatus {
 
 model Invoice {
   id         Int           @id @default(autoincrement())
-  // np. PF/2026/11/0001
   number     String        @unique
   orderId    Int
   order      Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -264,7 +241,6 @@ model PricingPackage {
   position    Int      @default(0)
 }
 
-// Pozycje kalkulatora wyceny (moduły, które klient może wybrać)
 model PricingItem {
   id          Int     @id @default(autoincrement())
   key         String  @unique
@@ -285,8 +261,6 @@ model DiscountCode {
   createdAt DateTime  @default(now())
 }
 
-// ─────────────────────────────── Klienci, portfolio, opinie ───────────────────────────────
-
 model ClientProfile {
   userId    String   @id
   badges    String[]
@@ -305,7 +279,6 @@ model PortfolioItem {
   images       PortfolioImage[]
 }
 
-// Zdjęcia portfolio trzymamy w bazie – linki do załączników Discorda wygasają.
 model PortfolioImage {
   id          Int           @id @default(autoincrement())
   itemId      Int
@@ -324,7 +297,6 @@ model Review {
   rating     Int
   content    String
   approved   Boolean   @default(false)
-  // null = czeka na decyzję obsługi
   reviewedAt DateTime?
   reviewedBy String?
   messageId  String?
@@ -337,10 +309,8 @@ model MonitoredBot {
   id                  Int       @id @default(autoincrement())
   name                String    @unique
   ownerId             String?
-  // Adres health-checku (HTTP 200 = działa) albo ID bota do sprawdzania obecności
   healthUrl           String?
   botUserId           String?
-  // http | heartbeat | presence
   mode                String    @default("http")
   heartbeatToken      String?   @unique
   lastHeartbeatAt     DateTime?
@@ -358,17 +328,13 @@ model MonitoredBot {
   createdAt           DateTime  @default(now())
 }
 
-// Dzienne liczniki serwera (do /statystyki i wykresów trendu)
 model DailyStat {
-  // RRRR-MM-DD (strefa Europe/Warsaw)
   date     String @id
   members  Int    @default(0)
   joins    Int    @default(0)
   leaves   Int    @default(0)
   messages Int    @default(0)
 }
-
-// ─────────────────────────────── Ogłoszenia i changelog ───────────────────────────────
 
 enum PublishStatus {
   DRAFT
@@ -381,13 +347,10 @@ model Announcement {
   title       String
   content     String
   imageUrl    String?
-  // Obrazek trzymamy w bazie – linki do załączników Discorda wygasają.
   imageData   Bytes?
   imageName   String?
   imageType   String?
-  // [{ label, url }]
   buttons     Json?
-  // null | "everyone" | "here" | "role:<id>"
   ping        String?
   status      PublishStatus @default(DRAFT)
   publishAt   DateTime?
@@ -407,7 +370,6 @@ model ChangelogEntry {
   id          Int             @id @default(autoincrement())
   project     String
   version     String
-  // { added: string[], changed: string[], fixed: string[], removed: string[] }
   sections    Json
   description String?
   releaseUrl  String?
@@ -425,11 +387,8 @@ model ChangelogEntry {
 model ChangelogProject {
   name        String   @id
   description String?
-  // owner/repo na GitHubie – release z tego repo tworzy szkic changelogu
   repo        String?  @unique
-  // Rola pingowana przy nowej wersji (subskrypcja = nadanie tej roli)
   roleId      String?
-  // Kanał changelogu projektu (domyślnie kanał z /config)
   channelId   String?
   createdAt   DateTime @default(now())
 }
@@ -454,8 +413,6 @@ model RoadmapItem {
   status    RoadmapStatus @default(PLANNED)
   createdAt DateTime      @default(now())
 }
-
-// ─────────────────────────────── Moderacja i społeczność ───────────────────────────────
 
 model Giveaway {
   id              Int      @id @default(autoincrement())
@@ -489,15 +446,12 @@ model Reminder {
   content   String
   remindAt  DateTime
   orderId   Int?
-  // Gdy DM jest zablokowany – kanał, na którym ustawiono przypomnienie
   channelId String?
   sent      Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([remindAt, sent])
 }
-
-// ─────────────────────────────── Weryfikacja ───────────────────────────────
 
 enum VerificationResult {
   PASSED
@@ -517,8 +471,6 @@ model VerificationEvent {
   @@index([userId])
 }
 
-// ─────────────────────────────── Audyt ───────────────────────────────
-
 model AuditLog {
   id        Int      @id @default(autoincrement())
   action    String
@@ -531,29 +483,19 @@ model AuditLog {
   @@index([actorId])
 }
 
-// ─────────────────────────────── zxCode SDK (boty klientów) ───────────────────────────────
-
-/// Bot korzystający z pakietu zxcode-sdk (bot klienta albo sam bot zxCode).
 model SdkBot {
   id              Int       @id @default(autoincrement())
   name            String
-  /// Discord ID właściciela – tylko on edytuje bota w panelu
   ownerId         String
-  /// SHA-256 klucza API (sam klucz pokazujemy tylko raz)
   keyHash         String    @unique
-  /// Początek klucza do rozpoznania w panelu, np. zxk_12_ab3f
   keyPrefix       String
-  /// Dane zgłoszone przez bota przy połączeniu
   appId           String?
   username        String?
   avatarUrl       String?
   sdkVersion      String?
   botVersion      String?
-  /// Moduły i pola zadeklarowane w kodzie bota
   schema          Json?
-  /// Komendy bota [{ name, description }]
   commands        Json?
-  /// Profil ustawiony w panelu: { username?, avatar?, presence? }
   profile         Json?
   profileRevision Int       @default(0)
   connected       Boolean   @default(false)
@@ -569,15 +511,11 @@ model SdkBot {
   @@index([ownerId])
 }
 
-/// Osoby, którym właściciel (lub ktoś z uprawnieniem „access”) udostępnił bota w panelu
 model SdkBotMember {
   botId       Int
   userId      String
-  /// Podzbiór: settings, commands, profile, access (pusta lista = tylko podgląd)
   permissions String[]
-  /// Klucze modułów do edycji (pusta lista = wszystkie moduły)
   modules     String[] @default([])
-  /// ID serwerów, na których działa dostęp (pusta lista = wszystkie serwery)
   guilds      String[] @default([])
   addedBy     String
   createdAt   DateTime @default(now())
@@ -589,30 +527,24 @@ model SdkBotMember {
   @@index([userId])
 }
 
-/// Serwer, na którym jest bot – kanały i role do wyboru w panelu.
 model SdkGuild {
   botId     Int
   bot       SdkBot   @relation(fields: [botId], references: [id], onDelete: Cascade)
   guildId   String
   name      String
   icon      String?
-  /// [{ id, name, type, parentId, position }]
   channels  Json
-  /// [{ id, name, color, position, managed }]
   roles     Json
   updatedAt DateTime @updatedAt
 
   @@id([botId, guildId])
 }
 
-/// Ustawienia bota na danym serwerze (edytowane w panelu albo zgłoszone przez bota).
 model SdkConfig {
   botId       Int
   bot         SdkBot   @relation(fields: [botId], references: [id], onDelete: Cascade)
   guildId     String
-  /// { moduł: { pole: wartość } }
   values      Json     @default("{}")
-  /// { komenda: { roles: [id...] } } – kto może używać komendy
   permissions Json     @default("{}")
   revision    Int      @default(1)
   updatedBy   String?
@@ -621,7 +553,6 @@ model SdkConfig {
   @@id([botId, guildId])
 }
 
-/// Ustawienia strony zxcode.pl (np. tryb „Start wkrótce” i lista osób z podglądem).
 model SiteSetting {
   key       String   @id
   value     Json

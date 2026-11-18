@@ -64,7 +64,6 @@ export function changelogPanel(
     timestamp: false,
   });
   if (used.length) {
-    // Jeden blok ```diff: + Dodano (zielone), ~ Zmieniono, * Naprawiono, - Usunięto (czerwone).
     const lines: [DiffSign, string][] = [];
     for (const k of used) for (const l of s[k]) lines.push([SECTIONS[k].sign, `${SECTIONS[k].label}: ${l}`]);
     let block = diffBlock(lines);
@@ -180,7 +179,7 @@ async function notifySubscribers(client: ZxClient, entry: ChangelogEntry) {
       )
     )
       sent++;
-    await new Promise((r) => setTimeout(r, 250)); // łagodnie dla limitów Discorda
+    await new Promise((r) => setTimeout(r, 250));
   }
   if (subs.length)
     log.info(`Changelog ${entry.project} ${entry.version}: DM do ${sent}/${subs.length} subskrybentów`);

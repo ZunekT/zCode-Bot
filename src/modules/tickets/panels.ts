@@ -29,8 +29,6 @@ const PRIORITY_ACCENT = {
 const statusLine = (t: Ticket) => badge(STATUS_LABELS[t.status]);
 const priorityLine = (t: Ticket) => badge(PRIORITIES[t.priority].label);
 
-// ───────────────────────────── Panel „Centrum pomocy” ─────────────────────────────
-
 export function categorySelect(): StringSelectMenuBuilder {
   return new StringSelectMenuBuilder()
     .setCustomId('ticket:category')
@@ -71,8 +69,6 @@ export function publicPanel(): Panel {
     .select(categorySelect())
     .footer('Jeden ticket na kategorię • Nigdy nie podawaj haseł ani tokenów botów');
 }
-
-// ───────────────────────────── Panel w kanale ticketu ─────────────────────────────
 
 export function actionSelect(ticket: Ticket): StringSelectMenuBuilder {
   const actions: ControlAction[] = [
@@ -137,7 +133,6 @@ export function controlPanel(
     .separator();
 
   if (answers.length) panel.text('### Formularz');
-  // „>>>” cytuje do końca bloku tekstu, więc każda odpowiedź to osobny TextDisplay.
   for (const a of answers) panel.text(`**${a.label}**\n>>> ${truncate(a.value, perAnswer)}`);
 
   if (opts.faq?.length) {
@@ -157,8 +152,6 @@ export function controlPanel(
     .select(actionSelect(ticket))
     .footer('Opisz sprawę jak najdokładniej • Prosimy nie pingować obsługi');
 }
-
-// ───────────────────────────── Zamknięcie / archiwum ─────────────────────────────
 
 export function closedPanel(
   ticket: Ticket,
@@ -212,8 +205,6 @@ export function closeSummaryCard(ticket: Ticket, ownerAvatar?: string) {
     ],
   });
 }
-
-// ───────────────────────────── DM: ocena ─────────────────────────────
 
 export function ratingSelect(ticketId: number): StringSelectMenuBuilder {
   const labels = ['Bardzo źle', 'Słabo', 'Przeciętnie', 'Dobrze', 'Rewelacja'];
@@ -288,8 +279,6 @@ export function ratingLogCard(ticket: Ticket, avatarUrl?: string) {
     body: ticket.ratingComment ? quote(truncate(ticket.ratingComment, 1000)) : '-# Bez komentarza',
   });
 }
-
-// ───────────────────────────── Alerty ─────────────────────────────
 
 export function slaAlertPanel(ticket: Ticket, staffRoleId: string | null, waitingMs: number): Panel {
   const def = CATEGORIES[ticket.category];

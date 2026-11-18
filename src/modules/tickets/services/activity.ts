@@ -10,7 +10,6 @@ export async function recordStaffActivity(ticketId: number, at = new Date()): Pr
       where: { id: ticketId },
       data: { lastStaffMsgAt: at, lastActivityAt: at, slaAlertedAt: null, closeWarnedAt: null },
     }),
-    // Pierwsza odpowiedź liczy się tylko raz – do statystyk.
     prisma.ticket.updateMany({
       where: { id: ticketId, firstStaffReplyAt: null },
       data: { firstStaffReplyAt: at },

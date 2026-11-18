@@ -21,7 +21,6 @@ export class ZxClient extends Client {
         GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildInvites,
         GatewayIntentBits.DirectMessages,
-        // Uprzywilejowany – tylko gdy włączony w Developer Portal (monitoring „presence”).
         ...(env.ENABLE_PRESENCE_INTENT ? [GatewayIntentBits.GuildPresences] : []),
       ],
       partials: [Partials.Channel, Partials.Message, Partials.GuildMember],

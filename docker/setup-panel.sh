@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
-# Jednorazowa konfiguracja strony zxcode.pl z panelem (uruchom na VPS w katalogu repo):
-#   bash docker/setup-panel.sh
-# Co robi:
-#   1. dopisuje do .env brakujące sekrety (generowane automatycznie) i adres strony,
-#   2. pyta o Client Secret aplikacji Discord i klucz API Mathost (wpisywane niewidocznie),
-#   3. dodaje zxcode.pl i www.zxcode.pl do Caddy (HTTPS) i przeładowuje Caddy,
-#   4. buduje i uruchamia bota oraz stronę.
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

@@ -42,7 +42,6 @@ const done = (title: string, description?: string) =>
   v2Message(card({ tone: 'success', title, description, timestamp: false }));
 
 export const orderComponents: ComponentHandler[] = [
-  // ── Utworzenie z ticketu ──
   defineComponent({
     id: 'order:create',
     type: 'modal',
@@ -78,7 +77,6 @@ export const orderComponents: ComponentHandler[] = [
     },
   }),
 
-  // ── Menu panelu zlecenia ──
   defineComponent({
     id: 'order:action',
     type: 'select',
@@ -162,7 +160,7 @@ export const orderComponents: ComponentHandler[] = [
             return await interaction.showModal(discountModal(order));
         }
       } finally {
-        void refreshOrderPanel(client, id).catch(() => undefined); // reset menu
+        void refreshOrderPanel(client, id).catch(() => undefined);
       }
     },
   }),
@@ -193,7 +191,6 @@ export const orderComponents: ComponentHandler[] = [
     },
   }),
 
-  // ── Klient akceptuje wycenę ──
   defineComponent({
     id: 'order:accept',
     type: 'button',
@@ -210,7 +207,6 @@ export const orderComponents: ComponentHandler[] = [
     },
   }),
 
-  // ── Formularze ──
   defineComponent({
     id: 'order:editSubmit',
     type: 'modal',

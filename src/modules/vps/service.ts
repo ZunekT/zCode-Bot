@@ -60,7 +60,6 @@ export async function snapshot(opts: { backups?: boolean } = {}): Promise<VpsSna
     uptimeSec: s.uptime,
     cpuPct: Math.min(100, Math.round(s.cpu * 1000) / 10),
     cpus: s.cpus,
-    // Pamięć z agenta w systemie (bez cache) – realne zużycie; bez agenta: to, co widzi hypervisor.
     mem: agentMem
       ? { used: agentMem.used, total: agentMem.total, fromAgent: true }
       : { used: s.mem, total: s.maxmem, fromAgent: false },

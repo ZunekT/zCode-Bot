@@ -124,7 +124,6 @@ export function orderPanel(order: FullOrder, avatarUrl: string, interactive = tr
     );
 
   if (order.tasks.length) {
-    // Bez nagłówka liczba pozycji mogłaby rozsadzić limit tekstu – przycinamy listę, nie blok.
     const shown = order.tasks.slice(0, 25);
     panel
       .separator()

@@ -22,10 +22,19 @@ interface Common {
   size?: 'sm' | 'md';
   className?: string;
 }
-type Single = Common & { multiple?: false; value: string | null; onChange: (v: string | null) => void; clearable?: boolean };
+type Single = Common & {
+  multiple?: false;
+  value: string | null;
+  onChange: (v: string | null) => void;
+  clearable?: boolean;
+};
 type Multi = Common & { multiple: true; value: string[]; onChange: (v: string[]) => void; max?: number };
 
-const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+const norm = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
 
 export function Select(props: Single | Multi) {
   const { options, placeholder = 'Wybierz…', id, ariaLabel, disabled, size = 'md', className = '' } = props;
@@ -49,7 +58,6 @@ export function Select(props: Single | Multi) {
   }, [options, query]);
   const selectable = filtered.filter((o) => !o.disabled);
 
-  // Zamknięcie po kliknięciu poza.
   useEffect(() => {
     if (!open) return;
     const away = (e: PointerEvent) => !root.current?.contains(e.target as Node) && setOpen(false);
@@ -65,7 +73,6 @@ export function Select(props: Single | Multi) {
     };
   }, [open]);
 
-  // Kierunek otwarcia + fokus wyszukiwarki + podświetlenie wybranej.
   useLayoutEffect(() => {
     if (!open) return;
     const r = root.current!.getBoundingClientRect();
@@ -136,12 +143,15 @@ export function Select(props: Single | Multi) {
     </>
   );
 
-  // Grupy w kolejności występowania.
   let lastGroup: string | null | undefined;
   let idx = -1;
 
   return (
-    <div ref={root} className={`sel ${size === 'sm' ? 'sel-sm' : ''} ${open ? 'open' : ''} ${className}`} onKeyDown={onKey}>
+    <div
+      ref={root}
+      className={`sel ${size === 'sm' ? 'sel-sm' : ''} ${open ? 'open' : ''} ${className}`}
+      onKeyDown={onKey}
+    >
       <button
         type="button"
         id={id}
@@ -182,7 +192,9 @@ export function Select(props: Single | Multi) {
             <span className="sel-placeholder">{placeholder}</span>
           )
         ) : props.value ? (
-          <span className="sel-value">{label(byValue.get(props.value) ?? { value: props.value, label: 'usunięte' })}</span>
+          <span className="sel-value">
+            {label(byValue.get(props.value) ?? { value: props.value, label: 'usunięte' })}
+          </span>
         ) : (
           <span className="sel-placeholder">{placeholder}</span>
         )}
@@ -202,7 +214,14 @@ export function Select(props: Single | Multi) {
           </span>
         )}
         <svg className="sel-chev" width="14" height="14" viewBox="0 0 16 16" aria-hidden>
-          <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M4 6l4 4 4-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </button>
 
@@ -226,10 +245,17 @@ export function Select(props: Single | Multi) {
               />
             </div>
           )}
-          <div ref={list} id={listId} className="sel-list" role="listbox" aria-multiselectable={props.multiple || undefined}>
+          <div
+            ref={list}
+            id={listId}
+            className="sel-list"
+            role="listbox"
+            aria-multiselectable={props.multiple || undefined}
+          >
             {filtered.length === 0 && <div className="sel-empty">Brak wyników</div>}
             {filtered.map((o) => {
-              const header = o.group !== lastGroup && o.group ? <div className="sel-group">{o.group}</div> : null;
+              const header =
+                o.group !== lastGroup && o.group ? <div className="sel-group">{o.group}</div> : null;
               lastGroup = o.group;
               if (!o.disabled) idx++;
               const myIdx = idx;
@@ -251,7 +277,14 @@ export function Select(props: Single | Multi) {
                     {o.hint && <span className="sel-hint">{o.hint}</span>}
                     {isSel && (
                       <svg className="sel-check" width="14" height="14" viewBox="0 0 16 16" aria-hidden>
-                        <path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <path
+                          d="M3.5 8.5l3 3 6-7"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     )}
                   </div>
