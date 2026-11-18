@@ -599,3 +599,11 @@ model SdkConfig {
 
   @@id([botId, guildId])
 }
+
+/// Ustawienia strony zxcode.pl (np. tryb „Start wkrótce” i lista osób z podglądem).
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+}

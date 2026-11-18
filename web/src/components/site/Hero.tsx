@@ -1,112 +1,94 @@
 'use client';
 
-import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react';
+import Link from 'next/link';
+import { m, useReducedMotion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { Icon } from '../Icon';
-import { Arrow, Stars } from './primitives';
+import { Arrow, EASE, Stars, useVisible } from './primitives';
 
-const EASE = [0.21, 0.8, 0.3, 1] as const;
-const TITLE = ['Boty', 'Discord,', 'które', 'pracują', 'za', 'Ciebie'];
-const GRAD_FROM = 3;
-
-/** Sekwencja „na żywo” na podglądzie: postęp zlecenia rośnie. */
+const LINE_1 = ['Boty', 'Discord,'];
+const LINE_2 = ['które', 'pracują', 'za', 'Ciebie'];
 const PROGRESS = [35, 60, 85, 100];
 
-export function Hero({
-  orderUrl,
-  rating,
-  reviews,
-  avatars,
-}: {
-  orderUrl: string;
-  rating: number | null;
-  reviews: number;
-  avatars: string[];
-}) {
-  const reduce = useReducedMotion();
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const rx = useSpring(useTransform(my, [-0.5, 0.5], [7, -7]), { stiffness: 120, damping: 18 });
-  const ry = useSpring(useTransform(mx, [-0.5, 0.5], [-9, 9]), { stiffness: 120, damping: 18 });
-  const fx = useSpring(useTransform(mx, [-0.5, 0.5], [-18, 18]), { stiffness: 80, damping: 20 });
-  const fy = useSpring(useTransform(my, [-0.5, 0.5], [-14, 14]), { stiffness: 80, damping: 20 });
-  const [step, setStep] = useState(0);
+const word = (i: number) => ({
+  initial: { opacity: 0, y: 28 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.7, delay: 0.08 + i * 0.06, ease: EASE },
+});
 
+export function Hero({ rating, reviews, avatars }: { rating: number | null; reviews: number; avatars: string[] }) {
+  const reduce = useReducedMotion();
+  const [stageRef, visible] = useVisible<HTMLDivElement>();
+  const [step, setStep] = useState(1);
+
+  // Postęp zlecenia „na żywo” – tylko gdy podgląd jest na ekranie.
   useEffect(() => {
-    if (reduce) return;
+    if (reduce || !visible) return;
     const t = setInterval(() => setStep((s) => (s + 1) % PROGRESS.length), 2200);
     return () => clearInterval(t);
-  }, [reduce]);
+  }, [reduce, visible]);
 
   const pct = PROGRESS[step]!;
   const done = pct === 100;
 
   return (
-    <section
-      className="hero2"
-      onPointerMove={(e) => {
-        if (reduce || e.pointerType !== 'mouse') return;
-        mx.set(e.clientX / window.innerWidth - 0.5);
-        my.set(e.clientY / window.innerHeight - 0.5);
-      }}
-    >
+    <section className="hero2">
       <div className="bg" aria-hidden>
-        <div className="aurora aurora-1" />
-        <div className="aurora aurora-2" />
-        <div className="aurora aurora-3" />
+        <div className="bg-glow" />
         <div className="grid-bg" />
-        <div className="noise" />
       </div>
 
-      <div className="wrap hero2-grid">
-        <div>
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}>
-            <span className="pill-badge">
-              <b>NOWE</b> Panel ustawień bota na zxcode.pl
-            </span>
-          </motion.div>
+      <div className="wrap">
+        <div className="hero2-head">
+          <m.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}>
+            <Link href="/#panel" className="pill-badge">
+              <b>NOWE</b>
+              <span>Panel klienta – ustawienia bota online</span>
+              <Arrow />
+            </Link>
+          </m.div>
 
           <h1>
-            {TITLE.map((w, i) => (
-              <motion.span
-                key={i}
-                className={`word${i >= GRAD_FROM ? ' grad' : ''}`}
-                initial={{ opacity: 0, y: 40, filter: 'blur(10px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                transition={{ duration: 0.8, delay: 0.1 + i * 0.07, ease: EASE }}
-              >
+            {LINE_1.map((w, i) => (
+              <m.span key={w} className="word" {...word(i)}>
+                {w}&nbsp;
+              </m.span>
+            ))}
+            <br />
+            {LINE_2.map((w, i) => (
+              <m.span key={w} className="word grad" {...word(i + LINE_1.length)}>
                 {w}
-                {i < TITLE.length - 1 ? ' ' : ''}
-              </motion.span>
+                {i < LINE_2.length - 1 ? ' ' : ''}
+              </m.span>
             ))}
           </h1>
 
-          <motion.p
+          <m.p
             className="hero2-sub"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.55, ease: EASE }}
+            transition={{ duration: 0.7, delay: 0.45, ease: EASE }}
           >
-            Tickety, ekonomia, RP, moderacja i integracje – projektujemy, piszemy i utrzymujemy boty dla Twojej społeczności. Ustawienia
-            zmieniasz sam w panelu, a my pilnujemy, żeby bot działał 24/7.
-          </motion.p>
+            Tickety, ekonomia, RP, moderacja i integracje. Projektujemy, piszemy i utrzymujemy boty dla Twojej społeczności –
+            a ustawienia zmieniasz sam w panelu.
+          </m.p>
 
-          <motion.div
+          <m.div
             className="hero2-actions"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.7, ease: EASE }}
+            transition={{ duration: 0.7, delay: 0.55, ease: EASE }}
           >
-            <a href={orderUrl} className="cta-btn" target={orderUrl.startsWith('http') ? '_blank' : undefined} rel="noreferrer">
+            <a href="/zamow" className="cta-btn">
               <Icon name="discord" size={20} /> Zamów bota <Arrow />
             </a>
-            <a href="#realizacje" className="ghost-btn">
+            <Link href="/realizacje" className="ghost-btn">
               Zobacz realizacje <Arrow />
-            </a>
-          </motion.div>
+            </Link>
+          </m.div>
 
           {rating !== null && reviews > 0 && (
-            <motion.div className="hero2-trust" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1, duration: 0.8 }}>
+            <m.div className="hero2-trust" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 0.6 }}>
               {avatars.length > 0 && (
                 <div className="avatars">
                   {avatars.slice(0, 5).map((a, i) => (
@@ -117,28 +99,56 @@ export function Hero({
               <div>
                 <Stars n={Math.round(rating)} />
                 <div>
-                  <b style={{ color: 'var(--text)' }}>{rating.toLocaleString('pl-PL', { maximumFractionDigits: 2 })}/5</b> ·{' '}
-                  {reviews} {reviews === 1 ? 'opinia' : reviews < 5 ? 'opinie' : 'opinii'} klientów
+                  <b style={{ color: 'var(--text)' }}>{rating.toLocaleString('pl-PL', { maximumFractionDigits: 1 })}/5</b> ·{' '}
+                  <Link href="/opinie" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                    {reviews} {reviews === 1 ? 'opinia' : reviews < 5 ? 'opinie' : 'opinii'}
+                  </Link>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </div>
 
-        <motion.div
+        <m.div
+          ref={stageRef}
           className="stage"
-          initial={{ opacity: 0, y: 40, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 1, delay: 0.35, ease: EASE }}
+          initial={{ opacity: 0, y: 32 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.35, ease: EASE }}
         >
-          <motion.div className="dc" style={{ rotateX: rx, rotateY: ry }}>
+          <div className="float-card float-1">
+            <span className="live-dot" />
+            <div>
+              <strong>Bot działa</strong>
+              <small>monitoring co minutę, 24/7</small>
+            </div>
+          </div>
+          <div className="float-card float-2">
+            <Icon name="verified" size={22} />
+            <div>
+              <strong>Zapisano w panelu</strong>
+              <small>Bot już używa nowych ustawień</small>
+            </div>
+          </div>
+          <div className="float-card float-3">
+            <Icon name="ticket" size={22} />
+            <div>
+              <strong>Nowy ticket #128</strong>
+              <small>Zamówienie · odpowiedź w drodze</small>
+            </div>
+          </div>
+
+          <div className="dc" aria-label="Przykładowa wiadomość bota zxCode na Discordzie" role="img">
             <div className="dc-top">
               <span className="hash">#</span> zamowienia
+              <span className="dc-online">
+                <span className="live-dot" /> online
+              </span>
             </div>
             <div className="dc-body">
               <div className="dc-msg">
                 <img className="dc-avatar" src="/emojis/logo_round.png" alt="" />
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <div className="dc-name">
                     zxCode <span className="dc-app">APP</span> <span className="dc-time">Dzisiaj o 14:32</span>
                   </div>
@@ -154,58 +164,27 @@ export function Hero({
                     <div className="dc-field">
                       <b>Moduły:</b> ekonomia, praca, tickety, logi
                     </div>
-                    <div className="dc-field">
-                      <b>Termin:</b> 14 dni
-                    </div>
-                    <div className="dc-code dc-progress">
+                    <div className="dc-progress">
                       <span>Postęp</span>
                       <span className={`dc-bar${done ? ' done' : ''}`}>
-                        <span style={{ width: `${pct}%` }} />
+                        <span style={{ transform: `scaleX(${pct / 100})` }} />
                       </span>
-                      <span>{pct}%</span>
+                      <span className="dc-pct">{pct}%</span>
                     </div>
                     <div className="dc-buttons">
                       <span className="dc-btn primary">
-                        <img src="/emojis/checklist.png" width={16} height={16} alt="" /> Panel zlecenia
+                        <img src="/emojis/checklist.png" width={16} height={16} alt="" /> Panel
                       </span>
                       <span className="dc-btn">
                         <img src="/emojis/invoice.png" width={16} height={16} alt="" /> Proforma
                       </span>
                     </div>
-                    <div className="dc-foot">zxCode · programowanie botów Discord</div>
                   </div>
                 </div>
               </div>
             </div>
-          </motion.div>
-
-          <motion.div
-            className="float-card float-1"
-            style={{ x: fx, y: fy }}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1.1, duration: 0.8, ease: EASE }}
-          >
-            <span className="live-dot" />
-            <div>
-              <strong>Bot RP działa</strong>
-              <small>uptime 99,98% · monitoring 24/7</small>
-            </div>
-          </motion.div>
-          <motion.div
-            className="float-card float-2"
-            style={{ x: useTransform(fx, (v) => -v), y: useTransform(fy, (v) => -v) }}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.3, duration: 0.8, ease: EASE }}
-          >
-            <Icon name="verified" size={22} />
-            <div>
-              <strong>Zapisano w panelu</strong>
-              <small>Bot już używa nowych ustawień</small>
-            </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </m.div>
       </div>
     </section>
   );

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Icon } from '@/components/Icon';
 import { MetricChart } from '@/components/MetricChart';
 import { VpsActions } from '@/components/VpsActions';
+import { SiteAccessCard } from '@/components/SiteAccessCard';
 import { ApiError, api, type VpsData } from '@/lib/api';
 import { requireSession } from '@/lib/session';
 
@@ -49,17 +50,30 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const [{ zakres }, session] = await Promise.all([searchParams, requireSession()]);
   const range = RANGES.some((r) => r.key === zakres) ? zakres! : 'hour';
 
+  const siteAccess = await api.siteAccess(session.id);
+  const siteCard = (
+    <>
+      <div className="page-head">
+        <h1>Administracja</h1>
+      </div>
+      <SiteAccessCard initial={siteAccess} />
+    </>
+  );
+
   let data: VpsData;
   try {
     data = await api.vps(session.id, range);
   } catch (err) {
     if (err instanceof ApiError && (err.status === 503 || err.status === 502)) {
       return (
+        <>
+        {siteCard}
         <div className="card empty">
           <Icon name="server" size={56} />
           <h2>VPS niedostępny w panelu</h2>
           <p>{err.message}</p>
         </div>
+        </>
       );
     }
     throw err;
@@ -73,8 +87,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
+      {siteCard}
       <div className="page-head">
-        <h1>Serwer VPS</h1>
+        <h2 style={{ fontSize: 22 }}>Serwer VPS</h2>
         <span className={`pill ${running ? 'pill-ok' : 'pill-err'}`}>{running ? 'Działa' : s.status}</span>
         <div className="spacer" />
         <VpsActions />

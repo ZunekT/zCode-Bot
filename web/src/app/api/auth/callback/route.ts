@@ -4,7 +4,7 @@ import { env } from '@/lib/env';
 import { SESSION_COOKIE, STATE_COOKIE, cookieOptions, encodeSession } from '@/lib/session';
 
 function fail(reason: string) {
-  const url = new URL('/', env.siteUrl);
+  const url = new URL('/logowanie', env.siteUrl);
   url.searchParams.set('blad', reason);
   const res = NextResponse.redirect(url);
   res.cookies.delete({ name: STATE_COOKIE, path: '/api/auth' });

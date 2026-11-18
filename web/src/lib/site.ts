@@ -19,15 +19,24 @@ export interface SiteData {
 }
 
 /** Dane wizytówki z bota (cache 5 min). Gdy bot nie odpowiada – strona działa na treściach statycznych. */
-export async function getSite(): Promise<SiteData | null> {
+const EMPTY: SiteData = {
+  stats: { ordersCompleted: 0, clients: 0, rating: null, reviews: 0, members: null, botsMonitored: 0, uptime: null },
+  packages: [],
+  addons: [],
+  portfolio: [],
+  reviews: [],
+  faq: [],
+};
+
+export async function getSite(): Promise<SiteData> {
   try {
     const res = await fetch(`${env.internalUrl}/internal/public/site`, {
       headers: { 'x-internal-secret': env.internalSecret },
       next: { revalidate: 300 },
       signal: AbortSignal.timeout(5000),
     });
-    return res.ok ? ((await res.json()) as SiteData) : null;
+    return res.ok ? ((await res.json()) as SiteData) : EMPTY;
   } catch {
-    return null;
+    return EMPTY;
   }
 }

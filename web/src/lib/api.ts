@@ -71,7 +71,15 @@ export interface VpsData {
   history: { t: number; cpu: number; mem: number; netIn: number; netOut: number }[];
 }
 
+export interface SiteAccessData {
+  launched: boolean;
+  previewUsers: { id: string; name: string | null; avatar: string | null }[];
+}
+
 export const api = {
+  siteAccess: (userId: string) => internal<SiteAccessData>('GET', `${user(userId)}/admin/site`),
+  saveSiteAccess: (userId: string, body: { launched?: boolean; previewUsers?: string[] }) =>
+    internal<{ launched: boolean; previewUsers: string[] }>('PUT', `${user(userId)}/admin/site`, body),
   me: (userId: string) =>
     internal<{ owner: boolean; vps: boolean }>('GET', `${user(userId)}/me`).catch(() => ({ owner: false, vps: false })),
   vps: (userId: string, range: string) =>

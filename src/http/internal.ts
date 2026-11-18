@@ -7,6 +7,7 @@ import { createLogger } from '../utils/logger.js';
 import { safeEqual } from '../modules/sdk/keys.js';
 import { sendError } from '../modules/sdk/routes.js';
 import { publicSiteRoutes } from './public-site.js';
+import { getAccess, setAccess } from '../modules/site/service.js';
 import {
   guildData,
   ownedBot,
@@ -166,7 +167,74 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
     }
   });
 
+  // ───────────── Dostęp do strony (tryb „Start wkrótce”) ─────────────
+
+  /** Pytane przez stronę przy każdym wejściu (z cache po obu stronach). */
+  app.get('/internal/site/access', async (request, reply) => {
+    try {
+      const user = (request.query as { user?: string }).user;
+      const access = await getAccess();
+      if (access.launched) return { launched: true, allowed: true };
+      const id = user && /^\d{17,20}$/.test(user) ? user : null;
+      const allowed = !!id && (access.previewUsers.includes(id) || (await isOwner(client, id)));
+      return { launched: false, allowed };
+    } catch (err) {
+      return sendError(reply, err);
+    }
+  });
+
   // ───────────── Administracja (tylko właściciel zxCode) ─────────────
+
+  const ownerCheck = async (params: unknown, reply: { code(n: number): { send(b: unknown): unknown } }) => {
+    const { userId } = userParam(params);
+    if (await isOwner(client, userId)) return userId;
+    reply.code(404).send({ error: 'Nie znaleziono.' });
+    return null;
+  };
+
+  app.get('/internal/users/:userId/admin/site', async (request, reply) => {
+    try {
+      if (!(await ownerCheck(request.params, reply))) return;
+      const access = await getAccess();
+      const users = await Promise.all(
+        access.previewUsers.map(async (id) => {
+          const u = await client.users.fetch(id).catch(() => null);
+          return { id, name: u?.globalName ?? u?.username ?? null, avatar: u?.displayAvatarURL({ size: 64, extension: 'png' }) ?? null };
+        }),
+      );
+      return { launched: access.launched, previewUsers: users };
+    } catch (err) {
+      return sendError(reply, err);
+    }
+  });
+
+  app.put('/internal/users/:userId/admin/site', async (request, reply) => {
+    try {
+      const userId = await ownerCheck(request.params, reply);
+      if (!userId) return;
+      const body = (request.body ?? {}) as { launched?: unknown; previewUsers?: unknown };
+      const before = await getAccess();
+      const next = await setAccess(
+        { launched: body.launched as boolean | undefined, previewUsers: body.previewUsers as string[] | undefined },
+        userId,
+      );
+      if (before.launched !== next.launched || before.previewUsers.join() !== next.previewUsers.join()) {
+        await audit(client, {
+          action: 'site.access',
+          actorId: userId,
+          summary:
+            before.launched !== next.launched
+              ? `Panel WWW: strona ${next.launched ? 'uruchomiona publicznie' : 'w trybie „Start wkrótce”'}`
+              : `Panel WWW: lista podglądu strony (${next.previewUsers.length} os.)`,
+        });
+      }
+      return next;
+    } catch (err) {
+      return sendError(reply, err);
+    }
+  });
+
+  // ───────────── Administracja: VPS ─────────────
 
   app.get('/internal/users/:userId/me', async (request, reply) => {
     try {
