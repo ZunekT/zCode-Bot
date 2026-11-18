@@ -457,26 +457,6 @@ model RoadmapItem {
 
 // ─────────────────────────────── Moderacja i społeczność ───────────────────────────────
 
-enum PunishmentType {
-  WARN
-  MUTE
-  KICK
-  BAN
-}
-
-model Punishment {
-  id          Int            @id @default(autoincrement())
-  userId      String
-  moderatorId String
-  type        PunishmentType
-  reason      String
-  expiresAt   DateTime?
-  revoked     Boolean        @default(false)
-  createdAt   DateTime       @default(now())
-
-  @@index([userId])
-}
-
 model Giveaway {
   id              Int      @id @default(autoincrement())
   prize           String
