@@ -11,6 +11,7 @@ import { portfolioModule } from './portfolio/index.js';
 import { pricingModule } from './pricing/index.js';
 import { remindersModule } from './reminders/index.js';
 import { reviewsModule } from './reviews/index.js';
+import { sdkModule } from './sdk/index.js';
 import { statsModule } from './stats/index.js';
 import { systemModule } from './system/index.js';
 import { ticketsModule } from './tickets/index.js';
@@ -37,4 +38,5 @@ export const modules: BotModule[] = [
   monitoringModule,
   remindersModule,
   statsModule,
+  sdkModule,
 ];

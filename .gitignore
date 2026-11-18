@@ -6,3 +6,4 @@ src/generated/
 backups/
 transcripts/
 dump.rdb
+.zxcode-cache.json

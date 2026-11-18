@@ -9,6 +9,7 @@ import { loadModules } from './core/loader.js';
 import { deployGuildCommands } from './core/registry.js';
 import { startScheduler, stopScheduler } from './core/scheduler.js';
 import { startHttpServer } from './http/server.js';
+import { startInternalServer } from './http/internal.js';
 import { modules } from './modules/index.js';
 import { loadApplicationEmojis } from './ui/emojis.js';
 import { logger } from './utils/logger.js';
@@ -40,12 +41,13 @@ async function main() {
   });
 
   const http = await startHttpServer(client);
+  const internal = await startInternalServer(client);
   await client.login(env.DISCORD_TOKEN);
 
   const shutdown = async (signal: string) => {
     logger.info(`Otrzymano ${signal}, zamykam…`);
     stopScheduler();
-    await Promise.allSettled([http.close(), client.destroy(), prisma.$disconnect(), redis.quit()]);
+    await Promise.allSettled([http.close(), internal?.close(), client.destroy(), prisma.$disconnect(), redis.quit()]);
     process.exit(0);
   };
   process.once('SIGINT', () => void shutdown('SIGINT'));

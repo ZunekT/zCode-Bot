@@ -530,3 +530,72 @@ model AuditLog {
   @@index([action])
   @@index([actorId])
 }
+
+// ─────────────────────────────── zxCode SDK (boty klientów) ───────────────────────────────
+
+/// Bot korzystający z pakietu zxcode-sdk (bot klienta albo sam bot zxCode).
+model SdkBot {
+  id              Int       @id @default(autoincrement())
+  name            String
+  /// Discord ID właściciela – tylko on edytuje bota w panelu
+  ownerId         String
+  /// SHA-256 klucza API (sam klucz pokazujemy tylko raz)
+  keyHash         String    @unique
+  /// Początek klucza do rozpoznania w panelu, np. zxk_12_ab3f
+  keyPrefix       String
+  /// Dane zgłoszone przez bota przy połączeniu
+  appId           String?
+  username        String?
+  avatarUrl       String?
+  sdkVersion      String?
+  botVersion      String?
+  /// Moduły i pola zadeklarowane w kodzie bota
+  schema          Json?
+  /// Komendy bota [{ name, description }]
+  commands        Json?
+  /// Profil ustawiony w panelu: { username?, avatar?, presence? }
+  profile         Json?
+  profileRevision Int       @default(0)
+  connected       Boolean   @default(false)
+  lastSeenAt      DateTime?
+  monitoredBotId  Int?      @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  guilds  SdkGuild[]
+  configs SdkConfig[]
+
+  @@index([ownerId])
+}
+
+/// Serwer, na którym jest bot – kanały i role do wyboru w panelu.
+model SdkGuild {
+  botId     Int
+  bot       SdkBot   @relation(fields: [botId], references: [id], onDelete: Cascade)
+  guildId   String
+  name      String
+  icon      String?
+  /// [{ id, name, type, parentId, position }]
+  channels  Json
+  /// [{ id, name, color, position, managed }]
+  roles     Json
+  updatedAt DateTime @updatedAt
+
+  @@id([botId, guildId])
+}
+
+/// Ustawienia bota na danym serwerze (edytowane w panelu albo zgłoszone przez bota).
+model SdkConfig {
+  botId       Int
+  bot         SdkBot   @relation(fields: [botId], references: [id], onDelete: Cascade)
+  guildId     String
+  /// { moduł: { pole: wartość } }
+  values      Json     @default("{}")
+  /// { komenda: { roles: [id...] } } – kto może używać komendy
+  permissions Json     @default("{}")
+  revision    Int      @default(1)
+  updatedBy   String?
+  updatedAt   DateTime @updatedAt
+
+  @@id([botId, guildId])
+}

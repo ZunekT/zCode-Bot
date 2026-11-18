@@ -4,6 +4,7 @@ import { env } from '../config/env.js';
 import { createLogger } from '../utils/logger.js';
 import { githubRoutes } from './routes/github.js';
 import { heartbeatRoutes } from './routes/heartbeat.js';
+import { sdkRoutes } from '../modules/sdk/routes.js';
 
 const log = createLogger('http');
 
@@ -18,6 +19,7 @@ export async function startHttpServer(client: ZxClient): Promise<FastifyInstance
 
   await app.register(githubRoutes);
   await app.register(heartbeatRoutes);
+  await app.register(sdkRoutes);
 
   await app.listen({ port: env.HTTP_PORT, host: '0.0.0.0' });
   log.info(`Serwer HTTP nasłuchuje na porcie ${env.HTTP_PORT}`);
