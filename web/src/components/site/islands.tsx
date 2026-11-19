@@ -320,31 +320,6 @@ export function PanelMock() {
   );
 }
 
-const PROGRESS = [35, 60, 85, 100];
-
-export function OrderProgress() {
-  const [ref, on] = useOnScreen<HTMLDivElement>();
-  const tick = useTicker(2200, on);
-  const pct = PROGRESS[(tick + 1) % PROGRESS.length]!;
-  const done = pct === 100;
-  return (
-    <div ref={ref}>
-      <div className="dc-field">
-        <b>Status:</b> {done ? 'Gotowe do odbioru' : 'W realizacji'}
-      </div>
-      <div className="dc-field">
-        <b>Moduły:</b> ekonomia, praca, tickety, logi
-      </div>
-      <div className="dc-progress">
-        <span>Postęp</span>
-        <span className={`dc-bar${done ? ' done' : ''}`}>
-          <span style={{ transform: `scaleX(${pct / 100})` }} />
-        </span>
-        <span className="dc-pct">{pct}%</span>
-      </div>
-    </div>
-  );
-}
 
 export function useScrolled(threshold = 16) {
   const [s, setS] = useState(false);

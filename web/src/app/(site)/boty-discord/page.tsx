@@ -1,36 +1,18 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Arrow } from '@/components/site/primitives';
-import {
-  Addons,
-  BOT_STEPS,
-  BotServices,
-  FaqList,
-  FinalCta,
-  PageHero,
-  PanelShowcase,
-  PortfolioPreview,
-  PricingCards,
-  Process,
-  SectionHead,
-} from '@/components/site/Sections';
-import { FAQ_GROUPS } from '@/lib/faq';
+import { Reveal } from '@/components/site/primitives';
+import { BOT_STEPS, BotServices, FinalCta, MoreLinks, PageHero, PanelShowcase, Process } from '@/components/site/Sections';
+import { BotMock } from '@/components/site/WebMock';
 import { env } from '@/lib/env';
-import { byKind, getSite } from '@/lib/site';
 
-export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Boty Discord',
   description:
     'Boty Discord na zamówienie: tickety, ekonomia, RP, moderacja i integracje. Panel ustawień online, monitoring 24/7 i opieka po wdrożeniu.',
 };
 
-export default async function BotsPage() {
-  const data = await getSite();
-  const packages = byKind(data.packages, 'BOT');
-  const addons = byKind(data.addons, 'BOT');
-  const works = byKind(data.portfolio, 'BOT');
-  const faq = FAQ_GROUPS.find((g) => g.title === 'Boty Discord')?.items ?? [];
+export default function BotsPage() {
   const order = env.discordInvite ?? '/zamow';
   return (
     <>
@@ -53,53 +35,24 @@ export default async function BotsPage() {
         </div>
       </PageHero>
 
+      <section className="wrap" style={{ marginTop: 8 }}>
+        <Reveal>
+          <div className="bot-hero-mock">
+            <BotMock />
+          </div>
+        </Reveal>
+      </section>
+
       <BotServices />
       <PanelShowcase />
       <Process steps={BOT_STEPS} title={<>Od pomysłu do działającego bota <span className="grad">w 4 krokach</span></>} />
-      <PortfolioPreview
-        items={works}
-        title={
-          <>
-            Boty, które <span className="grad">już działają</span>
-          </>
-        }
-        lead="Wybrane boty dla serwerów naszych klientów."
-        href="/realizacje?typ=boty"
+      <MoreLinks
+        items={[
+          { href: '/cennik#boty', icon: 'coins', title: 'Cennik botów', text: 'Pakiety i moduły z cenami' },
+          { href: '/realizacje?typ=boty', icon: 'package', title: 'Nasze boty', text: 'Boty działające na serwerach klientów' },
+          { href: '/faq#boty', icon: 'idea', title: 'Pytania o boty', text: 'Panel, poprawki, kod źródłowy' },
+        ]}
       />
-
-      <section id="ceny" className="section cv">
-        <div className="wrap">
-          <SectionHead
-            center
-            kicker="Cennik"
-            title={
-              <>
-                Pakiety <span className="grad">botów Discord</span>
-              </>
-            }
-            lead="Ceny są orientacyjne – dokładną wycenę dostajesz w tickecie, zanim cokolwiek zapłacisz."
-          />
-          <PricingCards packages={packages} orderHref={order} />
-          <Addons addons={addons} />
-        </div>
-      </section>
-
-      {faq.length > 0 && (
-        <section className="section cv">
-          <div className="wrap">
-            <SectionHead
-              center
-              kicker="FAQ"
-              title={
-                <>
-                  Pytania o <span className="grad">boty</span>
-                </>
-              }
-            />
-            <FaqList items={faq} />
-          </div>
-        </section>
-      )}
 
       <FinalCta
         title={

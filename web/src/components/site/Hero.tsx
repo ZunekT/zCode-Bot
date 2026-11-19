@@ -1,30 +1,50 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
+import { byKind, type SiteData } from '@/lib/site';
 import { Icon } from '../Icon';
-import { OrderProgress, TypeRotate } from './islands';
-import { WebMock } from './WebMock';
+import { CountUp, TypeRotate } from './islands';
 import { Arrow, Stars } from './primitives';
 
 const PHRASES = ['strony internetowe', 'boty Discord', 'sklepy online', 'aplikacje WWW', 'landing page'];
 const TYPED = PHRASES.map((p) => `${p},`);
 const d = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties;
+const DISCORD_CDN = /^https:\/\/cdn\.discordapp\.com\//;
 
-export function Hero({ rating, reviews, avatars }: { rating: number | null; reviews: number; avatars: string[] }) {
+const money = (v: number) => v.toLocaleString('pl-PL', { maximumFractionDigits: 0 });
+const from = (list: SiteData['packages']) => (list.length ? Math.min(...list.map((p) => p.price)) : null);
+const plural = (n: number, one: string, few: string, many: string) =>
+  n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many;
+
+export function Hero({ data }: { data: SiteData }) {
+  const { stats, packages, portfolio, reviews } = data;
+  const webFrom = from(byKind(packages, 'WEBSITE'));
+  const botFrom = from(byKind(packages, 'BOT'));
+  const thumbs = portfolio.filter((p) => p.images[0]).slice(0, 3);
+  const avatars = reviews
+    .map((r) => r.avatar)
+    .filter((a): a is string => !!a && DISCORD_CDN.test(a))
+    .slice(0, 4);
+  const uptimeDec = stats.uptime !== null && stats.uptime < 99.995 ? 2 : 0;
+  const facts = [
+    stats.ordersCompleted > 0 && { v: stats.ordersCompleted, label: 'zrealizowanych zleceń' },
+    stats.clients > 0 && { v: stats.clients, label: 'zadowolonych klientów' },
+    stats.uptime !== null && { v: stats.uptime, dec: uptimeDec, suffix: '%', label: 'dostępności' },
+  ].filter(Boolean) as { v: number; dec?: number; suffix?: string; label: string }[];
+
   return (
-    <section className="hero2">
+    <section className="home">
       <div className="bg" aria-hidden>
         <div className="bg-glow" />
         <div className="grid-bg" />
       </div>
-
-      <div className="wrap">
-        <div className="hero2-head">
+      <div className="wrap home-grid">
+        <div className="home-copy">
           <Link href="/strony-internetowe" className="pill-badge enter" style={d(0)}>
             <b>NOWE</b>
             <span>Robimy też strony internetowe</span>
             <Arrow />
           </Link>
-
           <h1>
             <span className="word enter" style={d(80)}>
               Tworzymy
@@ -42,103 +62,146 @@ export function Hero({ rating, reviews, avatars }: { rating: number | null; revi
               dla Ciebie
             </span>
           </h1>
-
-          <p className="hero2-sub enter" style={d(420)}>
-            Projektujemy, kodujemy i utrzymujemy szybkie strony internetowe i boty Discord – dopracowane w każdym szczególe,
-            działające na każdym urządzeniu i pod stałą opieką.
+          <p className="home-sub enter" style={d(380)}>
+            Projektujemy, kodujemy i utrzymujemy szybkie strony internetowe i boty Discord – dopracowane w każdym szczególe i
+            pod stałą opieką.
           </p>
-
-          <div className="hero2-actions enter" style={d(520)}>
-            <a href="/zamow" className="cta-btn">
+          <div className="home-actions enter" style={d(460)}>
+            <Link href="/zamow" className="cta-btn">
               Bezpłatna wycena <Arrow />
-            </a>
+            </Link>
             <Link href="/realizacje" className="ghost-btn">
-              Zobacz realizacje <Arrow />
+              Realizacje
             </Link>
           </div>
-
-          {rating !== null && reviews > 0 && (
-            <div className="hero2-trust enter" style={d(700)}>
-              {avatars.length > 0 && (
-                <div className="avatars">
-                  {avatars.slice(0, 5).map((a, i) => (
-                    <img key={i} src={a} alt="" width={32} height={32} />
-                  ))}
+          {facts.length > 1 && (
+            <dl className="home-facts enter" style={d(540)}>
+              {facts.map((f) => (
+                <div key={f.label}>
+                  <dt>{f.label}</dt>
+                  <dd>
+                    <CountUp to={f.v} decimals={f.dec ?? 0} suffix={f.suffix} />
+                  </dd>
                 </div>
-              )}
-              <div>
-                <Stars n={Math.round(rating)} />
-                <div>
-                  <b style={{ color: 'var(--text)' }}>{rating.toLocaleString('pl-PL', { maximumFractionDigits: 1 })}/5</b> ·{' '}
-                  <Link href="/opinie" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
-                    {reviews} {reviews === 1 ? 'opinia' : reviews < 5 ? 'opinie' : 'opinii'}
-                  </Link>
-                </div>
-              </div>
-            </div>
+              ))}
+            </dl>
           )}
         </div>
 
-        <div className="stage stage2 enter" style={d(350)}>
-          <div className="float-card float-1">
-            <span className="live-dot" />
-            <div>
-              <strong>Strona i bot działają</strong>
-              <small>monitoring co minutę, 24/7</small>
-            </div>
-          </div>
-          <div className="float-card float-2">
-            <Icon name="verified" size={24} />
-            <div>
-              <strong>Certyfikat SSL ważny</strong>
-              <small>pilnujemy odnowienia za Ciebie</small>
-            </div>
-          </div>
-          <div className="float-card float-3">
-            <Icon name="laptop" size={24} />
-            <div>
-              <strong>Nowe zapytanie o stronę</strong>
-              <small>Strona firmowa · wycena w drodze</small>
-            </div>
-          </div>
-
-          <WebMock />
-
-          <div className="dc dc-over" aria-label="Przykładowa wiadomość bota zxCode na Discordzie" role="img">
-            <div className="dc-top">
-              <span className="hash">#</span> zamowienia
-              <span className="dc-online">
-                <span className="live-dot" /> online
+        <nav className="hub enter" style={d(300)} aria-label="Na skróty">
+          <Link href="/strony-internetowe" className="hub-tile hub-web">
+            <span className="hub-top">
+              <span className="tile-icon">
+                <Icon name="laptop" size={24} />
               </span>
-            </div>
-            <div className="dc-body">
-              <div className="dc-msg">
-                <img className="dc-avatar" src="/emojis/logo_round.png" alt="" width={40} height={40} />
-                <div style={{ minWidth: 0 }}>
-                  <div className="dc-name">
-                    zxCode <span className="dc-app">APP</span> <span className="dc-time">Dzisiaj o 14:32</span>
-                  </div>
-                  <div className="dc-card">
-                    <h4>
-                      <img src="/emojis/package.png" width={20} height={20} alt="" /> Zlecenie ZX-0042
-                    </h4>
-                    <div style={{ color: '#b5bac1' }}>Bot RP dla serwera Miasto Nocą</div>
-                    <div className="dc-sep" />
-                    <OrderProgress />
-                    <div className="dc-buttons">
-                      <span className="dc-btn primary">
-                        <img src="/emojis/checklist.png" width={16} height={16} alt="" /> Panel
-                      </span>
-                      <span className="dc-btn">
-                        <img src="/emojis/invoice.png" width={16} height={16} alt="" /> Proforma
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+              {webFrom !== null && <span className="hub-chip">od {money(webFrom)} zł</span>}
+            </span>
+            <span className="hub-mini-site" aria-hidden>
+              <i className="b1" />
+              <i className="b2" />
+              <i className="b3" />
+              <i className="btn" />
+            </span>
+            <b>Strony internetowe</b>
+            <small>Wizytówki, strony firmowe, sklepy i aplikacje WWW</small>
+            <Arrow />
+          </Link>
+
+          <Link href="/boty-discord" className="hub-tile hub-bot">
+            <span className="hub-top">
+              <span className="tile-icon">
+                <Icon name="bot" size={24} />
+              </span>
+              {botFrom !== null && <span className="hub-chip">od {money(botFrom)} zł</span>}
+            </span>
+            <span className="hub-mini-chat" aria-hidden>
+              <i />
+              <i />
+              <i />
+            </span>
+            <b>Boty Discord</b>
+            <small>Tickety, ekonomia, RP, moderacja i integracje</small>
+            <Arrow />
+          </Link>
+
+          <Link href="/realizacje" className="hub-tile hub-works">
+            {thumbs.length > 0 ? (
+              <span className="hub-thumbs" aria-hidden>
+                {thumbs.map((p) => (
+                  <Image key={p.id} src={`/api/portfolio/${p.images[0]}`} alt="" width={120} height={80} sizes="120px" />
+                ))}
+              </span>
+            ) : (
+              <span className="tile-icon">
+                <Icon name="package" size={24} />
+              </span>
+            )}
+            <b>Realizacje</b>
+            <small>
+              {portfolio.length
+                ? `${portfolio.length} ${plural(portfolio.length, 'projekt', 'projekty', 'projektów')}`
+                : 'Wkrótce'}
+            </small>
+            <Arrow />
+          </Link>
+
+          <Link href="/opinie" className="hub-tile hub-reviews">
+            {stats.rating !== null && stats.reviews > 0 ? (
+              <>
+                <span className="hub-rating">
+                  <Stars n={Math.round(stats.rating)} size={14} />
+                  <span className="hub-avatars" aria-hidden>
+                    {avatars.map((a) => (
+                      <img key={a} src={a} alt="" width={26} height={26} loading="lazy" />
+                    ))}
+                  </span>
+                </span>
+                <b>{stats.rating.toLocaleString('pl-PL', { maximumFractionDigits: 1 })}/5</b>
+                <small>
+                  {stats.reviews} {plural(stats.reviews, 'opinia', 'opinie', 'opinii')} klientów
+                </small>
+              </>
+            ) : (
+              <>
+                <span className="tile-icon">
+                  <Icon name="star" size={24} />
+                </span>
+                <b>Opinie</b>
+                <small>Co mówią klienci</small>
+              </>
+            )}
+            <Arrow />
+          </Link>
+
+          <Link href="/cennik" className="hub-tile hub-price">
+            <span className="tile-icon">
+              <Icon name="coins" size={24} />
+            </span>
+            <b>Cennik</b>
+            <small>Pakiety i dodatki – strony i boty</small>
+            <Arrow />
+          </Link>
+
+          <Link href="/faq" className="hub-tile hub-faq">
+            <span className="tile-icon">
+              <Icon name="idea" size={24} />
+            </span>
+            <b>Pytania</b>
+            <small>Terminy, płatności, hosting</small>
+            <Arrow />
+          </Link>
+
+          <Link href="/panel" prefetch={false} className="hub-tile hub-panel">
+            <span className="tile-icon">
+              <Icon name="desktop" size={24} />
+            </span>
+            <span className="hub-panel-text">
+              <b>Panel klienta</b>
+              <small>Postęp zleceń, płatności, ustawienia botów i stan stron – po zalogowaniu przez Discord</small>
+            </span>
+            <Arrow />
+          </Link>
+        </nav>
       </div>
     </section>
   );

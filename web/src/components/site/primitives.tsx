@@ -22,30 +22,6 @@ export function Reveal({
   );
 }
 
-export function Marquee({
-  children,
-  speed = 40,
-  reverse = false,
-  gap,
-}: {
-  children: ReactNode;
-  speed?: number;
-  reverse?: boolean;
-  gap?: number;
-}) {
-  return (
-    <div
-      className={`marquee${reverse ? ' reverse' : ''}`}
-      style={{ '--speed': `${speed}s`, ...(gap !== undefined && { '--gap': `${gap}px` }) } as CSSProperties}
-    >
-      <div className="marquee-track">{children}</div>
-      <div className="marquee-track" aria-hidden>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 export function Stars({ n, size = 15 }: { n: number; size?: number }) {
   return (
     <span className="stars" role="img" aria-label={`Ocena ${n} na 5`}>

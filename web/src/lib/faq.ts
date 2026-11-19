@@ -1,5 +1,6 @@
-export const FAQ_GROUPS: { title: string; items: { id: string; question: string; answer: string }[] }[] = [
+export const FAQ_GROUPS: { id: string; title: string; items: { id: string; question: string; answer: string }[] }[] = [
   {
+    id: 'zamowienie',
     title: 'Zamówienie i płatności',
     items: [
       {
@@ -29,6 +30,7 @@ export const FAQ_GROUPS: { title: string; items: { id: string; question: string;
     ],
   },
   {
+    id: 'strony',
     title: 'Strony internetowe',
     items: [
       {
@@ -70,6 +72,7 @@ export const FAQ_GROUPS: { title: string; items: { id: string; question: string;
     ],
   },
   {
+    id: 'boty',
     title: 'Boty Discord',
     items: [
       {
@@ -91,6 +94,7 @@ export const FAQ_GROUPS: { title: string; items: { id: string; question: string;
     ],
   },
   {
+    id: 'hosting',
     title: 'Hosting i wsparcie',
     items: [
       {

@@ -1,36 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Reveal, Arrow } from '@/components/site/primitives';
-import {
-  Addons,
-  FaqList,
-  FinalCta,
-  PageHero,
-  PortfolioPreview,
-  PricingCards,
-  Process,
-  SectionHead,
-  SiteTypes,
-  WEB_STEPS,
-  WebIncluded,
-} from '@/components/site/Sections';
+import { FinalCta, MoreLinks, PageHero, Process, SiteTypes, WEB_STEPS, WebIncluded } from '@/components/site/Sections';
 import { WebMock } from '@/components/site/WebMock';
-import { FAQ_GROUPS } from '@/lib/faq';
-import { byKind, getSite } from '@/lib/site';
 
-export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Strony internetowe',
   description:
     'Nowoczesne strony internetowe na zamówienie: wizytówki, strony firmowe, sklepy i aplikacje WWW. Szybkie, responsywne, z SEO i opieką po wdrożeniu.',
 };
 
-export default async function WebsitesPage() {
-  const data = await getSite();
-  const packages = byKind(data.packages, 'WEBSITE');
-  const addons = byKind(data.addons, 'WEBSITE');
-  const works = byKind(data.portfolio, 'WEBSITE');
-  const faq = FAQ_GROUPS.find((g) => g.title === 'Strony internetowe')?.items ?? [];
+export default function WebsitesPage() {
   return (
     <>
       <PageHero
@@ -68,50 +48,13 @@ export default async function WebsitesPage() {
           </>
         }
       />
-      <PortfolioPreview
-        items={works}
-        title={
-          <>
-            Strony, które <span className="grad">już działają</span>
-          </>
-        }
-        lead="Wybrane strony, które zaprojektowaliśmy i zbudowaliśmy dla naszych klientów."
-        href="/realizacje?typ=strony"
+      <MoreLinks
+        items={[
+          { href: '/cennik#strony', icon: 'coins', title: 'Cennik stron', text: 'Pakiety i dodatki z cenami' },
+          { href: '/realizacje?typ=strony', icon: 'package', title: 'Nasze strony', text: 'Przykłady stron, które zbudowaliśmy' },
+          { href: '/faq#strony', icon: 'idea', title: 'Pytania o strony', text: 'Domena, edycja treści, SEO, RODO' },
+        ]}
       />
-
-      <section id="ceny" className="section cv">
-        <div className="wrap">
-          <SectionHead
-            center
-            kicker="Cennik"
-            title={
-              <>
-                Pakiety <span className="grad">stron internetowych</span>
-              </>
-            }
-            lead="Ceny są orientacyjne – dokładną wycenę dostajesz bezpłatnie, zanim cokolwiek zapłacisz."
-          />
-          <PricingCards packages={packages} orderHref="/zamow/strona" />
-          <Addons addons={addons} title="Dodatki" lead="Rozbuduj stronę o to, czego potrzebujesz." />
-        </div>
-      </section>
-
-      {faq.length > 0 && (
-        <section className="section cv">
-          <div className="wrap">
-            <SectionHead
-              center
-              kicker="FAQ"
-              title={
-                <>
-                  Pytania o <span className="grad">strony</span>
-                </>
-              }
-            />
-            <FaqList items={faq} />
-          </div>
-        </section>
-      )}
 
       <FinalCta
         title={
