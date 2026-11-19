@@ -38,7 +38,7 @@ export function SiteAccessCard({ initial }: { initial: SiteAccessData }) {
       <div className="card-head">
         <Icon name="desktop" />
         <h2>Strona publiczna</h2>
-        <span className={`pill ${initial.launched ? 'pill-ok' : 'pill-err'}`} style={{ marginLeft: 8 }}>
+        <span className={`pill ${initial.launched ? 'pill-ok pill-live' : 'pill-err'}`} style={{ marginLeft: 8 }}>
           {initial.launched ? 'Uruchomiona' : 'Start wkrótce'}
         </span>
         <div className="spacer" />

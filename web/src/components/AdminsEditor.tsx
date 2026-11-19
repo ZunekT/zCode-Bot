@@ -9,6 +9,7 @@ import { Icon } from './Icon';
 import { PersonChip } from './PersonChip';
 import { useToast } from './Toast';
 import { Select } from './ui/Select';
+import { EmptyState } from './ui/EmptyState';
 
 interface Data {
   users: Person[];
@@ -64,7 +65,7 @@ export function AdminsEditor({ initial, people }: { initial: Data; people: Perso
             <h2>Osoby ({initial.users.length})</h2>
           </div>
           {initial.users.length === 0 ? (
-            <div className="card-body muted small">Nikt poza Tobą nie ma uprawnień.</div>
+            <EmptyState compact icon="user_crown" title="Tylko Ty" text="Nikt poza Tobą nie ma uprawnień administracyjnych." />
           ) : (
             <div className="list">
               {initial.users.map((u) => (

@@ -8,5 +8,5 @@ export function BotAvatar({ bot, large }: { bot: Pick<PublicBot, 'avatarUrl'>; l
 }
 
 export function StatusPill({ connected }: { connected: boolean }) {
-  return <span className={`pill ${connected ? 'pill-ok' : 'pill-err'}`}>{connected ? 'Połączony' : 'Rozłączony'}</span>;
+  return <span className={`pill ${connected ? 'pill-ok pill-live' : 'pill-err pill-down'}`}>{connected ? 'Połączony' : 'Rozłączony'}</span>;
 }

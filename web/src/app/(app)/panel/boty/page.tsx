@@ -23,7 +23,7 @@ export default async function BotsPage() {
         <div className="spacer" />
         {invite && (
           <a href={invite} className="btn btn-primary" target="_blank" rel="noreferrer">
-            <Icon name="cart" size={18} /> Zamów nowego bota
+            <Icon name="cart" size={20} /> Zamów nowego bota
           </a>
         )}
       </div>

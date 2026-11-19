@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { post } from '@/lib/client';
+import { post, signalResult } from '@/lib/client';
 import { pln } from '@/lib/money';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
@@ -14,6 +14,7 @@ type Busy = string | null;
 async function patch(url: string, body: unknown) {
   const res = await fetch(url, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
   const data = (await res.json().catch(() => ({}))) as { error?: string };
+  signalResult(res.ok);
   return { ok: res.ok, error: data.error };
 }
 

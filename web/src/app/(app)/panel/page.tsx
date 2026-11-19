@@ -2,9 +2,11 @@ import Link from 'next/link';
 import { BotAvatar } from '@/components/BotAvatar';
 import { Icon } from '@/components/Icon';
 import { CountUp } from '@/components/site/islands';
+import { Amount } from '@/components/ui/Amount';
 import { api } from '@/lib/api';
 import { pln } from '@/lib/money';
 import { requireSession } from '@/lib/session';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const metadata = { title: 'Pulpit' };
 
@@ -40,7 +42,7 @@ export default async function Dashboard() {
 
       <div className="kpis">
         <div className="card kpi glow">
-          <Icon name="bot" size={22} className="kpi-icon" />
+          <Icon name="bot" size={24} className="kpi-icon" />
           <div className="kpi-label">Boty</div>
           <div className="kpi-value">
             <CountUp to={bots.length} />
@@ -48,7 +50,7 @@ export default async function Dashboard() {
           <div className="kpi-sub">{bots.length ? `${online} połączonych` : 'jeszcze żadnego'}</div>
         </div>
         <div className="card kpi glow">
-          <Icon name="package" size={22} className="kpi-icon" />
+          <Icon name="package" size={24} className="kpi-icon" />
           <div className="kpi-label">Zlecenia w toku</div>
           <div className="kpi-value">
             <CountUp to={active.length} />
@@ -56,15 +58,15 @@ export default async function Dashboard() {
           <div className="kpi-sub">{mine.orders.length} wszystkich</div>
         </div>
         <div className="card kpi glow">
-          <Icon name="payment_card" size={22} className="kpi-icon" />
+          <Icon name="payment_card" size={24} className="kpi-icon" />
           <div className="kpi-label">Do zapłaty</div>
           <div className="kpi-value" style={due > 0 ? { color: 'var(--warn)' } : undefined}>
-            {pln(due)}
+            <Amount v={due} />
           </div>
           <div className="kpi-sub">{due > 0 ? 'dane do przelewu w zleceniu' : 'wszystko opłacone'}</div>
         </div>
         <div className="card kpi glow">
-          <Icon name="lightning" size={22} className="kpi-icon" />
+          <Icon name="lightning" size={24} className="kpi-icon" />
           <div className="kpi-label">Monitoring</div>
           <div className="kpi-value">{bots.length ? (online === bots.length ? 'OK' : `${bots.length - online} off`) : '—'}</div>
           <div className="kpi-sub">{bots.length ? 'sprawdzane co minutę' : 'po wdrożeniu bota'}</div>
@@ -82,12 +84,7 @@ export default async function Dashboard() {
             </Link>
           </div>
           {active.length === 0 ? (
-            <div className="card-body muted">
-              Brak aktywnych zleceń.{' '}
-              <a href="/zamow" style={{ color: 'var(--brand)' }}>
-                Zamów bota →
-              </a>
-            </div>
+            <EmptyState compact icon="package" title="Brak aktywnych zleceń" text="Zamówione boty i postęp prac pojawią się tutaj."><a href="/zamow" className="btn btn-sm btn-primary">Zamów bota</a></EmptyState>
           ) : (
             <div className="list">
               {active.map((o) => (
@@ -120,7 +117,7 @@ export default async function Dashboard() {
             </Link>
           </div>
           {bots.length === 0 ? (
-            <div className="card-body muted">Gdy zamówisz bota, pojawi się tutaj.</div>
+            <EmptyState compact icon="bot" title="Brak botów" text="Gdy zamówisz bota, pojawi się tutaj." />
           ) : (
             <div className="list">
               {bots.slice(0, 5).map((b) => (
@@ -130,7 +127,7 @@ export default async function Dashboard() {
                     <div style={{ fontWeight: 600 }}>{b.name}</div>
                     <div className="faint small">{b.username ? `@${b.username}` : 'jeszcze się nie połączył'}</div>
                   </div>
-                  <span className={`pill ${b.connected ? 'pill-ok' : 'pill-err'}`}>{b.connected ? 'Online' : 'Offline'}</span>
+                  <span className={`pill ${b.connected ? 'pill-ok pill-live' : 'pill-err pill-down'}`}>{b.connected ? 'Online' : 'Offline'}</span>
                 </Link>
               ))}
             </div>

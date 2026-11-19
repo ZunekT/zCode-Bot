@@ -182,7 +182,7 @@ export function Select(props: Single | Multi) {
                         props.onChange(props.value.filter((x) => x !== v));
                       }}
                     >
-                      ×
+                      <XIcon />
                     </span>
                   </span>
                 );
@@ -210,7 +210,7 @@ export function Select(props: Single | Multi) {
               props.onChange(null);
             }}
           >
-            ×
+            <XIcon />
           </span>
         )}
         <svg className="sel-chev" width="14" height="14" viewBox="0 0 16 16" aria-hidden>
@@ -295,5 +295,13 @@ export function Select(props: Single | Multi) {
         </div>
       )}
     </div>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
+      <path d="M2 2l6 6M8 2L2 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
   );
 }

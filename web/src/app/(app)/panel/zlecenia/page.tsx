@@ -64,7 +64,7 @@ export default async function MyOrders() {
                   {(o.due ?? 0) > 0 ? (
                     <span className="pill pill-warn">do zapłaty {pln(o.due)}</span>
                   ) : o.total !== null && o.paid > 0 ? (
-                    <span className="pill pill-ok">opłacone</span>
+                    <span className="pill pill-ok pill-done">opłacone</span>
                   ) : null}
                 </div>
               </Link>

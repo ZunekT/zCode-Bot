@@ -43,7 +43,7 @@ export default async function PricingPage() {
             <div className="includes">
               {INCLUDED.map(([icon, b, t]) => (
                 <div key={b} className="include">
-                  <Icon name={icon!} size={22} />
+                  <Icon name={icon!} size={24} />
                   <span>
                     <b>{b}</b>
                     {t}

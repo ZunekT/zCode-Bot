@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { date, pln } from '@/lib/money';
 import { notFound } from 'next/navigation';
 import { requireSession } from '@/lib/session';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const metadata = { title: 'Ewidencja sprzedaży' };
 
@@ -42,7 +43,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
         />
       </div>
 
-      <section className={`card limit glow`} style={{ marginBottom: 16 }}>
+      <section key={`l${rok}-${kw}`} className="card limit glow tab-in" style={{ marginBottom: 16 }}>
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <div>
             <div className="kpi-label">
@@ -74,13 +75,13 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
         </div>
       </section>
 
-      <section className="card glow">
+      <section key={`t${rok}-${kw}`} className="card glow tab-in">
         <div className="card-head">
           <Icon name="invoice" />
           <h2>Wpisy ({l.rows.length})</h2>
         </div>
         {l.rows.length === 0 ? (
-          <div className="card-body muted">Brak wpłat w tym kwartale.</div>
+          <EmptyState compact icon="money" title="Brak wpłat w tym kwartale" />
         ) : (
           <div className="table-wrap">
             <table className="dtable">

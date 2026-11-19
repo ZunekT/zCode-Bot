@@ -1,3 +1,4 @@
+import { CountUp } from '@/components/site/islands';
 import Link from 'next/link';
 import { Icon } from '@/components/Icon';
 import { MetricChart } from '@/components/MetricChart';
@@ -39,7 +40,9 @@ function Meter({ label, value, sub }: { label: string; value: number; sub: strin
   return (
     <div className="stat">
       <div className="stat-label">{label}</div>
-      <div className="stat-value num">{value}%</div>
+      <div className="stat-value num">
+        <CountUp to={value} suffix="%" />
+      </div>
       <div className={`meter meter-${level(value)}`} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={value} aria-label={label}>
         <span style={{ width: `${Math.min(100, value)}%` }} />
       </div>
@@ -96,7 +99,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       {siteCard}
       <div className="page-head">
         <h2 style={{ fontSize: 22 }}>Serwer VPS</h2>
-        <span className={`pill ${running ? 'pill-ok' : 'pill-err'}`}>{running ? 'Działa' : s.status}</span>
+        <span className={`pill ${running ? 'pill-ok pill-live' : 'pill-err pill-down'}`}>{running ? 'Działa' : s.status}</span>
         <div className="spacer" />
         <VpsActions />
       </div>

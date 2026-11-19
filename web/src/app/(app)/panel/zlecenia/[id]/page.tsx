@@ -2,8 +2,10 @@ import Link from 'next/link';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { Icon } from '@/components/Icon';
 import { api } from '@/lib/api';
+import { Amount } from '@/components/ui/Amount';
 import { date, dateTime, pln, statusTone } from '@/lib/money';
 import { requireSession } from '@/lib/session';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const INVOICE: Record<string, string> = { ISSUED: 'do zapłaty', PAID: 'opłacona', OVERDUE: 'po terminie' };
 
@@ -67,20 +69,20 @@ export default async function MyOrder({ params }: { params: Promise<{ id: string
               <div className="stat">
                 <div className="stat-label">Kwota</div>
                 <div className="stat-value" style={{ fontSize: 20 }}>
-                  {pln(o.total, 'wycena w toku')}
+                  <Amount v={o.total} dash="wycena w toku" />
                 </div>
                 {o.discount > 0 && <div className="faint small">rabat {pln(o.discount)}</div>}
               </div>
               <div className="stat">
                 <div className="stat-label">Zapłacono</div>
                 <div className="stat-value" style={{ fontSize: 20, color: 'var(--ok)' }}>
-                  {pln(o.paid)}
+                  <Amount v={o.paid} />
                 </div>
               </div>
               <div className="stat">
                 <div className="stat-label">Do zapłaty</div>
                 <div className="stat-value" style={{ fontSize: 20, color: (o.due ?? 0) > 0 ? 'var(--warn)' : undefined }}>
-                  {o.due === null ? '—' : pln(Math.max(0, o.due))}
+                  <Amount v={o.due === null ? null : Math.max(0, o.due)} />
                 </div>
               </div>
             </div>
@@ -130,7 +132,7 @@ export default async function MyOrder({ params }: { params: Promise<{ id: string
               )}
             </div>
             {d.tasks.length === 0 ? (
-              <div className="card-body muted small">Lista zadań pojawi się, gdy zaczniemy prace.</div>
+              <EmptyState compact icon="checklist" title="Zadania w przygotowaniu" text="Lista zadań pojawi się, gdy zaczniemy prace." />
             ) : (
               d.tasks.map((t) => (
                 <div key={t.id} className={`task-row${t.done ? ' done' : ''}`} style={{ cursor: 'default' }}>
@@ -149,7 +151,7 @@ export default async function MyOrder({ params }: { params: Promise<{ id: string
               <h2>Proformy i wpłaty</h2>
             </div>
             {d.invoices.length === 0 && d.payments.length === 0 ? (
-              <div className="card-body muted small">Brak dokumentów.</div>
+              <EmptyState compact icon="invoice" title="Brak dokumentów" text="Proformy pojawią się tutaj." />
             ) : (
               <div className="list">
                 {d.invoices.map((i) => (
@@ -186,7 +188,7 @@ export default async function MyOrder({ params }: { params: Promise<{ id: string
               <h2>Historia</h2>
             </div>
             {d.history.length === 0 ? (
-              <div className="card-body muted small">Brak zmian.</div>
+              <EmptyState compact icon="calendar" title="Brak zmian" />
             ) : (
               <ol className="timeline">
                 {d.history.map((h, i) => (

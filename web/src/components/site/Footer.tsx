@@ -8,7 +8,7 @@ export function Footer() {
         <div className="sfooter-grid">
           <div style={{ maxWidth: 320 }}>
             <Link href="/" className="brand" style={{ marginBottom: 12, display: 'inline-flex' }}>
-              <Icon name="logo_round" size={30} />
+              <Icon name="logo_round" size={32} />
               <span>
                 zx<b>Code</b>
               </span>

@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { Icon } from '../Icon';
-import { OrderProgress } from './islands';
+import { OrderProgress, TypeRotate } from './islands';
 import { Arrow, Stars } from './primitives';
 
 const LINE_1 = ['Boty', 'Discord,'];
-const LINE_2 = ['które', 'pracują', 'za', 'Ciebie'];
+const PHRASES = ['pracują za Ciebie', 'obsługują tickety', 'prowadzą ekonomię', 'pilnują serwera', 'ożywiają RP'];
 const d = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties;
 
 export function Hero({ rating, reviews, avatars }: { rating: number | null; reviews: number; avatars: string[] }) {
@@ -31,12 +31,13 @@ export function Hero({ rating, reviews, avatars }: { rating: number | null; revi
               </span>
             ))}
             <br />
-            {LINE_2.map((w, i) => (
-              <span key={w} className="word grad enter" style={d(200 + i * 60)}>
-                {w}
-                {i < LINE_2.length - 1 ? ' ' : ''}
-              </span>
-            ))}
+            <span className="word enter" style={d(200)}>
+              które&nbsp;
+            </span>
+            <span className="word grad enter" style={d(260)}>
+              <TypeRotate words={PHRASES} />
+            </span>
+            <span className="sr-only">{PHRASES[0]}</span>
           </h1>
 
           <p className="hero2-sub enter" style={d(420)}>
@@ -84,14 +85,14 @@ export function Hero({ rating, reviews, avatars }: { rating: number | null; revi
             </div>
           </div>
           <div className="float-card float-2">
-            <Icon name="verified" size={22} />
+            <Icon name="verified" size={24} />
             <div>
               <strong>Zapisano w panelu</strong>
               <small>Bot już używa nowych ustawień</small>
             </div>
           </div>
           <div className="float-card float-3">
-            <Icon name="ticket" size={22} />
+            <Icon name="ticket" size={24} />
             <div>
               <strong>Nowy ticket #128</strong>
               <small>Zamówienie · odpowiedź w drodze</small>

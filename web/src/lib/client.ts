@@ -13,7 +13,17 @@ export const put = <T,>(url: string, body: unknown) => send<T>('PUT', url, body)
 export const post = <T,>(url: string, body: unknown) => send<T>('POST', url, body);
 export const del = <T,>(url: string) => send<T>('DELETE', url, {});
 
+export function signalResult(ok: boolean) {
+  window.dispatchEvent(new CustomEvent('zx:result', { detail: { ok } }));
+}
+
 async function send<T>(method: 'PUT' | 'POST' | 'DELETE', url: string, body: unknown): Promise<SaveResult<T>> {
+  const r = await request<T>(method, url, body);
+  signalResult(r.ok);
+  return r;
+}
+
+async function request<T>(method: 'PUT' | 'POST' | 'DELETE', url: string, body: unknown): Promise<SaveResult<T>> {
   try {
     const res = await fetch(url, {
       method,

@@ -61,40 +61,109 @@ export function useTicker(ms: number, active: boolean) {
 
 export function CountUp({
   to,
-  decimals = 0,
+  decimals,
   suffix = '',
+  money = false,
 }: {
   to: number;
   decimals?: number;
   suffix?: string;
+  money?: boolean;
 }) {
+  const dec = decimals ?? (money && to % 1 ? 2 : 0);
   const fmt = (v: number) =>
-    v.toLocaleString('pl-PL', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    v.toLocaleString('pl-PL', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + (money ? ' zł' : '');
   const [ref, on] = useOnScreen<HTMLSpanElement>('0px');
   const [text, setText] = useState(fmt(to));
+  const [ready, setReady] = useState(false);
   const done = useRef(false);
 
   useEffect(() => {
-    if (!on || done.current || reduced()) return;
+    if (reduced() || to === 0) done.current = true;
+    else setText(fmt(0));
+    setReady(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    if (done.current) {
+      setText(fmt(to));
+      return;
+    }
+    if (!on) return;
     done.current = true;
     const start = performance.now();
-    const dur = 1400;
+    const dur = Math.min(1600, 700 + Math.log10(Math.abs(to) + 1) * 250);
     let raf = 0;
     const step = (t: number) => {
       const p = Math.min(1, (t - start) / dur);
       const eased = 1 - Math.pow(1 - p, 4);
-      setText(fmt(to * eased));
+      setText(fmt(p < 1 ? (dec ? to * eased : Math.round(to * eased)) : to));
       if (p < 1) raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [on, to]);
+  }, [on, ready, to]);
 
   return (
-    <span ref={ref}>
+    <span ref={ref} className={`cu${ready ? ' cu-ready' : ''}`}>
       {text}
       {suffix && <small>{suffix}</small>}
+    </span>
+  );
+}
+
+export function TypeRotate({ words, delay = 1400 }: { words: string[]; delay?: number }) {
+  const [ref, on] = useOnScreen<HTMLSpanElement>('0px');
+  const [text, setText] = useState(words[0] ?? '');
+  const state = useRef({ i: 0, len: (words[0] ?? '').length, del: true, started: false });
+
+  useEffect(() => {
+    if (!on || reduced() || words.length < 2) return;
+    let t: ReturnType<typeof setTimeout>;
+    const st = state.current;
+    const tick = () => {
+      if (document.hidden) return (t = setTimeout(tick, 500));
+      const word = words[st.i]!;
+      if (st.del) {
+        st.len--;
+        if (st.len <= 0) {
+          st.del = false;
+          st.i = (st.i + 1) % words.length;
+          st.len = 0;
+          setText('');
+          return (t = setTimeout(tick, 260));
+        }
+        setText(word.slice(0, st.len));
+        return (t = setTimeout(tick, 28));
+      }
+      const next = words[st.i]!;
+      st.len++;
+      setText(next.slice(0, st.len));
+      if (st.len >= next.length) {
+        st.del = true;
+        return (t = setTimeout(tick, 2400));
+      }
+      return (t = setTimeout(tick, 48 + Math.random() * 40));
+    };
+    t = setTimeout(tick, st.started ? 1200 : delay + 1800);
+    st.started = true;
+    return () => clearTimeout(t);
+  }, [on, words, delay]);
+
+  return (
+    <span ref={ref} className="tw" aria-hidden>
+      {words.map((w) => (
+        <span key={w} className="tw-sizer">
+          {w}
+        </span>
+      ))}
+      <span className="tw-live">
+        {text}
+        <i className="tw-caret" />
+      </span>
     </span>
   );
 }

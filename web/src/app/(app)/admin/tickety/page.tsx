@@ -8,7 +8,14 @@ import { requireSession } from '@/lib/session';
 
 export const metadata = { title: 'Tickety' };
 
-const tone = (s: string) => (s === 'OPEN' ? 'pill-info' : s === 'CLAIMED' ? 'pill-ok' : s === 'WAITING_CLIENT' ? 'pill-muted' : 'pill-muted');
+const tone = (s: string) =>
+  s === 'OPEN'
+    ? 'pill-info'
+    : s === 'CLAIMED'
+      ? 'pill-ok'
+      : s === 'WAITING_CLIENT'
+        ? 'pill-muted'
+        : 'pill-muted';
 
 export default async function TicketsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const [{ status }, session] = await Promise.all([searchParams, requireSession()]);
@@ -21,7 +28,13 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
       <div className="app-head">
         <div>
           <h1>Tickety</h1>
-          <p>{filter === 'open' ? (waiting ? `${waiting} czeka na odpowiedź` : 'Wszyscy mają odpowiedź') : 'Historia zgłoszeń'}</p>
+          <p>
+            {filter === 'open'
+              ? waiting
+                ? `${waiting} czeka na odpowiedź`
+                : 'Wszyscy mają odpowiedź'
+              : 'Historia zgłoszeń'}
+          </p>
         </div>
       </div>
       <div className="filters">
@@ -34,30 +47,43 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
           ]}
         />
       </div>
-      {tickets.length === 0 ? (
-        <div className="card empty">
-          <Icon name="ticket" size={56} />
-          <h2>Pusto</h2>
-          <p>Brak ticketów dla tego filtra.</p>
-        </div>
-      ) : (
-        <section className="card glow">
-          <div className="list">
-            {tickets.map((t) => (
-              <Link key={t.id} href={`/admin/tickety/${t.id}`} className="link-row">
-                {t.waitingSince ? <span className="badge-dot" title="Klient czeka na odpowiedź" /> : <span style={{ width: 8 }} />}
-                <PersonChip p={t.client} sub={`#${t.id} · ${t.category}${t.subject ? ` · ${t.subject}` : ''}`} />
-                <div className="spacer" />
-                {t.waitingSince && <span className="pill pill-warn">czeka {timeAgo(t.waitingSince).replace(' temu', '')}</span>}
-                <span className={`pill ${tone(t.status)}`}>{t.statusLabel}</span>
-                <span className="faint small hide-sm" style={{ minWidth: 90, textAlign: 'right' }}>
-                  {timeAgo(t.lastActivityAt)}
-                </span>
-              </Link>
-            ))}
+      <div key={filter} className="tab-in">
+        {tickets.length === 0 ? (
+          <div className="card empty">
+            <Icon name="ticket" size={56} />
+            <h2>Brak ticketów</h2>
+            <p>Nic tu nie czeka na odpowiedź – wszystko obsłużone.</p>
           </div>
-        </section>
-      )}
+        ) : (
+          <section className="card glow">
+            <div className="list">
+              {tickets.map((t) => (
+                <Link key={t.id} href={`/admin/tickety/${t.id}`} className="link-row">
+                  {t.waitingSince ? (
+                    <span className="badge-dot" title="Klient czeka na odpowiedź" />
+                  ) : (
+                    <span style={{ width: 8 }} />
+                  )}
+                  <PersonChip
+                    p={t.client}
+                    sub={`#${t.id} · ${t.category}${t.subject ? ` · ${t.subject}` : ''}`}
+                  />
+                  <div className="spacer" />
+                  {t.waitingSince && (
+                    <span className="pill pill-warn">
+                      czeka {timeAgo(t.waitingSince).replace(' temu', '')}
+                    </span>
+                  )}
+                  <span className={`pill ${tone(t.status)}`}>{t.statusLabel}</span>
+                  <span className="faint small hide-sm" style={{ minWidth: 90, textAlign: 'right' }}>
+                    {timeAgo(t.lastActivityAt)}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Segmented } from '@/components/ui/Segmented';
 import { api } from '@/lib/api';
 import { dateTime } from '@/lib/money';
 import { requireSession } from '@/lib/session';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const metadata = { title: 'Dziennik zmian' };
 
@@ -34,9 +35,9 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       <div className="filters">
         <Segmented value={typ ?? ''} items={FILTERS.map((f) => ({ ...f, href: href(f.value) }))} />
       </div>
-      <section className="card glow">
+      <section key={`${typ ?? ""}|${przed ?? ""}`} className="card glow tab-in">
         {entries.length === 0 ? (
-          <div className="card-body muted">Brak wpisów.</div>
+          <EmptyState compact icon="documentation" title="Brak wpisów" text="Zmiany z panelu i bota pojawią się w dzienniku." />
         ) : (
           <div className="list">
             {entries.map((e) => (

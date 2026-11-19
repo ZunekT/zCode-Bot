@@ -1063,9 +1063,7 @@ a.card.glow,
   }
 }
 
-.empty img {
-  animation: floaty 4s ease-in-out infinite;
-}
+
 @keyframes floaty {
   50% {
     transform: translateY(-6px);
@@ -1369,4 +1367,48 @@ a.link-row:hover {
 }
 .app-main .side a[aria-current='true'] {
   background: linear-gradient(90deg, rgba(26, 159, 255, 0.18), rgba(26, 159, 255, 0.04));
+}
+
+.app-head h1,
+.page-head h1 {
+  font-size: clamp(28px, 3.6vw, 38px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+  background: linear-gradient(180deg, #fff 30%, #b3bfd1);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.app-head p {
+  margin-top: 6px;
+  font-size: 15.5px;
+  color: var(--muted);
+}
+.card-head h2 {
+  font-size: 16.5px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: #f3f6fa;
+}
+.module-head h2 {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+.kpi-label,
+.stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+}
+.kpi-value {
+  font-size: clamp(26px, 3vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.stat-value {
+  letter-spacing: -0.03em;
 }

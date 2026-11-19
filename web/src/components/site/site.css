@@ -254,6 +254,8 @@
 .cta-btn,
 .ghost-btn {
   position: relative;
+  overflow: hidden;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -304,7 +306,7 @@
 }
 .cta-btn:active,
 .ghost-btn:active {
-  transform: translateY(1px);
+  transform: translateY(1px) scale(0.97);
 }
 
 .hero2 {
@@ -2007,4 +2009,16 @@
   .faq-item.open .faq-a {
     animation: none;
   }
+}
+
+.h2 {
+  font-weight: 800;
+  letter-spacing: -0.045em;
+}
+.hero2 h1 {
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+.lead {
+  color: #9aa6b8;
 }

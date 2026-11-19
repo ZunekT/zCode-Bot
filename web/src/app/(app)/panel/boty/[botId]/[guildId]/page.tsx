@@ -87,7 +87,7 @@ export default async function GuildPage({
         </div>
       )}
 
-      <fieldset className="readonly-wrap" disabled={!canEdit}>
+      <fieldset key={perms ? "perm" : "set"} className="readonly-wrap tab-in" disabled={!canEdit}>
         {perms ? (
           <PermissionsEditor
             key={`p-${s.revision}`}

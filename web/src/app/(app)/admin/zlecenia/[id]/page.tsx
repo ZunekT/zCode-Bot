@@ -3,8 +3,10 @@ import { Icon } from '@/components/Icon';
 import { OrderActions, TaskList } from '@/components/OrderActions';
 import { PersonChip } from '@/components/PersonChip';
 import { api } from '@/lib/api';
+import { Amount } from '@/components/ui/Amount';
 import { date, dateTime, pln, statusTone } from '@/lib/money';
 import { requireSession } from '@/lib/session';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const INVOICE: Record<string, string> = { ISSUED: 'wystawiona', PAID: 'opłacona', OVERDUE: 'po terminie', CANCELLED: 'anulowana' };
 
@@ -50,17 +52,17 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
             <div className="stats stats-4">
               <div className="stat">
                 <div className="stat-label">Kwota</div>
-                <div className="stat-value" style={{ fontSize: 18 }}>{pln(o.total, 'do wyceny')}</div>
+                <div className="stat-value" style={{ fontSize: 18 }}><Amount v={o.total} dash="do wyceny" /></div>
                 {o.discount > 0 && <div className="faint small">rabat {pln(o.discount)}{o.discountCode && ` (${o.discountCode})`}</div>}
               </div>
               <div className="stat">
                 <div className="stat-label">Zapłacono</div>
-                <div className="stat-value" style={{ fontSize: 18, color: 'var(--ok)' }}>{pln(o.paid)}</div>
+                <div className="stat-value" style={{ fontSize: 18, color: 'var(--ok)' }}><Amount v={o.paid} /></div>
               </div>
               <div className="stat">
                 <div className="stat-label">Do zapłaty</div>
                 <div className="stat-value" style={{ fontSize: 18, color: (o.due ?? 0) > 0 ? 'var(--warn)' : undefined }}>
-                  {o.due === null ? '—' : pln(Math.max(0, o.due))}
+                  <Amount v={o.due === null ? null : Math.max(0, o.due)} />
                 </div>
               </div>
               <div className="stat">
@@ -93,7 +95,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
               <div className="spacer" />
               {d.tasks.length > 0 && <span className="muted small">{doneCount}/{d.tasks.length}</span>}
             </div>
-            {d.tasks.length ? <TaskList id={o.id} tasks={d.tasks} /> : <div className="card-body muted small">Brak zadań – dodaj je w „Akcjach”.</div>}
+            {d.tasks.length ? <TaskList id={o.id} tasks={d.tasks} /> : <EmptyState compact icon="checklist" title="Brak zadań" text="Dodaj je w „Akcjach”." />}
           </section>
 
           <section className="card glow">
@@ -102,7 +104,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
               <h2>Wpłaty i proformy</h2>
             </div>
             {d.payments.length === 0 && d.invoices.length === 0 ? (
-              <div className="card-body muted small">Brak wpłat i proform.</div>
+              <EmptyState compact icon="invoice" title="Brak wpłat i proform" />
             ) : (
               <div className="table-wrap">
                 <table className="dtable">
@@ -145,7 +147,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
               <h2>Historia</h2>
             </div>
             {d.history.length === 0 ? (
-              <div className="card-body muted small">Brak zmian statusu.</div>
+              <EmptyState compact icon="calendar" title="Brak zmian statusu" />
             ) : (
               <ol className="timeline">
                 {d.history.map((h, i) => (

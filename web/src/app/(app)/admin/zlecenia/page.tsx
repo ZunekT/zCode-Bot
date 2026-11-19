@@ -4,6 +4,7 @@ import { Segmented } from '@/components/ui/Segmented';
 import { api } from '@/lib/api';
 import { date, pln, statusTone } from '@/lib/money';
 import { requireSession } from '@/lib/session';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const metadata = { title: 'Zlecenia' };
 
@@ -46,9 +47,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         </form>
       </div>
 
-      <section className="card glow">
+      <section key={`${status ?? ""}|${q ?? ""}`} className="card glow tab-in">
         {d.orders.length === 0 ? (
-          <div className="card-body muted">Brak zleceń dla tego filtra.</div>
+          <EmptyState compact icon="package" title="Brak zleceń" text="Zmień filtr albo wyszukiwaną frazę." />
         ) : (
           <div className="table-wrap">
             <table className="dtable">

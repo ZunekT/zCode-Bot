@@ -163,7 +163,7 @@ export function Services() {
           <Reveal className="cell xl">
             <Spotlight>
               <div className="tile-icon">
-                <Icon name="bot" size={26} />
+                <Icon name="bot" size={24} />
               </div>
               <h3>Boty na zamówienie</h3>
               <p>
@@ -191,7 +191,7 @@ export function Services() {
           <Reveal className="cell" delay={0.06}>
             <Spotlight>
               <div className="tile-icon">
-                <Icon name="tools" size={26} />
+                <Icon name="tools" size={24} />
               </div>
               <h3>Panel ustawień</h3>
               <p>Kanały, role, teksty i moduły zmieniasz na stronie. Bez restartu.</p>
@@ -201,7 +201,7 @@ export function Services() {
           <Reveal className="cell wide">
             <Spotlight>
               <div className="tile-icon">
-                <Icon name="server" size={26} />
+                <Icon name="server" size={24} />
               </div>
               <h3>Monitoring 24/7</h3>
               <p>
@@ -214,7 +214,7 @@ export function Services() {
           <Reveal className="cell wide" delay={0.06}>
             <Spotlight>
               <div className="tile-icon">
-                <Icon name="code" size={26} />
+                <Icon name="code" size={24} />
               </div>
               <h3>Czysty, nowoczesny kod</h3>
               <p>TypeScript, discord.js v14 i najnowsze komponenty Discorda. Kod, który da się rozwijać.</p>
@@ -249,7 +249,7 @@ export function Services() {
             <Reveal key={title} className="cell" delay={i * 0.06}>
               <Spotlight>
                 <div className="tile-icon">
-                  <Icon name={icon!} size={26} />
+                  <Icon name={icon!} size={24} />
                 </div>
                 <h3>{title}</h3>
                 <p>{text}</p>
@@ -560,7 +560,7 @@ export function PanelShowcase() {
                 ['lightning', 'Monitoring', 'czy bot działa, uptime i historia awarii'],
               ].map(([icon, b, t]) => (
                 <li key={b}>
-                  <Icon name={icon!} size={22} />
+                  <Icon name={icon!} size={24} />
                   <span>
                     <b>{b}</b> – {t}
                   </span>

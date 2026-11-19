@@ -1,5 +1,6 @@
 'use client';
 
+import { signalResult } from '@/lib/client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Icon } from './Icon';
@@ -34,6 +35,7 @@ export function VpsActions() {
     try {
       const res = await fetch(`/api/admin/vps/${action}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
+      signalResult(res.ok);
       if (!res.ok) throw new Error(data.error ?? 'Nie udało się.');
       toast.show(true, action === 'reboot' ? 'Restart zlecony – strona wróci za 1–2 minuty.' : 'Kopia zapasowa zlecona.');
       if (action === 'backup') setTimeout(() => router.refresh(), 1500);

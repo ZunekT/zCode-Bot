@@ -33,7 +33,7 @@ export function Nav() {
     <>
       <header className={`snav${scrolled || open ? ' scrolled' : ''}`}>
         <Link href="/" className="brand" aria-label="zxCode – strona główna">
-          <Icon name="logo_round" size={30} />
+          <Icon name="logo_round" size={32} />
           <span>
             zx<b>Code</b>
           </span>

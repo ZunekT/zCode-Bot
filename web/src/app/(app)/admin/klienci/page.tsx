@@ -3,6 +3,7 @@ import { PersonChip } from '@/components/PersonChip';
 import { api } from '@/lib/api';
 import { date, pln } from '@/lib/money';
 import { requireSession } from '@/lib/session';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const metadata = { title: 'Klienci' };
 
@@ -19,7 +20,7 @@ export default async function ClientsPage() {
       </div>
     <section className="card">
       {clients.length === 0 ? (
-        <div className="card-body muted">Brak klientów.</div>
+        <EmptyState compact icon="users" title="Brak klientów" text="Klienci pojawią się po pierwszym zleceniu." />
       ) : (
         <div className="table-wrap">
           <table className="dtable">

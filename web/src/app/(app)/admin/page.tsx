@@ -3,8 +3,11 @@ import { Icon } from '@/components/Icon';
 import { PersonChip } from '@/components/PersonChip';
 import { RevenueChart } from '@/components/RevenueChart';
 import { api } from '@/lib/api';
+import { CountUp } from '@/components/site/islands';
+import { Amount } from '@/components/ui/Amount';
 import { date, dateTime, pln, statusTone } from '@/lib/money';
 import { requireSession } from '@/lib/session';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export default async function AdminOverview() {
   const session = await requireSession();
@@ -29,24 +32,24 @@ export default async function AdminOverview() {
       <div className="kpis">
         <div className="card kpi glow">
           <div className="kpi-label">Przychód w tym miesiącu</div>
-          <div className="kpi-value">{pln(k.revenueMonth)}</div>
+          <div className="kpi-value"><Amount v={k.revenueMonth} /></div>
           <div className="kpi-sub">
             {diff === null ? `poprzedni: ${pln(k.revenuePrevMonth)}` : <span className={diff >= 0 ? 'up' : 'down'}>{diff >= 0 ? '+' : ''}{diff}% vs poprzedni</span>}
           </div>
         </div>
         <div className="card kpi glow">
           <div className="kpi-label">Należności</div>
-          <div className="kpi-value">{pln(k.receivables)}</div>
+          <div className="kpi-value"><Amount v={k.receivables} /></div>
           <div className="kpi-sub">{k.activeOrders} zleceń w toku</div>
         </div>
         <div className="card kpi glow">
           <div className="kpi-label">Otwarte tickety</div>
-          <div className="kpi-value">{k.openTickets}</div>
+          <div className="kpi-value"><CountUp to={k.openTickets} /></div>
           <div className="kpi-sub">{k.firstReplyMin === null ? 'brak danych o odpowiedziach' : `mediana 1. odpowiedzi: ${k.firstReplyMin < 60 ? `${k.firstReplyMin} min` : `${Math.round(k.firstReplyMin / 60)} godz.`}`}</div>
         </div>
         <div className="card kpi glow">
           <div className="kpi-label">Klienci</div>
-          <div className="kpi-value">{k.clients}</div>
+          <div className="kpi-value"><CountUp to={k.clients} /></div>
           <div className="kpi-sub">{k.rating === null ? 'brak opinii' : `ocena ${k.rating.toLocaleString('pl-PL')}/5 (${k.reviews})`}</div>
         </div>
       </div>
@@ -115,7 +118,7 @@ export default async function AdminOverview() {
             </Link>
           </div>
           {d.recentOrders.length === 0 ? (
-            <div className="card-body muted">Brak zleceń.</div>
+            <EmptyState compact icon="package" title="Brak zleceń" />
           ) : (
             <div className="table-wrap">
               <table className="dtable">
@@ -148,7 +151,7 @@ export default async function AdminOverview() {
             <h2>Ostatnie wpłaty</h2>
           </div>
           {d.recentPayments.length === 0 ? (
-            <div className="card-body muted">Brak wpłat.</div>
+            <EmptyState compact icon="money" title="Brak wpłat" />
           ) : (
             <div className="list">
               {d.recentPayments.map((p) => (

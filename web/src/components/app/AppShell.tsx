@@ -75,7 +75,7 @@ function NavGroup({ title, items, path }: { title: string; items: NavItem[]; pat
             data-on={on}
             aria-current={on ? 'page' : undefined}
           >
-            <Icon name={it.icon} size={18} />
+            <Icon name={it.icon} size={20} />
             <span>{it.label}</span>
           </Link>
         );
@@ -153,7 +153,7 @@ export function AppShell({
           <span />
         </button>
         <Link href="/panel" className="brand">
-          <Icon name="logo_round" size={28} />
+          <Icon name="logo_round" size={32} />
           <span>
             zx<b>Code</b>
           </span>
@@ -165,7 +165,7 @@ export function AppShell({
 
       <aside className={`app-side glass${open ? ' open' : ''}`} aria-label="Menu panelu">
         <Link href="/" className="brand app-brand">
-          <Icon name="logo_round" size={30} />
+          <Icon name="logo_round" size={32} />
           <span>
             zx<b>Code</b>
           </span>
@@ -188,7 +188,10 @@ export function AppShell({
           <div>
             <div className="app-user-name">{user.name}</div>
             <Link href="/" className="faint small">
-              Strona główna ↗
+              Strona główna{' '}
+              <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden style={{ verticalAlign: '-1px' }}>
+                <path d="M3 7l4-4M3.5 3H7v3.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </Link>
           </div>
           <form action="/api/auth/logout" method="post">
