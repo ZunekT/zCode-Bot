@@ -4,6 +4,7 @@ import { announcementsModule } from './announcements/index.js';
 import { changelogModule } from './changelog/index.js';
 import { clientsModule } from './clients/index.js';
 import { faqModule } from './faq/index.js';
+import { leadsModule } from './leads/index.js';
 import { logsModule } from './logs/index.js';
 import { monitoringModule } from './monitoring/index.js';
 import { ordersModule } from './orders/index.js';
@@ -27,6 +28,7 @@ export const modules: BotModule[] = [
   logsModule,
   verificationModule,
   ordersModule,
+  leadsModule,
   pricingModule,
   portfolioModule,
   reviewsModule,

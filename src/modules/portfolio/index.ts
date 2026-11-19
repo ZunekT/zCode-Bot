@@ -4,7 +4,7 @@ import {
   SlashCommandBuilder,
   type AutocompleteInteraction,
 } from 'discord.js';
-import type { PortfolioImage, PortfolioItem } from '../../generated/prisma/client.js';
+import type { PortfolioImage, PortfolioItem, ServiceKind } from '../../generated/prisma/client.js';
 import { prisma } from '../../db/prisma.js';
 import { audit } from '../../core/audit.js';
 import { UserError } from '../../core/errors.js';
@@ -73,9 +73,9 @@ async function itemAutocomplete(interaction: AutocompleteInteraction) {
   await interaction.respond(rows.map((r) => ({ name: truncate(r.title, 100), value: String(r.id) })));
 }
 
-function itemModal(existing?: PortfolioItem) {
+function itemModal(kind: ServiceKind, existing?: PortfolioItem) {
   const form = new Form(
-    existing ? `portfolio:save:${existing.id}` : 'portfolio:save',
+    existing ? `portfolio:save:${existing.id}:${kind}` : `portfolio:save:0:${kind}`,
     existing ? 'Edycja realizacji' : 'Nowa realizacja',
   )
     .text({ id: 'title', label: 'Nazwa projektu', max: 80, value: existing?.title })
@@ -86,11 +86,11 @@ function itemModal(existing?: PortfolioItem) {
       required: false,
       max: 200,
       value: existing?.technologies.join(', '),
-      placeholder: 'discord.js, TypeScript, PostgreSQL',
+      placeholder: kind === 'WEBSITE' ? 'Next.js, React, Tailwind' : 'discord.js, TypeScript, PostgreSQL',
     })
     .text({
       id: 'url',
-      label: 'Link (opcjonalnie)',
+      label: kind === 'WEBSITE' ? 'Adres strony' : 'Link (opcjonalnie)',
       required: false,
       max: 200,
       value: existing?.url ?? undefined,
@@ -121,13 +121,35 @@ const portfolioCommand = defineCommand({
             .addChannelTypes(ChannelType.GuildText),
         ),
     )
-    .addSubcommand((s) => s.setName('dodaj').setDescription('[Obsługa] Dodaj realizację'))
+    .addSubcommand((s) =>
+      s
+        .setName('dodaj')
+        .setDescription('[Obsługa] Dodaj realizację')
+        .addStringOption((o) =>
+          o
+            .setName('rodzaj')
+            .setDescription('Bot czy strona')
+            .addChoices(
+              { name: 'Bot Discord', value: 'BOT' },
+              { name: 'Strona internetowa', value: 'WEBSITE' },
+            ),
+        ),
+    )
     .addSubcommand((s) =>
       s
         .setName('edytuj')
         .setDescription('[Obsługa] Edytuj realizację')
         .addStringOption((o) =>
           o.setName('pozycja').setDescription('Realizacja').setRequired(true).setAutocomplete(true),
+        )
+        .addStringOption((o) =>
+          o
+            .setName('rodzaj')
+            .setDescription('Bot czy strona')
+            .addChoices(
+              { name: 'Bot Discord', value: 'BOT' },
+              { name: 'Strona internetowa', value: 'WEBSITE' },
+            ),
         ),
     )
     .addSubcommand((s) =>
@@ -187,13 +209,19 @@ const portfolioCommand = defineCommand({
         }),
       );
     }
-    if (sub === 'dodaj') return interaction.showModal(itemModal());
+    if (sub === 'dodaj')
+      return interaction.showModal(
+        itemModal(interaction.options.getString('rodzaj') === 'WEBSITE' ? 'WEBSITE' : 'BOT'),
+      );
 
     const item = await prisma.portfolioItem.findUnique({
       where: { id: Number(interaction.options.getString('pozycja', true)) },
     });
     if (!item) throw new UserError('Nie ma takiej realizacji.');
-    if (sub === 'edytuj') return interaction.showModal(itemModal(item));
+    if (sub === 'edytuj') {
+      const k = interaction.options.getString('rodzaj');
+      return interaction.showModal(itemModal(k === 'WEBSITE' || k === 'BOT' ? k : item.kind, item));
+    }
 
     await prisma.portfolioItem.delete({ where: { id: item.id } });
     await audit(client, {
@@ -252,9 +280,10 @@ export const portfolioModule = defineModule({
             .filter(Boolean)
             .slice(0, 10),
           url,
+          kind: (args[1] === 'WEBSITE' ? 'WEBSITE' : 'BOT') as ServiceKind,
         };
 
-        if (args[0]) {
+        if (args[0] && args[0] !== '0') {
           const item = await prisma.portfolioItem.update({ where: { id: Number(args[0]) }, data });
           await audit(client, {
             action: 'portfolio.edit',

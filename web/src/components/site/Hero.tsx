@@ -2,10 +2,11 @@ import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { Icon } from '../Icon';
 import { OrderProgress, TypeRotate } from './islands';
+import { WebMock } from './WebMock';
 import { Arrow, Stars } from './primitives';
 
-const LINE_1 = ['Boty', 'Discord,'];
-const PHRASES = ['pracują za Ciebie', 'obsługują tickety', 'prowadzą ekonomię', 'pilnują serwera', 'ożywiają RP'];
+const PHRASES = ['strony internetowe', 'boty Discord', 'sklepy online', 'aplikacje WWW', 'landing page'];
+const TYPED = PHRASES.map((p) => `${p},`);
 const d = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties;
 
 export function Hero({ rating, reviews, avatars }: { rating: number | null; reviews: number; avatars: string[] }) {
@@ -18,36 +19,38 @@ export function Hero({ rating, reviews, avatars }: { rating: number | null; revi
 
       <div className="wrap">
         <div className="hero2-head">
-          <Link href="/#panel" className="pill-badge enter" style={d(0)}>
+          <Link href="/strony-internetowe" className="pill-badge enter" style={d(0)}>
             <b>NOWE</b>
-            <span>Panel klienta – ustawienia bota online</span>
+            <span>Robimy też strony internetowe</span>
             <Arrow />
           </Link>
 
           <h1>
-            {LINE_1.map((w, i) => (
-              <span key={w} className="word enter" style={d(80 + i * 60)}>
-                {w}&nbsp;
-              </span>
-            ))}
+            <span className="word enter" style={d(80)}>
+              Tworzymy
+            </span>
             <br />
-            <span className="word enter" style={d(200)}>
-              które&nbsp;
+            <span className="sr-only">{PHRASES.join(', ')}, </span>
+            <span className="word grad enter" style={d(160)}>
+              <TypeRotate words={TYPED} />
             </span>
-            <span className="word grad enter" style={d(260)}>
-              <TypeRotate words={PHRASES} />
+            <br />
+            <span className="word enter" style={d(240)}>
+              które pracują
+            </span>{' '}
+            <span className="word enter" style={d(300)}>
+              dla Ciebie
             </span>
-            <span className="sr-only">{PHRASES[0]}</span>
           </h1>
 
           <p className="hero2-sub enter" style={d(420)}>
-            Tickety, ekonomia, RP, moderacja i integracje. Projektujemy, piszemy i utrzymujemy boty dla Twojej społeczności – a
-            ustawienia zmieniasz sam w panelu.
+            Projektujemy, kodujemy i utrzymujemy szybkie strony internetowe i boty Discord – dopracowane w każdym szczególe,
+            działające na każdym urządzeniu i pod stałą opieką.
           </p>
 
           <div className="hero2-actions enter" style={d(520)}>
             <a href="/zamow" className="cta-btn">
-              <Icon name="discord" size={20} /> Zamów bota <Arrow />
+              Bezpłatna wycena <Arrow />
             </a>
             <Link href="/realizacje" className="ghost-btn">
               Zobacz realizacje <Arrow />
@@ -76,30 +79,32 @@ export function Hero({ rating, reviews, avatars }: { rating: number | null; revi
           )}
         </div>
 
-        <div className="stage enter" style={d(350)}>
+        <div className="stage stage2 enter" style={d(350)}>
           <div className="float-card float-1">
             <span className="live-dot" />
             <div>
-              <strong>Bot działa</strong>
+              <strong>Strona i bot działają</strong>
               <small>monitoring co minutę, 24/7</small>
             </div>
           </div>
           <div className="float-card float-2">
             <Icon name="verified" size={24} />
             <div>
-              <strong>Zapisano w panelu</strong>
-              <small>Bot już używa nowych ustawień</small>
+              <strong>Certyfikat SSL ważny</strong>
+              <small>pilnujemy odnowienia za Ciebie</small>
             </div>
           </div>
           <div className="float-card float-3">
-            <Icon name="ticket" size={24} />
+            <Icon name="laptop" size={24} />
             <div>
-              <strong>Nowy ticket #128</strong>
-              <small>Zamówienie · odpowiedź w drodze</small>
+              <strong>Nowe zapytanie o stronę</strong>
+              <small>Strona firmowa · wycena w drodze</small>
             </div>
           </div>
 
-          <div className="dc" aria-label="Przykładowa wiadomość bota zxCode na Discordzie" role="img">
+          <WebMock />
+
+          <div className="dc dc-over" aria-label="Przykładowa wiadomość bota zxCode na Discordzie" role="img">
             <div className="dc-top">
               <span className="hash">#</span> zamowienia
               <span className="dc-online">

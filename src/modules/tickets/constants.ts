@@ -15,9 +15,15 @@ export const CATEGORIES: Record<TicketCategory, CategoryDef> = {
     emoji: 'cart',
     channelPrefix: 'zamowienie',
   },
+  WEBSITE: {
+    label: 'Zamówienie strony',
+    description: 'Strona firmowa, landing, sklep albo aplikacja WWW',
+    emoji: 'laptop',
+    channelPrefix: 'strona',
+  },
   SUPPORT: {
     label: 'Wsparcie techniczne',
-    description: 'Problem z botem, który od nas masz',
+    description: 'Problem z botem lub stroną, którą od nas masz',
     emoji: 'support',
     channelPrefix: 'wsparcie',
   },

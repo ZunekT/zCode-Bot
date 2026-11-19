@@ -1,4 +1,10 @@
-import { ChannelType, SlashCommandBuilder, type AutocompleteInteraction } from 'discord.js';
+import {
+  ChannelType,
+  SlashCommandBuilder,
+  type AutocompleteInteraction,
+  type ModalSubmitInteraction,
+} from 'discord.js';
+import type { ServiceKind } from '../../generated/prisma/client.js';
 import { prisma } from '../../db/prisma.js';
 import { redis } from '../../db/redis.js';
 import { audit } from '../../core/audit.js';
@@ -26,12 +32,29 @@ const saveState = (userId: string, state: CalcState) =>
   redis.set(calcKey(userId), JSON.stringify(state), 'EX', 3600);
 
 async function calcData(state: CalcState) {
-  const items = await prisma.pricingItem.findMany({ where: { active: true }, orderBy: { price: 'asc' } });
+  const items = await prisma.pricingItem.findMany({
+    where: { active: true, kind: 'BOT' },
+    orderBy: { price: 'asc' },
+  });
   const dc = state.code ? await findValidDiscount(state.code).catch(() => null) : null;
   return { items, dc };
 }
 
-const packages = () => prisma.pricingPackage.findMany({ orderBy: [{ position: 'asc' }, { price: 'asc' }] });
+const packages = () =>
+  prisma.pricingPackage.findMany({ orderBy: [{ kind: 'asc' }, { position: 'asc' }, { price: 'asc' }] });
+
+const KIND_OPTIONS = [
+  { value: 'BOT', label: 'Bot Discord' },
+  { value: 'WEBSITE', label: 'Strona internetowa' },
+];
+const kindOf = (v: string | undefined): ServiceKind => (v === 'WEBSITE' ? 'WEBSITE' : 'BOT');
+const pickKind = (i: ModalSubmitInteraction) => {
+  try {
+    return kindOf(i.fields.getStringSelectValues('kind')[0]);
+  } catch {
+    return 'BOT' as ServiceKind;
+  }
+};
 
 async function nameAutocomplete(interaction: AutocompleteInteraction) {
   const group = interaction.options.getSubcommandGroup();
@@ -96,6 +119,80 @@ async function seedDefaults(): Promise<{ packages: number; items: number }> {
       ],
     },
   ];
+  const sitePkgs = [
+    {
+      name: 'Wizytówka',
+      price: 799,
+      description: 'Elegancka strona jednostronicowa (landing) – szybka i gotowa w kilka dni.',
+      features: [
+        'Projekt graficzny',
+        'Wersja na telefony',
+        'Formularz kontaktowy',
+        'Podstawowe SEO',
+        'Certyfikat SSL',
+      ],
+    },
+    {
+      name: 'Strona firmowa',
+      price: 1599,
+      description: 'Kilka podstron, panel do edycji treści i porządne SEO.',
+      features: [
+        'Do 6 podstron',
+        'Panel do edycji treści',
+        'Blog lub aktualności',
+        'SEO i Google Analytics',
+        'RODO i cookies',
+        '30 dni wsparcia',
+      ],
+    },
+    {
+      name: 'Sklep / aplikacja',
+      price: 3499,
+      description: 'Sklep internetowy albo aplikacja WWW szyta na miarę.',
+      features: [
+        'Płatności online',
+        'Panel administracyjny',
+        'Konta klientów',
+        'Integracje (API, Discord)',
+        '90 dni wsparcia',
+      ],
+    },
+  ];
+  const siteItems = [
+    {
+      key: 'www-podstrona',
+      label: 'Dodatkowa podstrona',
+      price: 150,
+      description: 'Kolejna podstrona w projekcie',
+    },
+    {
+      key: 'www-cms',
+      label: 'Panel do edycji treści',
+      price: 400,
+      description: 'Sam zmieniasz teksty i zdjęcia',
+    },
+    {
+      key: 'www-blog',
+      label: 'Blog / aktualności',
+      price: 300,
+      description: 'Wpisy, kategorie, udostępnianie',
+    },
+    {
+      key: 'www-sklep',
+      label: 'Sklep internetowy',
+      price: 1500,
+      description: 'Koszyk, płatności, zamówienia',
+    },
+    { key: 'www-jezyki', label: 'Wersja językowa', price: 350, description: 'Np. angielska wersja strony' },
+    { key: 'www-seo', label: 'Pakiet SEO', price: 300, description: 'Audyt, meta, mapa strony, szybkość' },
+    { key: 'www-logo', label: 'Logo i identyfikacja', price: 400, description: 'Logo, kolory, fonty' },
+    {
+      key: 'www-opieka',
+      label: 'Opieka nad stroną (mies.)',
+      price: 99,
+      description: 'Aktualizacje, kopie, monitoring',
+    },
+  ].map((x) => ({ ...x, kind: 'WEBSITE' as const }));
   const items = [
     {
       key: 'tickety',
@@ -156,7 +253,15 @@ async function seedDefaults(): Promise<{ packages: number; items: number }> {
     });
     if (r) p++;
   }
-  for (const item of items) {
+  for (const [idx, pkg] of sitePkgs.entries()) {
+    const r = await prisma.pricingPackage.upsert({
+      where: { name: pkg.name },
+      create: { ...pkg, kind: 'WEBSITE', position: idx },
+      update: {},
+    });
+    if (r) p++;
+  }
+  for (const item of [...items, ...siteItems]) {
     await prisma.pricingItem.upsert({ where: { key: item.key }, create: item, update: {} });
     i++;
   }
@@ -311,8 +416,8 @@ const pricingCommand = defineCommand({
       if (sub === 'dodaj') {
         return interaction.showModal(
           new Form('pricing:packageSave', 'Pakiet cennika')
-            .info('Podaj nazwę istniejącego pakietu, żeby go edytować.')
-            .text({ id: 'name', label: 'Nazwa', max: 40, placeholder: 'np. Pro' })
+            .text({ id: 'name', label: 'Nazwa (istniejąca = edycja)', max: 40, placeholder: 'np. Pro' })
+            .select({ id: 'kind', label: 'Rodzaj', options: KIND_OPTIONS, placeholder: 'Bot czy strona?' })
             .text({ id: 'price', label: 'Cena „od” (zł)', max: 12 })
             .text({ id: 'description', label: 'Krótki opis', max: 200 })
             .text({
@@ -346,6 +451,7 @@ const pricingCommand = defineCommand({
           new Form('pricing:itemSave', 'Pozycja kalkulatora')
             .info('Podaj nazwę istniejącej pozycji, żeby ją edytować.')
             .text({ id: 'label', label: 'Nazwa funkcji', max: 60, placeholder: 'np. System ticketów' })
+            .select({ id: 'kind', label: 'Rodzaj', options: KIND_OPTIONS, placeholder: 'Bot czy strona?' })
             .text({ id: 'price', label: 'Cena (zł)', max: 12 })
             .text({ id: 'description', label: 'Opis', required: false, max: 100 })
             .build(),
@@ -523,13 +629,22 @@ export const pricingModule = defineModule({
       async run(interaction, args, { config }) {
         const pkg = await prisma.pricingPackage.findUnique({ where: { id: Number(args[0]) } });
         if (!pkg) throw new UserError('Ten pakiet już nie istnieje – odśwież cennik.');
-        await assertCanOpen(interaction.member, 'ORDER', config);
+        const site = pkg.kind === 'WEBSITE';
+        await assertCanOpen(interaction.member, site ? 'WEBSITE' : 'ORDER', config);
         await interaction.showModal(
-          ticketForm('ORDER', {
+          ticketForm(site ? 'WEBSITE' : 'ORDER', {
             name: `Pakiet ${pkg.name}`,
-            description: `Interesuje mnie pakiet ${pkg.name} (od ${formatMoney(Number(pkg.price))}):\n${pkg.features.map((f) => `- ${f}`).join('\n')}\n\nMój pomysł na bota: `,
+            description: `Interesuje mnie pakiet ${pkg.name} (od ${formatMoney(Number(pkg.price))}):\n${pkg.features.map((f) => `- ${f}`).join('\n')}\n\n${site ? 'Mój pomysł na stronę' : 'Mój pomysł na bota'}: `,
           }),
         );
+      },
+    }),
+    defineComponent({
+      id: 'pricing:site',
+      type: 'button',
+      async run(interaction, _args, { config }) {
+        await assertCanOpen(interaction.member, 'WEBSITE', config);
+        await interaction.showModal(ticketForm('WEBSITE'));
       },
     }),
     defineComponent({
@@ -550,6 +665,7 @@ export const pricingModule = defineModule({
         const price = parseMoney(f.getTextInputValue('price'));
         if (price === null) throw new UserError('Nieprawidłowa cena.');
         const data = {
+          kind: pickKind(interaction),
           price,
           description: f.getTextInputValue('description').trim(),
           features: f
@@ -595,6 +711,7 @@ export const pricingModule = defineModule({
         const key = slugify(label, 30);
         const data = {
           label,
+          kind: pickKind(interaction),
           price,
           description: f.getTextInputValue('description').trim() || null,
 

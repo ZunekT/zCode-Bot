@@ -20,22 +20,29 @@ export function pricingPanel(
   panel
     .title('coins', 'Cennik zxCode')
     .text(
-      'Gotowe pakiety na start albo projekt szyty na miarę. Kliknij **Zamów** – otworzymy ticket z wypełnionym formularzem.',
+      'Boty Discord i strony internetowe – gotowe pakiety albo projekt szyty na miarę. Kliknij **Zamów**, a otworzymy ticket z wypełnionym formularzem.',
     );
 
   if (!packages.length) {
     panel.separator().text('-# Cennik jest w przygotowaniu – zapytaj o wycenę w tickecie.');
   }
-  packages.slice(0, 6).forEach((p, i) => {
-    panel
-      .separator()
-      .sectionWithButton(
+  const groups = [
+    { kind: 'BOT', title: `${e('bot')} Boty Discord` },
+    { kind: 'WEBSITE', title: `${e('laptop')} Strony internetowe` },
+  ] as const;
+  for (const g of groups) {
+    const list = packages.filter((p) => p.kind === g.kind).slice(0, 3);
+    if (!list.length) continue;
+    panel.separator(true, 'large').text(`## ${g.title}`);
+    list.forEach((p, i) => {
+      panel.sectionWithButton(
         `### ${e(PACKAGE_EMOJIS[i % PACKAGE_EMOJIS.length]!)} ${p.name}\n` +
           `**od ${formatMoney(Number(p.price))}** · ${p.description}` +
           (p.features.length ? `\n-# ${p.features.slice(0, 8).join(' · ')}` : ''),
         button(`pricing:order:${p.id}`, 'Zamów', { style: i === 1 ? 'primary' : 'secondary', emoji: 'cart' }),
       );
-  });
+    });
+  }
 
   panel.separator();
   if (stats.count)
@@ -44,8 +51,9 @@ export function pricingPanel(
     );
   return panel
     .buttons(
-      button('pricing:calc', 'Kalkulator wyceny', { style: 'primary', emoji: 'coins' }),
-      button('pricing:custom', 'Projekt na miarę', { emoji: 'idea' }),
+      button('pricing:calc', 'Kalkulator bota', { style: 'primary', emoji: 'coins' }),
+      button('pricing:site', 'Wycena strony', { emoji: 'laptop' }),
+      button('pricing:custom', 'Bot na miarę', { emoji: 'idea' }),
     )
     .footer('Ceny orientacyjne • dokładną wycenę dostaniesz w tickecie');
 }

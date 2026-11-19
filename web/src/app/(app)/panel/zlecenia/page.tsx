@@ -3,6 +3,7 @@ import { Icon } from '@/components/Icon';
 import { api } from '@/lib/api';
 import { date, pln, statusTone } from '@/lib/money';
 import { requireSession } from '@/lib/session';
+import { KindTag } from '@/components/ui/KindTag';
 
 export const metadata = { title: 'Moje zlecenia' };
 
@@ -46,8 +47,8 @@ export default async function MyOrders() {
                   </span>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 16 }}>{o.title}</div>
-                    <div className="faint small">
-                      {o.number} · {date(o.createdAt)}
+                    <div className="faint small row" style={{ gap: 8 }}>
+                      <KindTag kind={o.kind} /> {o.number} · {date(o.createdAt)}
                     </div>
                   </div>
                 </div>

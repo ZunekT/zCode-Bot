@@ -8,8 +8,9 @@ import { useScrolled } from './islands';
 
 export const NAV_LINKS = [
   { href: '/', label: 'Start' },
+  { href: '/strony-internetowe', label: 'Strony WWW' },
+  { href: '/boty-discord', label: 'Boty Discord' },
   { href: '/realizacje', label: 'Realizacje' },
-  { href: '/opinie', label: 'Opinie' },
   { href: '/cennik', label: 'Cennik' },
   { href: '/faq', label: 'FAQ' },
 ];
@@ -49,9 +50,10 @@ export function Nav() {
         <Link href="/panel" className="btn btn-ghost btn-sm snav-login" prefetch={false}>
           Panel klienta
         </Link>
-        <a href="/zamow" className="btn btn-primary btn-sm">
-          Zamów bota
-        </a>
+        <Link href="/zamow" className="btn btn-primary btn-sm">
+          <span className="cta-long">Bezpłatna wycena</span>
+          <span className="cta-short">Wycena</span>
+        </Link>
         <button
           className={`snav-burger${open ? ' open' : ''}`}
           aria-label={open ? 'Zamknij menu' : 'Otwórz menu'}
@@ -69,6 +71,9 @@ export function Nav() {
             {l.label}
           </Link>
         ))}
+        <Link href="/opinie" aria-current={current('/opinie')}>
+          Opinie
+        </Link>
         <hr />
         <Link href="/panel" prefetch={false}>
           Panel klienta <span className="muted">→</span>

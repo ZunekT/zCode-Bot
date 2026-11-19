@@ -49,7 +49,7 @@ export function publicPanel(): Panel {
     .banner(BANNER_URL)
     .title('support', 'Centrum pomocy zxCode')
     .text(
-      'Chcesz zamówić bota, coś przestało działać albo masz pytanie? ' +
+      'Chcesz zamówić bota lub stronę internetową, coś przestało działać albo masz pytanie? ' +
         'Otwórz ticket – porozmawiamy na prywatnym kanale, który widzisz tylko Ty i nasza obsługa.',
     )
     .separator()
@@ -67,7 +67,7 @@ export function publicPanel(): Panel {
         ).join('\n'),
     )
     .select(categorySelect())
-    .footer('Jeden ticket na kategorię • Nigdy nie podawaj haseł ani tokenów botów');
+    .footer('Jeden ticket na kategorię • Nigdy nie podawaj haseł ani tokenów');
 }
 
 export function actionSelect(ticket: Ticket): StringSelectMenuBuilder {

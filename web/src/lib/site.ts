@@ -1,6 +1,10 @@
 import 'server-only';
 import { env } from './env';
 
+export type Kind = 'BOT' | 'WEBSITE';
+
+export const byKind = <T extends { kind?: Kind }>(list: T[], kind: Kind) => list.filter((x) => (x.kind ?? 'BOT') === kind);
+
 export interface SiteData {
   stats: {
     ordersCompleted: number;
@@ -9,11 +13,20 @@ export interface SiteData {
     reviews: number;
     members: number | null;
     botsMonitored: number;
+    sitesMonitored?: number;
     uptime: number | null;
   };
-  packages: { id: number; name: string; description: string; price: number; features: string[] }[];
-  addons: { id: number; label: string; description: string | null; price: number }[];
-  portfolio: { id: number; title: string; description: string; technologies: string[]; url: string | null; images: number[] }[];
+  packages: { id: number; kind: Kind; name: string; description: string; price: number; features: string[] }[];
+  addons: { id: number; kind: Kind; label: string; description: string | null; price: number }[];
+  portfolio: {
+    id: number;
+    kind: Kind;
+    title: string;
+    description: string;
+    technologies: string[];
+    url: string | null;
+    images: number[];
+  }[];
   reviews: { id: number; rating: number; content: string; createdAt: string; author: string; avatar: string | null }[];
   faq: { id: number; question: string; answer: string }[];
 }

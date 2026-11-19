@@ -1,4 +1,4 @@
-import type { OrderStatus } from '../../generated/prisma/client.js';
+import type { OrderStatus, ServiceKind } from '../../generated/prisma/client.js';
 import type { EmojiName } from '../../ui/emojis.js';
 import type { ToneName } from '../../ui/theme.js';
 
@@ -9,7 +9,18 @@ export interface StatusDef {
   tone: ToneName;
   step: number;
   clientText: string;
+  siteText?: string;
 }
+
+export const SERVICE_KINDS: Record<ServiceKind, { label: string; short: string; emoji: EmojiName }> = {
+  BOT: { label: 'Bot Discord', short: 'Bot', emoji: 'bot' },
+  WEBSITE: { label: 'Strona internetowa', short: 'Strona', emoji: 'laptop' },
+};
+
+export const statusText = (status: OrderStatus, kind: ServiceKind) => {
+  const def = ORDER_STATUSES[status];
+  return kind === 'WEBSITE' && def.siteText ? def.siteText : def.clientText;
+};
 
 export const ORDER_STATUSES: Record<OrderStatus, StatusDef> = {
   QUOTE: {
@@ -43,6 +54,7 @@ export const ORDER_STATUSES: Record<OrderStatus, StatusDef> = {
     tone: 'brand',
     step: 4,
     clientText: 'Pracujemy nad Twoim botem!',
+    siteText: 'Pracujemy nad Twoją stroną!',
   },
   TESTING: {
     label: 'Testy',
@@ -51,6 +63,7 @@ export const ORDER_STATUSES: Record<OrderStatus, StatusDef> = {
     tone: 'info',
     step: 5,
     clientText: 'Bot jest gotowy i właśnie go testujemy.',
+    siteText: 'Strona jest gotowa i właśnie ją testujemy na komputerach i telefonach.',
   },
   DELIVERED: {
     label: 'Dostarczone',
@@ -59,6 +72,7 @@ export const ORDER_STATUSES: Record<OrderStatus, StatusDef> = {
     tone: 'success',
     step: 6,
     clientText: 'Bot dostarczony – sprawdź go i daj znać, czy wszystko działa.',
+    siteText: 'Strona jest online – sprawdź ją i daj znać, czy wszystko działa.',
   },
   COMPLETED: {
     label: 'Zakończone',

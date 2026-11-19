@@ -4,7 +4,8 @@ import type { ZxClient } from '../client.js';
 import { env } from '../config/env.js';
 import { getConfig } from '../core/config-service.js';
 import { prisma } from '../db/prisma.js';
-import { ORDER_STATUSES, STATUS_ORDER } from '../modules/orders/constants.js';
+import { uptime } from '../modules/monitoring/service.js';
+import { ORDER_STATUSES, STATUS_ORDER, statusText } from '../modules/orders/constants.js';
 import { renderInvoice } from '../modules/orders/invoice.js';
 import { totalsOf } from '../modules/orders/panels.js';
 import { sendError } from '../modules/sdk/routes.js';
@@ -41,6 +42,33 @@ export async function invoiceHtml(
 }
 
 export function clientOrderRoutes(app: FastifyInstance, client: ZxClient) {
+  app.get('/internal/users/:userId/sites', async (request, reply) => {
+    try {
+      const { userId } = request.params as { userId: string };
+      if (!/^\d{17,20}$/.test(userId)) return reply.code(400).send({ error: 'bad user' });
+      const sites = await prisma.monitoredBot.findMany({
+        where: { ownerId: userId, mode: 'site' },
+        orderBy: { name: 'asc' },
+      });
+      return {
+        sites: sites.map((s) => ({
+          id: s.id,
+          name: s.name,
+          url: s.healthUrl,
+          online: s.online,
+          uptime: uptime(s),
+          responseMs: s.lastResponseMs,
+          sslExpiresAt: s.sslExpiresAt,
+          lastDownAt: s.lastDownAt,
+          lastCheckAt: s.lastCheckAt,
+          error: s.online ? null : s.lastError,
+        })),
+      };
+    } catch (err) {
+      return sendError(reply, err);
+    }
+  });
+
   app.get('/internal/users/:userId/orders', async (request, reply: FastifyReply) => {
     try {
       const uid = userId(request.params);
@@ -55,6 +83,7 @@ export function clientOrderRoutes(app: FastifyInstance, client: ZxClient) {
           id: o.id,
           number: formatOrderId(o.id),
           title: o.title,
+          kind: o.kind,
           status: o.status,
           statusLabel: ORDER_STATUSES[o.status].label,
           step: ORDER_STATUSES[o.status].step,
@@ -99,7 +128,8 @@ export function clientOrderRoutes(app: FastifyInstance, client: ZxClient) {
           description: o.description,
           status: o.status,
           statusLabel: ORDER_STATUSES[o.status].label,
-          statusText: ORDER_STATUSES[o.status].clientText,
+          statusText: statusText(o.status, o.kind),
+          kind: o.kind,
           step: ORDER_STATUSES[o.status].step,
           ...t,
           discountCode: o.discountCode,

@@ -83,6 +83,42 @@ export interface VpsData {
   history: { t: number; cpu: number; mem: number; netIn: number; netOut: number }[];
 }
 
+export interface ClientSite {
+  id: number;
+  name: string;
+  url: string | null;
+  online: boolean;
+  uptime: string;
+  responseMs: number | null;
+  sslExpiresAt: string | null;
+  lastDownAt: string | null;
+  lastCheckAt: string | null;
+  error: string | null;
+}
+
+export interface LeadRow {
+  id: number;
+  name: string;
+  email: string;
+  company: string | null;
+  siteType: string;
+  budget: string;
+  deadline: string;
+  status: string;
+  statusLabel: string;
+  preview: string;
+  createdAt: string;
+}
+
+export interface LeadDetail extends Omit<LeadRow, 'preview'> {
+  website: string | null;
+  discord: string | null;
+  description: string;
+  note: string | null;
+  statuses: { value: string; label: string }[];
+  updatedAt: string;
+}
+
 export interface Person {
   id: string;
   name: string;
@@ -99,6 +135,7 @@ export interface OrderRow extends Money {
   id: number;
   number: string;
   title: string;
+  kind?: 'BOT' | 'WEBSITE';
   status: string;
   statusLabel: string;
   client: Person;
@@ -185,6 +222,7 @@ export interface MyOrder extends Money {
   id: number;
   number: string;
   title: string;
+  kind?: 'BOT' | 'WEBSITE';
   status: string;
   statusLabel: string;
   step: number;
@@ -289,11 +327,11 @@ const adm = (userId: string) => `${user(userId)}/admin`;
 
 export const api = {
   overview: (userId: string) => orNotFound(internal<Overview>('GET', `${adm(userId)}/overview`)),
-  orders: (userId: string, status?: string, q?: string) =>
+  orders: (userId: string, status?: string, q?: string, kind?: string) =>
     orNotFound(
       internal<{ statuses: { status: string; label: string }[]; orders: OrderRow[] }>(
         'GET',
-        `${adm(userId)}/orders?${new URLSearchParams({ ...(status && { status }), ...(q && { q }) })}`,
+        `${adm(userId)}/orders?${new URLSearchParams({ ...(status && { status }), ...(q && { q }), ...(kind && { kind }) })}`,
       ),
     ),
   order: (userId: string, id: string) =>
@@ -341,6 +379,19 @@ export const api = {
     ),
   saveAdmins: (userId: string, body: { users?: string[]; roles?: string[] }) =>
     internal<{ users: string[]; roles: string[] }>('PUT', `${adm(userId)}/admins`, body),
+  sites: (userId: string) =>
+    internal<{ sites: ClientSite[] }>('GET', `${user(userId)}/sites`).then((r) => r.sites),
+  leads: (userId: string, status?: string) =>
+    orNotFound(
+      internal<{ counts: Record<string, number>; leads: LeadRow[] }>(
+        'GET',
+        `${adm(userId)}/leads${status ? `?status=${encodeURIComponent(status)}` : ''}`,
+      ),
+    ),
+  lead: (userId: string, id: string) =>
+    orNotFound(internal<LeadDetail>('GET', `${adm(userId)}/leads/${Number(id)}`)),
+  saveLead: (userId: string, id: string, body: unknown) =>
+    internal<{ status: string; note: string | null }>('PATCH', `${adm(userId)}/leads/${Number(id)}`, body),
   people: (userId: string) => orNotFound(internal<{ people: Person[] }>('GET', `${adm(userId)}/people`)),
   createOrder: (userId: string, body: unknown) =>
     internal<{ id: number; number: string }>('POST', `${adm(userId)}/orders`, body),
@@ -352,10 +403,14 @@ export const api = {
   saveSiteAccess: (userId: string, body: { launched?: boolean; previewUsers?: string[] }) =>
     internal<{ launched: boolean; previewUsers: string[] }>('PUT', `${user(userId)}/admin/site`, body),
   me: cache((userId: string) =>
-    internal<{ owner: boolean; admin: boolean; vps: boolean }>('GET', `${user(userId)}/me`).catch(() => ({
+    internal<{ owner: boolean; admin: boolean; vps: boolean; newLeads?: number }>(
+      'GET',
+      `${user(userId)}/me`,
+    ).catch(() => ({
       owner: false,
       admin: false,
       vps: false,
+      newLeads: 0,
     })),
   ),
   vps: (userId: string, range: string) =>

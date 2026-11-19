@@ -17,11 +17,13 @@ interface NavItem {
 const CLIENT: NavItem[] = [
   { href: '/panel', label: 'Pulpit', icon: 'desktop', exact: true },
   { href: '/panel/boty', label: 'Moje boty', icon: 'bot' },
+  { href: '/panel/strony', label: 'Moje strony', icon: 'laptop' },
   { href: '/panel/zlecenia', label: 'Zlecenia', icon: 'package' },
 ];
 const ADMIN: NavItem[] = [
   { href: '/admin', label: 'Przegląd', icon: 'checklist', exact: true },
   { href: '/admin/zlecenia', label: 'Zlecenia', icon: 'cart' },
+  { href: '/admin/zapytania', label: 'Zapytania', icon: 'notification' },
   { href: '/admin/tickety', label: 'Tickety', icon: 'ticket' },
   { href: '/admin/klienci', label: 'Klienci', icon: 'users' },
   { href: '/admin/ewidencja', label: 'Ewidencja', icon: 'invoice', ownerOnly: true },
@@ -61,7 +63,17 @@ function RouteProgress() {
   return <div className={`route-bar ${state}`} aria-hidden />;
 }
 
-function NavGroup({ title, items, path }: { title: string; items: NavItem[]; path: string }) {
+function NavGroup({
+  title,
+  items,
+  path,
+  badges,
+}: {
+  title: string;
+  items: NavItem[];
+  path: string;
+  badges?: Record<string, number>;
+}) {
   return (
     <div className="nav-group">
       <div className="nav-title">{title}</div>
@@ -77,6 +89,7 @@ function NavGroup({ title, items, path }: { title: string; items: NavItem[]; pat
           >
             <Icon name={it.icon} size={20} />
             <span>{it.label}</span>
+            {!!badges?.[it.href] && <span className="nav-badge">{badges[it.href]}</span>}
           </Link>
         );
       })}
@@ -88,11 +101,13 @@ export function AppShell({
   user,
   owner,
   admin,
+  badges,
   children,
 }: {
   user: { name: string; avatar: string };
   owner: boolean;
   admin: boolean;
+  badges?: Record<string, number>;
   children: ReactNode;
 }) {
   const path = usePathname();
@@ -180,7 +195,12 @@ export function AppShell({
           )}
           <NavGroup title="Panel klienta" items={CLIENT} path={path} />
           {admin && (
-            <NavGroup title="Administracja" items={ADMIN.filter((i) => owner || !i.ownerOnly)} path={path} />
+            <NavGroup
+              title="Administracja"
+              items={ADMIN.filter((i) => owner || !i.ownerOnly)}
+              path={path}
+              badges={badges}
+            />
           )}
         </nav>
         <div className="app-user">
@@ -190,7 +210,14 @@ export function AppShell({
             <Link href="/" className="faint small">
               Strona główna{' '}
               <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden style={{ verticalAlign: '-1px' }}>
-                <path d="M3 7l4-4M3.5 3H7v3.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M3 7l4-4M3.5 3H7v3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </Link>
           </div>

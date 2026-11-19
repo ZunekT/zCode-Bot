@@ -55,7 +55,7 @@ const monitoringCommand = defineCommand({
     .addSubcommand((s) =>
       s
         .setName('dodaj')
-        .setDescription('Dodaj bota do monitoringu')
+        .setDescription('Dodaj bota lub stronę do monitoringu')
         .addStringOption((o) =>
           o.setName('nazwa').setDescription('Nazwa na tablicy statusu').setRequired(true).setMaxLength(40),
         )
@@ -72,7 +72,7 @@ const monitoringCommand = defineCommand({
             ),
         )
         .addStringOption((o) =>
-          o.setName('adres').setDescription('Tryb HTTP: adres health-check (200 = działa)'),
+          o.setName('adres').setDescription('Tryb HTTP lub strona: adres (np. https://firma.pl)'),
         )
         .addUserOption((o) => o.setName('bot').setDescription('Tryb presence: konto bota'))
         .addUserOption((o) =>
@@ -127,8 +127,8 @@ const monitoringCommand = defineCommand({
       const mode = interaction.options.getString('tryb', true) as Mode;
       const url = interaction.options.getString('adres')?.trim() ?? null;
       const botUser = interaction.options.getUser('bot');
-      if (mode === 'http' && (!url || !/^https?:\/\/\S+$/i.test(url)))
-        throw new UserError('Tryb HTTP wymaga adresu `http(s)://…`.');
+      if ((mode === 'http' || mode === 'site') && (!url || !/^https?:\/\/\S+$/i.test(url)))
+        throw new UserError('Ten tryb wymaga adresu `http(s)://…`.');
       if (mode === 'presence') {
         if (!botUser?.bot) throw new UserError('Tryb presence wymaga wskazania konta bota (opcja `bot`).');
         if (!env.ENABLE_PRESENCE_INTENT)
@@ -142,7 +142,7 @@ const monitoringCommand = defineCommand({
         data: {
           name,
           mode,
-          healthUrl: mode === 'http' ? url : null,
+          healthUrl: mode === 'http' || mode === 'site' ? url : null,
           botUserId: mode === 'presence' ? botUser!.id : null,
           heartbeatToken: mode === 'heartbeat' ? newHeartbeatToken() : null,
           ownerId: interaction.options.getUser('wlasciciel')?.id ?? null,

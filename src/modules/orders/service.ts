@@ -1,5 +1,5 @@
 import { AttachmentBuilder, FileBuilder, type SendableChannels } from 'discord.js';
-import type { Order, OrderStatus, Prisma } from '../../generated/prisma/client.js';
+import type { Order, OrderStatus, Prisma, ServiceKind } from '../../generated/prisma/client.js';
 import type { ZxClient } from '../../client.js';
 import { prisma } from '../../db/prisma.js';
 import { getSendableChannel } from '../../core/channels.js';
@@ -113,6 +113,7 @@ export interface CreateOrderInput {
   deadline?: Date | null;
   repoUrl?: string | null;
   ticketId?: number | null;
+  kind?: ServiceKind;
   actorId: string;
 }
 
@@ -121,13 +122,16 @@ export async function createOrder(
   input: CreateOrderInput,
   panelChannel?: SendableChannels | null,
 ): Promise<FullOrder> {
+  let kind: ServiceKind = input.kind ?? 'BOT';
   if (input.ticketId) {
     const ticket = await prisma.ticket.findUnique({ where: { id: input.ticketId } });
     if (ticket?.orderId) throw new UserError(`Ten ticket ma już zlecenie ${formatOrderId(ticket.orderId)}.`);
+    if (!input.kind && ticket?.category === 'WEBSITE') kind = 'WEBSITE';
   }
   const order = await prisma.order.create({
     data: {
       userId: input.userId,
+      kind,
       title: input.title.slice(0, 120),
       description: input.description?.slice(0, 2000) || null,
       price: input.price ?? null,

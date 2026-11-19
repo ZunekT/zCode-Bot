@@ -5,10 +5,15 @@ import { Fx } from '@/components/Fx';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: { default: 'zxCode – programowanie botów Discord', template: '%s · zxCode' },
+  title: { default: 'zxCode – strony internetowe i boty Discord', template: '%s · zxCode' },
   description:
-    'Boty Discord na zamówienie: tickety, ekonomia, RP, moderacja i integracje. Panel ustawień, monitoring 24/7 i opieka po wdrożeniu.',
-  openGraph: { title: 'zxCode – programowanie botów Discord', images: ['/branding/banner.png'], locale: 'pl_PL', type: 'website' },
+    'Nowoczesne strony internetowe i boty Discord na zamówienie. Projekt, kod, wdrożenie, monitoring 24/7 i opieka po starcie.',
+  openGraph: {
+    title: 'zxCode – strony internetowe i boty Discord',
+    images: ['/branding/banner.png'],
+    locale: 'pl_PL',
+    type: 'website',
+  },
   icons: { icon: '/emojis/logo_round.png' },
 };
 

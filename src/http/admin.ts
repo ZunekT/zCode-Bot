@@ -133,6 +133,7 @@ export function adminRoutes(app: FastifyInstance, client: ZxClient, ownerCheck: 
             number: formatOrderId(o.id),
             title: o.title,
             status: o.status,
+            kind: o.kind,
             statusLabel: ORDER_STATUSES[o.status].label,
             client: await person(client, o.userId),
             ...totalsOf(o),
@@ -168,7 +169,8 @@ export function adminRoutes(app: FastifyInstance, client: ZxClient, ownerCheck: 
   app.get(`${base}/orders`, async (request, reply) => {
     try {
       if (!(await ownerCheck(request.params, reply))) return;
-      const q = request.query as { status?: string; q?: string };
+      const q = request.query as { status?: string; q?: string; kind?: string };
+      const kind = q.kind === 'BOT' || q.kind === 'WEBSITE' ? q.kind : undefined;
       const status = STATUS_ORDER.includes(q.status as OrderStatus) ? (q.status as OrderStatus) : undefined;
       const active = q.status === 'active';
       const search = q.q?.trim().slice(0, 60);
@@ -176,6 +178,7 @@ export function adminRoutes(app: FastifyInstance, client: ZxClient, ownerCheck: 
       const orders = await prisma.order.findMany({
         where: {
           ...(status && { status }),
+          ...(kind && { kind }),
           ...(active && { status: { in: ACTIVE_ORDER_STATUSES } }),
           ...(search && {
             OR: [
@@ -197,6 +200,7 @@ export function adminRoutes(app: FastifyInstance, client: ZxClient, ownerCheck: 
             number: formatOrderId(o.id),
             title: o.title,
             status: o.status,
+            kind: o.kind,
             statusLabel: ORDER_STATUSES[o.status].label,
             client: await person(client, o.userId),
             ...totalsOf(o),
@@ -236,6 +240,7 @@ export function adminRoutes(app: FastifyInstance, client: ZxClient, ownerCheck: 
           title: o.title,
           description: o.description,
           status: o.status,
+          kind: o.kind,
           statusLabel: ORDER_STATUSES[o.status].label,
           client: await person(client, o.userId),
           ...totalsOf(o),

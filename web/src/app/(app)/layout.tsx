@@ -9,7 +9,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const session = await requireSession();
   const me = await api.me(session.id);
   return (
-    <AppShell user={{ name: session.globalName ?? session.username, avatar: avatarUrl(session, 64) }} owner={me.owner} admin={me.admin}>
+    <AppShell
+      user={{ name: session.globalName ?? session.username, avatar: avatarUrl(session, 64) }}
+      owner={me.owner}
+      admin={me.admin}
+      badges={{ '/admin/zapytania': me.newLeads ?? 0 }}
+    >
       {children}
     </AppShell>
   );

@@ -338,6 +338,7 @@ export function adminMoreRoutes(
       const actorId = await ownerCheck(request.params, reply);
       if (!actorId) return;
       const b = (request.body ?? {}) as {
+        kind?: unknown;
         userId?: string;
         title?: string;
         description?: string;
@@ -361,6 +362,7 @@ export function adminMoreRoutes(
         description: b.description?.trim().slice(0, 2000) || null,
         price,
         deadline,
+        kind: b.kind === 'WEBSITE' ? 'WEBSITE' : 'BOT',
         actorId,
       });
       return { id: order.id, number: formatOrderId(order.id) };

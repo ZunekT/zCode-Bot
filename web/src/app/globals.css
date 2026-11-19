@@ -1551,7 +1551,7 @@ textarea:focus {
 .tw {
   display: inline-grid;
   vertical-align: top;
-  text-align: left;
+  text-align: center;
   white-space: nowrap;
   font-size: min(1em, 8.4vw);
 }

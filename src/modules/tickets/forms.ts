@@ -22,7 +22,23 @@ const BUDGETS = [
   { value: 'wycena', label: 'Nie wiem – proszę o wycenę' },
 ];
 
-const DEADLINES = [
+export const SITE_BUDGETS = [
+  { value: 'do1000', label: 'do 1000 zł' },
+  { value: '1000-2500', label: '1000–2500 zł' },
+  { value: '2500-5000', label: '2500–5000 zł' },
+  { value: '5000+', label: 'powyżej 5000 zł' },
+  { value: 'wycena', label: 'Nie wiem – proszę o wycenę' },
+];
+
+export const SITE_TYPES = [
+  { value: 'wizytowka', label: 'Wizytówka / landing page' },
+  { value: 'firmowa', label: 'Strona firmowa (kilka podstron)' },
+  { value: 'sklep', label: 'Sklep internetowy' },
+  { value: 'aplikacja', label: 'Aplikacja / panel WWW' },
+  { value: 'inne', label: 'Inne / przebudowa strony' },
+];
+
+export const DEADLINES = [
   { value: 'luz', label: 'Bez pośpiechu' },
   { value: '2tyg', label: 'Do 2 tygodni' },
   { value: '1tyg', label: 'Do tygodnia' },
@@ -64,11 +80,34 @@ export function ticketForm(category: TicketCategory, prefill: { name?: string; d
         })
         .build();
 
+    case 'WEBSITE':
+      return form
+        .text({
+          id: 'name',
+          label: 'Nazwa projektu / firmy',
+          max: 80,
+          placeholder: 'np. Strona dla studia tatuażu',
+          value: prefill.name,
+        })
+        .select({ id: 'type', label: 'Rodzaj strony', options: SITE_TYPES, placeholder: 'Co budujemy?' })
+        .text({
+          id: 'description',
+          label: 'Opis – co ma być na stronie?',
+          description: 'Podstrony, funkcje, przykłady stron, które Ci się podobają, domena',
+          paragraph: true,
+          min: 20,
+          max: 2000,
+          value: prefill.description,
+        })
+        .select({ id: 'budget', label: 'Budżet', options: SITE_BUDGETS, placeholder: 'Wybierz przedział' })
+        .select({ id: 'deadline', label: 'Termin', options: DEADLINES, placeholder: 'Na kiedy?' })
+        .build();
+
     case 'SUPPORT':
       return form
         .text({
           id: 'bot',
-          label: 'Którego bota dotyczy?',
+          label: 'Którego bota lub strony dotyczy?',
           max: 80,
           placeholder: 'nazwa bota lub numer zlecenia, np. ZX-0042',
         })
@@ -152,6 +191,18 @@ export function parseTicketForm(category: TicketCategory, i: ModalSubmitInteract
           a('Termin', labelOf(DEADLINES, select(i, 'deadline'))),
         ]),
         files: files(i),
+      };
+    case 'WEBSITE':
+      return {
+        subject: text(i, 'name'),
+        answers: clean([
+          a('Projekt', text(i, 'name')),
+          a('Rodzaj', labelOf(SITE_TYPES, select(i, 'type'))),
+          a('Opis', text(i, 'description')),
+          a('Budżet', labelOf(SITE_BUDGETS, select(i, 'budget'))),
+          a('Termin', labelOf(DEADLINES, select(i, 'deadline'))),
+        ]),
+        files: [],
       };
     case 'SUPPORT':
       return {

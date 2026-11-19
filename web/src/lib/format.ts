@@ -25,3 +25,6 @@ export const roleColor = (c?: number) => (c ? `#${c.toString(16).padStart(6, '0'
 export function guildIconUrl(icon: string | null): string | null {
   return icon && /^https:\/\/cdn\.discordapp\.com\//.test(icon) ? icon : null;
 }
+
+export const leadTone = (s: string) =>
+  s === 'NEW' ? 'pill-info' : s === 'CONTACTED' ? 'pill-warn' : s === 'WON' ? 'pill-ok pill-done' : 'pill-plain';

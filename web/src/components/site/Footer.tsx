@@ -13,19 +13,24 @@ export function Footer() {
                 zx<b>Code</b>
               </span>
             </Link>
-            <p>Programowanie botów Discord. Projekt, kod, wdrożenie i opieka – w jednym miejscu.</p>
+            <p>Strony internetowe i boty Discord. Projekt, kod, wdrożenie i opieka – w jednym miejscu.</p>
+            <a href="mailto:kontakt@zxcode.pl" className="sfooter-mail">
+              kontakt@zxcode.pl
+            </a>
           </div>
           <nav aria-label="Stopka">
             <div>
-              <b>Oferta</b>
-              <Link href="/realizacje">Realizacje</Link>
+              <b>Usługi</b>
+              <Link href="/strony-internetowe">Strony internetowe</Link>
+              <Link href="/boty-discord">Boty Discord</Link>
               <Link href="/cennik">Cennik</Link>
-              <Link href="/opinie">Opinie</Link>
-              <Link href="/faq">FAQ</Link>
+              <Link href="/realizacje">Realizacje</Link>
             </div>
             <div>
               <b>Klient</b>
-              <a href="/zamow">Zamów bota</a>
+              <Link href="/zamow">Bezpłatna wycena</Link>
+              <Link href="/opinie">Opinie</Link>
+              <Link href="/faq">FAQ</Link>
               <Link href="/panel" prefetch={false}>
                 Panel klienta
               </Link>

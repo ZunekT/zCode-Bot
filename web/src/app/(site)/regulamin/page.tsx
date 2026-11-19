@@ -34,11 +34,13 @@ const sections: LegalSection[] = [
           gospodarczą lub zawodową.
         </li>
         <li>
-          <b>Usługa</b> – wykonanie bota Discord lub jego modyfikacji (Dzieło), a także usługi dodatkowe: hosting, monitoring,
-          opieka techniczna i dostęp do Panelu.
+          <b>Usługa</b> – wykonanie bota Discord albo strony internetowej (w tym sklepu internetowego i aplikacji WWW) lub ich
+          modyfikacji (Dzieło), a także usługi dodatkowe: hosting, konfiguracja domeny, monitoring, opieka techniczna i dostęp do
+          Panelu.
         </li>
         <li>
-          <b>Panel</b> – panel klienta na zxcode.pl, w którym Klient zarządza ustawieniami swojego bota.
+          <b>Panel</b> – panel klienta na zxcode.pl, w którym Klient widzi postęp zleceń i płatności, zarządza ustawieniami swoich
+          botów i sprawdza stan swoich stron.
         </li>
         <li>
           <b>Wycena</b> – indywidualna oferta określająca zakres, cenę i termin realizacji.
@@ -51,13 +53,16 @@ const sections: LegalSection[] = [
     title: 'Zamówienie i zawarcie umowy',
     body: (
       <ol>
-        <li>Zamówienie składa się przez ticket „Zamówienie” na serwerze Discord zxCode, opisując oczekiwany zakres prac.</li>
+        <li>
+          Zamówienie składa się przez formularz wyceny na zxcode.pl, ticket na serwerze Discord zxCode albo e-mailem: <Mail />,
+          opisując oczekiwany zakres prac.
+        </li>
         <li>
           Usługodawca przygotowuje bezpłatną Wycenę. Ceny na stronie zxcode.pl są orientacyjne i nie stanowią oferty w rozumieniu
           Kodeksu cywilnego.
         </li>
-        <li>Umowa zostaje zawarta z chwilą akceptacji Wyceny przez Klienta w tickecie (forma dokumentowa).</li>
-        <li>Zmiana zakresu po zawarciu umowy wymaga nowej Wyceny lub aneksu uzgodnionego w tickecie.</li>
+        <li>Umowa zostaje zawarta z chwilą akceptacji Wyceny przez Klienta w tickecie lub e-mailem (forma dokumentowa).</li>
+        <li>Zmiana zakresu po zawarciu umowy wymaga nowej Wyceny lub aneksu uzgodnionego w tickecie lub e-mailem.</li>
       </ol>
     ),
   },
@@ -71,7 +76,11 @@ const sections: LegalSection[] = [
           Płatność odbywa się przelewem na podstawie proformy. Po zapłacie Klient może otrzymać rachunek. Przy większych projektach Usługodawca może wymagać
           zaliczki – jej wysokość podaje w Wycenie.
         </li>
-        <li>Usługi cykliczne (np. hosting) opłaca się z góry za dany okres rozliczeniowy.</li>
+        <li>Usługi cykliczne (np. hosting, opieka nad stroną) opłaca się z góry za dany okres rozliczeniowy.</li>
+        <li>
+          Opłaty zewnętrznych dostawców (np. rejestracja i odnowienie domeny, płatne wtyczki, bramki płatności) nie są wliczone w
+          cenę Usługi, chyba że Wycena stanowi inaczej.
+        </li>
         <li>Brak płatności za usługę cykliczną może skutkować wstrzymaniem jej świadczenia po wcześniejszym powiadomieniu.</li>
       </ol>
     ),
@@ -84,31 +93,64 @@ const sections: LegalSection[] = [
         <li>Termin realizacji podawany jest w Wycenie i liczy się od dnia zaksięgowania płatności (lub zaliczki).</li>
         <li>Klient współpracuje przy realizacji – w szczególności udziela informacji i dostępów niezbędnych do wykonania Usługi.</li>
         <li>
-          Przed odbiorem Klient może przetestować bota na swoim serwerze i zgłosić uwagi. Usługodawca wprowadza poprawki
-          mieszczące się w uzgodnionym zakresie.
+          Przed odbiorem Klient może przetestować bota na swoim serwerze lub stronę w wersji testowej i zgłosić uwagi. Usługodawca
+          wprowadza poprawki mieszczące się w uzgodnionym zakresie.
         </li>
         <li>
-          Odbiór następuje przez potwierdzenie w tickecie. Brak zgłoszenia uwag w ciągu 7 dni od udostępnienia bota do odbioru
-          oznacza jego odebranie.
+          Odbiór następuje przez potwierdzenie w tickecie lub e-mailem. Brak zgłoszenia uwag w ciągu 7 dni od udostępnienia Dzieła
+          do odbioru oznacza jego odebranie.
         </li>
-        <li>Przez 30 dni od odbioru Usługodawca bezpłatnie usuwa błędy w działaniu bota w uzgodnionym zakresie.</li>
+        <li>Przez 30 dni od odbioru Usługodawca bezpłatnie usuwa błędy w działaniu Dzieła w uzgodnionym zakresie.</li>
+      </ol>
+    ),
+  },
+  {
+    id: 'strony',
+    title: 'Strony internetowe',
+    body: (
+      <ol>
+        <li>
+          Klient dostarcza treści (teksty, zdjęcia, logo, dane firmy) i odpowiada za to, że ma do nich prawa oraz że są zgodne z
+          prawem. Usługodawca może użyć licencjonowanych zdjęć, ikon i fontów, jeśli Wycena tak przewiduje.
+        </li>
+        <li>
+          Domena i hosting mogą być zarejestrowane na Klienta albo – na jego prośbę – utrzymywane przez Usługodawcę. Na żądanie
+          Klienta Usługodawca przekazuje dostęp do domeny i strony, o ile Usługa została w pełni opłacona.
+        </li>
+        <li>
+          Strona jest testowana w aktualnych wersjach popularnych przeglądarek (m.in. Chrome, Safari, Firefox, Edge) na komputerach i
+          urządzeniach mobilnych.
+        </li>
+        <li>
+          Usługodawca przygotowuje stronę zgodnie z wymaganiami technicznymi (m.in. HTTPS, informacja o plikach cookies). Za treść
+          dokumentów prawnych działalności Klienta (np. regulaminu sklepu, polityki prywatności) odpowiada Klient, chyba że Wycena
+          obejmuje ich przygotowanie – przygotowane wzory nie stanowią porady prawnej.
+        </li>
+        <li>
+          Pozycja strony w wyszukiwarkach zależy od czynników niezależnych od Usługodawcy (algorytmy, konkurencja, treści), dlatego
+          Usługodawca nie gwarantuje określonej pozycji.
+        </li>
       </ol>
     ),
   },
   {
     id: 'prawa',
-    title: 'Prawa do bota i kodu',
+    title: 'Prawa do Dzieła i kodu',
     body: (
       <ol>
         <li>
-          Z chwilą zapłaty pełnej ceny Klient otrzymuje niewyłączną, nieograniczoną czasowo licencję na korzystanie z bota na
-          swoich serwerach Discord, chyba że Wycena stanowi inaczej (np. przeniesienie autorskich praw majątkowych do kodu).
+          Z chwilą zapłaty pełnej ceny Klient otrzymuje niewyłączną, nieograniczoną czasowo licencję na korzystanie z Dzieła – bota
+          na swoich serwerach Discord lub strony internetowej w ramach swojej działalności – chyba że Wycena stanowi inaczej (np.
+          przeniesienie autorskich praw majątkowych do kodu i projektu graficznego).
         </li>
         <li>
           Biblioteki i elementy wspólne używane w wielu projektach (w tym pakiety zxcode-sdk i zxcode-heartbeat) pozostają
-          własnością Usługodawcy; Klient może z nich korzystać w ramach swojego bota.
+          własnością Usługodawcy; Klient może z nich korzystać w ramach swojego Dzieła.
         </li>
-        <li>Usługodawca może umieścić bota w portfolio (opis i zrzuty ekranu), chyba że Klient się temu sprzeciwi.</li>
+        <li>
+          Usługodawca może umieścić Dzieło w portfolio (opis, zrzuty ekranu, a w przypadku strony – link), chyba że Klient się temu
+          sprzeciwi.
+        </li>
       </ol>
     ),
   },
@@ -118,12 +160,19 @@ const sections: LegalSection[] = [
     body: (
       <ol>
         <li>Logowanie do Panelu odbywa się przez konto Discord. Klient odpowiada za bezpieczeństwo swojego konta Discord.</li>
-        <li>Zmiany wprowadzone w Panelu są stosowane w bocie automatycznie. Klient odpowiada za ustawienia, które wprowadził.</li>
+        <li>
+          Zmiany wprowadzone w Panelu są stosowane w bocie automatycznie. Klient odpowiada za ustawienia, które wprowadził – także
+          przez osoby, którym udostępnił bota w Panelu.
+        </li>
         <li>
           Usługodawca dokłada starań, aby hosting i Panel działały nieprzerwanie, jednak nie odpowiada za przerwy wynikające z
-          awarii Discorda, dostawców infrastruktury lub siły wyższej. Planowane prace serwisowe ogłaszane są z wyprzedzeniem.
+          awarii Discorda, rejestratorów domen, dostawców infrastruktury lub siły wyższej. Planowane prace serwisowe ogłaszane są z
+          wyprzedzeniem.
         </li>
-        <li>Monitoring polega na automatycznym sprawdzaniu działania bota i powiadamianiu o awariach.</li>
+        <li>
+          Monitoring polega na automatycznym sprawdzaniu działania bota lub strony (w tym ważności certyfikatu SSL) i powiadamianiu
+          o awariach.
+        </li>
       </ol>
     ),
   },
@@ -172,7 +221,7 @@ const sections: LegalSection[] = [
     title: 'Odpowiedzialność',
     body: (
       <ol>
-        <li>Klient korzysta z bota zgodnie z prawem oraz Warunkami korzystania z usług Discord.</li>
+        <li>Klient korzysta z Dzieła zgodnie z prawem, a z bota – także zgodnie z Warunkami korzystania z usług Discord.</li>
         <li>
           Usługodawca nie odpowiada za skutki zmian w Discordzie (API, zasady platformy), które uniemożliwią działanie funkcji
           bota – w takim przypadku zaproponuje dostosowanie bota na podstawie odrębnej Wyceny, o ile nie dotyczy to okresu
@@ -212,7 +261,7 @@ export default function TermsPage() {
     <LegalPage
       kicker="Dokumenty"
       title="Regulamin"
-      lead="Zasady zamawiania botów, płatności, odbioru, reklamacji i korzystania z panelu klienta."
+      lead="Zasady zamawiania stron internetowych i botów, płatności, odbioru, reklamacji i korzystania z panelu klienta."
       sections={sections}
     />
   );

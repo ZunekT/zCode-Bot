@@ -41,7 +41,7 @@ async function build(client: ZxClient) {
         include: { images: { select: { id: true }, orderBy: { position: 'asc' } } },
       }),
       prisma.faqArticle.findMany({ orderBy: { createdAt: 'asc' }, take: 8 }),
-      prisma.monitoredBot.findMany({ select: { online: true, checksOk: true, checksTotal: true } }),
+      prisma.monitoredBot.findMany({ select: { online: true, checksOk: true, checksTotal: true, mode: true } }),
     ]);
 
   const guild = client.guilds.cache.get(env.GUILD_ID);
@@ -57,11 +57,13 @@ async function build(client: ZxClient) {
       rating: ratingAgg._count ? Math.round((ratingAgg._avg.rating ?? 0) * 100) / 100 : null,
       reviews: ratingAgg._count,
       members: guild?.memberCount ?? null,
-      botsMonitored: monitored.length,
+      botsMonitored: monitored.filter((m) => m.mode !== 'site').length,
+      sitesMonitored: monitored.filter((m) => m.mode === 'site').length,
       uptime: totals.all ? Math.round((totals.ok / totals.all) * 10000) / 100 : null,
     },
     packages: packages.map((p) => ({
       id: p.id,
+      kind: p.kind,
       name: p.name,
       description: p.description,
       price: Number(p.price),
@@ -69,12 +71,14 @@ async function build(client: ZxClient) {
     })),
     addons: items.map((i) => ({
       id: i.id,
+      kind: i.kind,
       label: i.label,
       description: i.description,
       price: Number(i.price),
     })),
     portfolio: portfolio.map((p) => ({
       id: p.id,
+      kind: p.kind,
       title: p.title,
       description: p.description,
       technologies: p.technologies,

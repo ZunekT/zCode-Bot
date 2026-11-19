@@ -1,10 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
-import type { SiteData } from '@/lib/site';
+import type { Kind, SiteData } from '@/lib/site';
 import { Icon } from '../Icon';
 import { CountUp, FaqList, LiveSwitches, PanelMock, Spotlight } from './islands';
 import { Arrow, Check, Marquee, Reveal, Stars } from './primitives';
+import { BotMock, WebMock } from './WebMock';
 
 export { FaqList };
 
@@ -62,17 +63,19 @@ export function PageHero({
 }
 
 const TECH = [
-  'discord.js v14',
+  'Next.js',
+  'React',
   'TypeScript',
   'Node.js',
+  'discord.js v14',
   'PostgreSQL',
   'Redis',
   'Docker',
   'Prisma',
-  'Components v2',
+  'SEO',
+  'Core Web Vitals',
   'REST API',
   'Webhooki',
-  'GitHub',
 ];
 
 export function TechStrip() {
@@ -97,7 +100,12 @@ export function Stats({ stats }: { stats: SiteData['stats'] }) {
     stats.rating !== null &&
       stats.reviews >= 1 && { v: stats.rating, d: 1, s: '/5', label: `średnia z ${stats.reviews} opinii` },
     stats.uptime !== null &&
-      stats.botsMonitored >= 1 && { v: stats.uptime, d: uptimeDecimals, s: '%', label: 'dostępności botów' },
+      stats.botsMonitored + (stats.sitesMonitored ?? 0) >= 1 && {
+        v: stats.uptime,
+        d: uptimeDecimals,
+        s: '%',
+        label: stats.sitesMonitored ? 'dostępności stron i botów' : 'dostępności botów',
+      },
     stats.members !== null && stats.members >= 10 && { v: stats.members, label: 'osób na serwerze zxCode' },
   ].filter(Boolean) as { v: number; d?: number; s?: string; label: string }[];
   if (items.length < 2) return null;
@@ -146,7 +154,7 @@ function UptimeBars() {
   );
 }
 
-export function Services() {
+export function BotServices() {
   return (
     <section id="uslugi" className="section cv">
       <div className="wrap">
@@ -262,39 +270,66 @@ export function Services() {
   );
 }
 
-const STEPS = [
+type Step = { title: string; text: string };
+
+export const STEPS: Step[] = [
   {
-    title: 'Ticket na Discordzie',
-    text: 'Opisujesz, czego potrzebujesz. Dopytamy o szczegóły i zaproponujemy rozwiązanie.',
+    title: 'Zapytanie',
+    text: 'Wypełniasz krótki formularz wyceny albo otwierasz ticket na Discordzie. Dopytamy o szczegóły.',
   },
   { title: 'Wycena i termin', text: 'Dostajesz konkretną cenę, zakres i termin. Zaczynamy po akceptacji.' },
   {
-    title: 'Realizacja',
-    text: 'Postęp widzisz w panelu zlecenia. Testujesz bota na swoim serwerze przed odbiorem.',
+    title: 'Projekt i realizacja',
+    text: 'Najpierw projekt, potem kod. Postęp widzisz na żywo w panelu klienta i testujesz przed odbiorem.',
   },
   {
-    title: 'Wdrożenie i opieka',
-    text: 'Uruchamiamy bota, dajemy dostęp do panelu i pilnujemy, żeby działał.',
+    title: 'Start i opieka',
+    text: 'Uruchamiamy projekt, monitorujemy go 24/7 i pomagamy w dalszym rozwoju.',
   },
 ];
 
-export function Process() {
+export const WEB_STEPS: Step[] = [
+  { title: 'Brief i wycena', text: 'Poznajemy Twoją firmę, cele i konkurencję. Dostajesz zakres, cenę i termin.' },
+  {
+    title: 'Projekt graficzny',
+    text: 'Projektujemy wygląd strony na komputery i telefony. Wprowadzamy poprawki, aż będzie idealnie.',
+  },
+  {
+    title: 'Kodowanie i testy',
+    text: 'Zamieniamy projekt w szybką stronę, dodajemy treści i testujemy na różnych urządzeniach.',
+  },
+  {
+    title: 'Start i opieka',
+    text: 'Podpinamy domenę, SSL i analitykę. Pilnujemy, żeby strona działała i była aktualna.',
+  },
+];
+
+export const BOT_STEPS: Step[] = [
+  { title: 'Ticket na Discordzie', text: 'Opisujesz, czego potrzebujesz. Dopytamy o szczegóły i zaproponujemy rozwiązanie.' },
+  { title: 'Wycena i termin', text: 'Dostajesz konkretną cenę, zakres i termin. Zaczynamy po akceptacji.' },
+  { title: 'Realizacja', text: 'Postęp widzisz w panelu zlecenia. Testujesz bota na swoim serwerze przed odbiorem.' },
+  { title: 'Wdrożenie i opieka', text: 'Uruchamiamy bota, dajemy dostęp do panelu i pilnujemy, żeby działał.' },
+];
+
+export function Process({ steps = STEPS, title }: { steps?: Step[]; title?: React.ReactNode }) {
   return (
     <section id="proces" className="section cv">
       <div className="wrap">
         <SectionHead
           kicker="Jak pracujemy"
           title={
-            <>
-              Od pomysłu do działającego bota <span className="grad">w 4 krokach</span>
-            </>
+            title ?? (
+              <>
+                Od pomysłu do gotowego projektu <span className="grad">w 4 krokach</span>
+              </>
+            )
           }
         />
         <div className="steps">
           <div className="steps-line" aria-hidden>
             <span />
           </div>
-          {STEPS.map((s, i) => (
+          {steps.map((s, i) => (
             <Reveal key={s.title} className="step" delay={i * 0.08}>
               <div className="step-num">0{i + 1}</div>
               <h3>{s.title}</h3>
@@ -312,7 +347,15 @@ export function PortfolioGrid({ items, compact }: { items: SiteData['portfolio']
     <div className="works">
       {items.map((p, i) => (
         <Reveal key={p.id} delay={(i % 3) * 0.06}>
-          <article className={`work${compact ? ' compact' : ''}`}>
+          <article className={`work${compact ? ' compact' : ''}${p.kind === 'WEBSITE' ? ' work-web' : ''}`}>
+            {p.kind === 'WEBSITE' && (
+              <div className="work-chrome" aria-hidden>
+                <i />
+                <i />
+                <i />
+                {p.url && <span>{p.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>}
+              </div>
+            )}
             <div className="work-media">
               {p.images[0] ? (
                 <Image
@@ -324,12 +367,12 @@ export function PortfolioGrid({ items, compact }: { items: SiteData['portfolio']
                 />
               ) : (
                 <div className="ph">
-                  <img src="/emojis/bot.png" alt="" width={72} height={72} />
+                  <img src={`/emojis/${p.kind === 'WEBSITE' ? 'laptop' : 'bot'}.png`} alt="" width={72} height={72} />
                 </div>
               )}
               {p.url && (
-                <a className="work-link" href={p.url} target="_blank" rel="noreferrer">
-                  Zobacz ↗
+                <a className="work-link" href={p.url} target="_blank" rel="noreferrer noopener">
+                  {p.kind === 'WEBSITE' ? 'Odwiedź stronę' : 'Zobacz'} <Arrow />
                 </a>
               )}
             </div>
@@ -343,6 +386,9 @@ export function PortfolioGrid({ items, compact }: { items: SiteData['portfolio']
               </div>
             )}
             <div className="work-body">
+              <span className={`work-kind ${p.kind === 'WEBSITE' ? 'web' : 'bot'}`}>
+                {p.kind === 'WEBSITE' ? 'Strona internetowa' : 'Bot Discord'}
+              </span>
               <h3>{p.title}</h3>
               <p>{p.description}</p>
               {p.technologies.length > 0 && (
@@ -360,7 +406,17 @@ export function PortfolioGrid({ items, compact }: { items: SiteData['portfolio']
   );
 }
 
-export function PortfolioPreview({ items }: { items: SiteData['portfolio'] }) {
+export function PortfolioPreview({
+  items,
+  title,
+  lead = 'Wybrane strony i boty, które zrobiliśmy dla naszych klientów.',
+  href = '/realizacje',
+}: {
+  items: SiteData['portfolio'];
+  title?: React.ReactNode;
+  lead?: string;
+  href?: string;
+}) {
   if (!items.length) return null;
   return (
     <section className="section cv">
@@ -368,16 +424,18 @@ export function PortfolioPreview({ items }: { items: SiteData['portfolio'] }) {
         <SectionHead
           kicker="Realizacje"
           title={
-            <>
-              Boty, które <span className="grad">już działają</span>
-            </>
+            title ?? (
+              <>
+                Projekty, które <span className="grad">już działają</span>
+              </>
+            )
           }
-          lead="Wybrane projekty dla serwerów naszych klientów."
+          lead={lead}
         />
         <PortfolioGrid items={items.slice(0, 3)} compact />
         {items.length > 3 && (
           <div className="more">
-            <Link href="/realizacje" className="ghost-btn">
+            <Link href={href} className="ghost-btn">
               Wszystkie realizacje ({items.length}) <Arrow />
             </Link>
           </div>
@@ -387,12 +445,12 @@ export function PortfolioPreview({ items }: { items: SiteData['portfolio'] }) {
   );
 }
 
-export function PricingCards({ packages }: { packages: SiteData['packages'] }) {
+export function PricingCards({ packages, orderHref = '/zamow' }: { packages: SiteData['packages']; orderHref?: string }) {
   if (!packages.length) {
     return (
       <Reveal>
         <div className="more">
-          <a href="/zamow" className="cta-btn">
+          <a href={orderHref} className="cta-btn">
             Poproś o bezpłatną wycenę <Arrow />
           </a>
         </div>
@@ -422,7 +480,10 @@ export function PricingCards({ packages }: { packages: SiteData['packages'] }) {
                 </li>
               ))}
             </ul>
-            <a href="/zamow" className={i === featured ? 'cta-btn' : 'ghost-btn'}>
+            <a
+              href={orderHref.startsWith('/zamow/strona') ? `${orderHref}?pakiet=${encodeURIComponent(p.name)}` : orderHref}
+              className={i === featured ? 'cta-btn' : 'ghost-btn'}
+            >
               Zamów <Arrow />
             </a>
           </div>
@@ -432,13 +493,21 @@ export function PricingCards({ packages }: { packages: SiteData['packages'] }) {
   );
 }
 
-export function Addons({ addons }: { addons: SiteData['addons'] }) {
+export function Addons({
+  addons,
+  title = 'Dodatki i moduły',
+  lead = 'Do każdego pakietu możesz dobrać dodatkowe funkcje.',
+}: {
+  addons: SiteData['addons'];
+  title?: string;
+  lead?: string;
+}) {
   if (!addons.length) return null;
   return (
     <Reveal>
       <div className="panel-box">
-        <h3>Dodatki i moduły</h3>
-        <p className="muted small">Do każdego pakietu możesz dobrać dodatkowe funkcje.</p>
+        <h3>{title}</h3>
+        <p className="muted small">{lead}</p>
         <div className="addons-grid">
           {addons.map((a) => (
             <div key={a.id} className="addon">
@@ -594,22 +663,256 @@ export function FinalCta({ title, lead }: { title?: React.ReactNode; lead?: stri
             <h2>
               {title ?? (
                 <>
-                  Masz pomysł na bota? <span className="grad">Zróbmy go razem.</span>
+                  Masz pomysł? <span className="grad">Zróbmy go razem.</span>
                 </>
               )}
             </h2>
             <p className="lead" style={{ margin: '0 auto' }}>
-              {lead ?? 'Opisz pomysł w tickecie na Discordzie – przygotujemy bezpłatną wycenę.'}
+              {lead ?? 'Opisz, czego potrzebujesz – przygotujemy bezpłatną wycenę.'}
             </p>
             <div className="final-actions">
               <a href="/zamow" className="cta-btn">
-                <Icon name="discord" size={20} /> Otwórz ticket na Discordzie <Arrow />
+                Bezpłatna wycena <Arrow />
               </a>
               <Link href="/cennik" className="ghost-btn">
                 Zobacz cennik
               </Link>
             </div>
           </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+const minPrice = (packages: SiteData['packages'], kind: Kind) => {
+  const list = packages.filter((p) => p.kind === kind).map((p) => p.price);
+  return list.length ? Math.min(...list) : null;
+};
+
+export function ServicesSplit({ packages }: { packages: SiteData['packages'] }) {
+  const cards = [
+    {
+      kind: 'WEBSITE' as const,
+      href: '/strony-internetowe',
+      icon: 'laptop',
+      title: 'Strony internetowe',
+      text: 'Wizytówki, strony firmowe, sklepy i aplikacje WWW. Szybkie, piękne na każdym ekranie i gotowe na Google.',
+      points: ['Projekt graficzny na miarę', 'Wersja na telefony', 'SEO i PageSpeed 90+', 'Domena, SSL i hosting'],
+      visual: <WebMock compact url="twojafirma.pl" />,
+    },
+    {
+      kind: 'BOT' as const,
+      href: '/boty-discord',
+      icon: 'bot',
+      title: 'Boty Discord',
+      text: 'Tickety, ekonomia, RP, moderacja i integracje. Ustawienia zmieniasz sam w panelu na stronie.',
+      points: ['Bot szyty na miarę', 'Panel ustawień online', 'Monitoring 24/7', 'Opieka i rozwój'],
+      visual: <BotMock />,
+    },
+  ];
+  return (
+    <section id="uslugi" className="section cv">
+      <div className="wrap">
+        <SectionHead
+          kicker="Co robimy"
+          title={
+            <>
+              Dwie usługi, <span className="grad">jedna jakość</span>
+            </>
+          }
+          lead="Od pomysłu, przez projekt i kod, po wdrożenie i opiekę. Wybierz, czego potrzebujesz – albo połącz jedno z drugim."
+        />
+        <div className="split">
+          {cards.map((c, i) => {
+            const from = minPrice(packages, c.kind);
+            return (
+              <Reveal key={c.kind} delay={i * 0.08}>
+                <Spotlight className={`split-card ${c.kind === 'WEBSITE' ? 'web' : 'bot'}`}>
+                  <div className="split-top">
+                    <div className="tile-icon">
+                      <Icon name={c.icon} size={24} />
+                    </div>
+                    {from !== null && (
+                      <span className="split-from">
+                        od <b>{money(from)} zł</b>
+                      </span>
+                    )}
+                  </div>
+                  <h3>{c.title}</h3>
+                  <p>{c.text}</p>
+                  <ul className="split-points">
+                    {c.points.map((pt) => (
+                      <li key={pt}>
+                        <Check /> {pt}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="split-visual">{c.visual}</div>
+                  <Link href={c.href} className="split-link">
+                    Poznaj ofertę <Arrow />
+                  </Link>
+                </Spotlight>
+              </Reveal>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function WhyUs() {
+  const items = [
+    ['lightning', 'Szybkość', 'Strony ładują się w ułamku sekundy, a boty odpowiadają od razu. Optymalizujemy każdy szczegół.'],
+    ['mobile', 'Na każdym ekranie', 'Projektujemy najpierw na telefony, potem na komputery. Wszystko wygląda i działa świetnie.'],
+    ['star', 'Dopracowany design', 'Nowoczesny wygląd, płynne animacje i spójna identyfikacja – bez szablonów z marketu.'],
+    ['shield_check', 'Bezpieczeństwo', 'HTTPS, aktualne biblioteki, testy bezpieczeństwa i kopie zapasowe w standardzie.'],
+    ['server', 'Monitoring 24/7', 'Sprawdzamy strony i boty co minutę, pilnujemy certyfikatów SSL i reagujemy przy awarii.'],
+    ['support', 'Opieka po wdrożeniu', 'Nie znikamy po oddaniu projektu. Poprawki, nowe funkcje i doradztwo – jesteśmy w kontakcie.'],
+  ];
+  return (
+    <section className="section cv">
+      <div className="wrap">
+        <SectionHead
+          center
+          kicker="Dlaczego zxCode"
+          title={
+            <>
+              Robimy to <span className="grad">porządnie</span>
+            </>
+          }
+        />
+        <div className="why">
+          {items.map(([icon, title, text], i) => (
+            <Reveal key={title} delay={(i % 3) * 0.06}>
+              <Spotlight className="why-card">
+                <div className="tile-icon">
+                  <Icon name={icon!} size={24} />
+                </div>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </Spotlight>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function SiteTypes() {
+  const types = [
+    ['idea', 'Wizytówka i landing page', 'Jedna, dopracowana strona, która przedstawia Twoją firmę lub produkt i zbiera zapytania.'],
+    ['partnership', 'Strona firmowa', 'Kilka podstron, oferta, realizacje, blog i kontakt. Treści zmieniasz sam w panelu.'],
+    ['store', 'Sklep internetowy', 'Produkty, koszyk, płatności online i panel zamówień – gotowe do sprzedaży od pierwszego dnia.'],
+    ['code', 'Aplikacje i panele WWW', 'Panele klienta, systemy rezerwacji, dashboardy i integracje – także z Discordem.'],
+  ];
+  return (
+    <section className="section cv">
+      <div className="wrap">
+        <SectionHead
+          kicker="Co budujemy"
+          title={
+            <>
+              Strona dopasowana <span className="grad">do Twojego celu</span>
+            </>
+          }
+          lead="Niezależnie od tego, czy potrzebujesz prostej wizytówki, czy rozbudowanej aplikacji – zaprojektujemy i zbudujemy ją od zera."
+        />
+        <div className="types">
+          {types.map(([icon, title, text], i) => (
+            <Reveal key={title} delay={i * 0.06}>
+              <Spotlight className="type-card">
+                <span className="type-num">0{i + 1}</span>
+                <div className="tile-icon">
+                  <Icon name={icon!} size={24} />
+                </div>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </Spotlight>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function WebIncluded() {
+  const items = [
+    ['mobile', 'Responsywność', 'idealny wygląd na telefonach, tabletach i komputerach'],
+    ['lightning', 'Szybkość', 'wynik 90+ w Google PageSpeed i lekki kod'],
+    ['documentation', 'SEO od podstaw', 'meta, mapa strony, dane strukturalne, podgląd w social media'],
+    ['lock', 'HTTPS i bezpieczeństwo', 'certyfikat SSL, aktualne biblioteki, ochrona formularzy'],
+    ['checklist', 'RODO i cookies', 'polityka prywatności i informacja o plikach cookies'],
+    ['coins', 'Analityka', 'statystyki odwiedzin, żeby wiedzieć, co działa'],
+    ['tools', 'Panel do edycji', 'treści, zdjęcia i wpisy zmieniasz bez programisty (opcjonalnie)'],
+    ['server', 'Monitoring i opieka', 'pilnujemy, żeby strona działała, a certyfikat był ważny'],
+  ];
+  return (
+    <section className="section cv">
+      <div className="wrap">
+        <SectionHead
+          kicker="W standardzie"
+          title={
+            <>
+              Wszystko, czego potrzebuje <span className="grad">nowoczesna strona</span>
+            </>
+          }
+        />
+        <Reveal>
+          <div className="included">
+            {items.map(([icon, b, t]) => (
+              <div key={b} className="included-item">
+                <Icon name={icon!} size={24} />
+                <span>
+                  <b>{b}</b>
+                  {t}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+export function ClientPanelShowcase() {
+  return (
+    <section id="panel" className="section cv" style={{ scrollMarginTop: 60 }}>
+      <div className="wrap showcase">
+        <div>
+          <SectionHead
+            kicker="Panel klienta"
+            title={
+              <>
+                Wszystko <span className="grad">w jednym miejscu</span>
+              </>
+            }
+            lead="Logujesz się przez Discord i widzisz swoje projekty: postęp zleceń, płatności, ustawienia botów i stan stron."
+          />
+          <Reveal delay={0.08}>
+            <ul className="bullets">
+              {[
+                ['package', 'Postęp na żywo', 'etapy, zadania i terminy Twojego zlecenia'],
+                ['invoice', 'Płatności i dokumenty', 'proformy i dane do przelewu zawsze pod ręką'],
+                ['tools', 'Ustawienia botów', 'kanały, role, teksty i moduły – bez czekania na nas'],
+                ['laptop', 'Stan Twoich stron', 'dostępność, czas odpowiedzi i ważność certyfikatu SSL'],
+              ].map(([icon, b, t]) => (
+                <li key={b}>
+                  <Icon name={icon!} size={24} />
+                  <span>
+                    <b>{b}</b> – {t}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        </div>
+        <Reveal delay={0.08}>
+          <PanelMock />
         </Reveal>
       </div>
     </section>

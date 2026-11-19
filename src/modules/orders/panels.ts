@@ -6,7 +6,14 @@ import { button } from '../../ui/builders/buttons.js';
 import { card, change, codeBlock, diffBlock, tableBlock, type DiffSign } from '../../ui/components/card.js';
 import { e, emojiComponent } from '../../ui/emojis.js';
 import { discordTime, formatMoney, formatOrderId, progressBar, truncate } from '../../utils/format.js';
-import { ORDER_ACTIONS, ORDER_STATUSES, STATUS_ORDER, type OrderAction } from './constants.js';
+import {
+  ORDER_ACTIONS,
+  ORDER_STATUSES,
+  SERVICE_KINDS,
+  STATUS_ORDER,
+  statusText as kindText,
+  type OrderAction,
+} from './constants.js';
 
 export type FullOrder = Order & { tasks: OrderTask[]; payments: Payment[]; invoices: Invoice[] };
 
@@ -104,7 +111,7 @@ export function orderPanel(order: FullOrder, avatarUrl: string, interactive = tr
 
   const panel = new Panel({ accent })
     .sectionWithThumbnail(
-      `## ${e('package')} Zlecenie ${formatOrderId(order.id)}\n**${order.title}**\nKlient: <@${order.userId}>`,
+      `## ${e(SERVICE_KINDS[order.kind].emoji)} Zlecenie ${formatOrderId(order.id)}\n**${order.title}**\n${SERVICE_KINDS[order.kind].label} · klient: <@${order.userId}>`,
       avatarUrl,
     )
     .separator()
@@ -160,7 +167,7 @@ export function statusChangeCard(
     tone: to.tone,
     emoji: to.emoji,
     title: `${formatOrderId(order.id)} • ${to.label}`,
-    description: `${forClient ? `**${order.title}**\n` : ''}${to.clientText}`,
+    description: `${forClient ? `**${order.title}**\n` : ''}${kindText(order.status, order.kind)}`,
     thumbnail: actorAvatar,
     fields: [
       {

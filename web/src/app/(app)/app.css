@@ -1412,3 +1412,122 @@ a.link-row:hover {
 .stat-value {
   letter-spacing: -0.03em;
 }
+
+.nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: 0 0 12px rgba(26, 159, 255, 0.55);
+}
+
+.lead-row {
+  align-items: center;
+}
+.lead-preview {
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lead-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right;
+  white-space: nowrap;
+}
+.lead-desc {
+  white-space: pre-wrap;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.sites {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+  gap: 16px;
+}
+.site-card.down {
+  border-color: rgba(255, 93, 108, 0.35);
+}
+.site-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+}
+.site-ico {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: rgba(26, 159, 255, 0.1);
+  border: 1px solid rgba(26, 159, 255, 0.25);
+  flex-shrink: 0;
+}
+.site-name {
+  font-weight: 750;
+  font-size: 16.5px;
+  letter-spacing: -0.01em;
+}
+.site-url {
+  color: var(--muted);
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+.site-url:hover {
+  color: var(--brand);
+}
+.site-stats {
+  border-top: 1px solid var(--border);
+}
+.site-foot {
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border);
+}
+.tone-ok {
+  color: var(--ok);
+}
+.tone-warn {
+  color: var(--warn);
+}
+.tone-err {
+  color: var(--err);
+}
+@media (max-width: 640px) {
+  .lead-meta {
+    display: none;
+  }
+}
+
+.kind-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px 0 5px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.kind-tag.web {
+  color: #7cc8ff;
+  background: rgba(26, 159, 255, 0.12);
+}
+.kind-tag.bot {
+  color: #a9b6ff;
+  background: rgba(109, 134, 255, 0.14);
+}

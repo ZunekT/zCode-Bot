@@ -41,12 +41,23 @@ const sections: LegalSection[] = [
               <td>ID konta Discord, nazwa użytkownika, wyświetlana nazwa, avatar. Nie otrzymujemy hasła ani e-maila.</td>
             </tr>
             <tr>
+              <td>Formularz wyceny strony</td>
+              <td>
+                Imię, e-mail, opis projektu oraz – jeśli je podasz – nazwa firmy, adres obecnej strony i nick na Discordzie. Do
+                ochrony przed spamem zapisujemy też skrót (hash) adresu IP, z którego nie da się odczytać samego adresu.
+              </td>
+            </tr>
+            <tr>
               <td>Zamówienie i realizacja</td>
               <td>Treść ticketów, ustalenia, dane do rachunku (imię i nazwisko lub firma, adres, NIP), historia wpłat.</td>
             </tr>
             <tr>
               <td>Panel i boty</td>
               <td>Ustawienia botów, lista serwerów, kanałów i ról, na których działa bot, dziennik zmian ustawień.</td>
+            </tr>
+            <tr>
+              <td>Monitoring stron klientów</td>
+              <td>Adres strony, dostępność, czas odpowiedzi i data ważności certyfikatu SSL.</td>
             </tr>
             <tr>
               <td>Serwer Discord zxCode</td>
@@ -70,7 +81,8 @@ const sections: LegalSection[] = [
     body: (
       <ul>
         <li>
-          <b>Zawarcie i wykonanie umowy</b> (wycena, realizacja, hosting, panel, wsparcie) – art. 6 ust. 1 lit. b RODO.
+          <b>Działania przed zawarciem umowy na Twoje żądanie</b> (przygotowanie wyceny, w tym z formularza na stronie) oraz{' '}
+          <b>zawarcie i wykonanie umowy</b> (realizacja, hosting, monitoring, panel, wsparcie) – art. 6 ust. 1 lit. b RODO.
         </li>
         <li>
           <b>Obowiązki prawne</b>, w szczególności podatkowe (m.in. prowadzenie uproszczonej ewidencji sprzedaży) – art. 6 ust. 1 lit. c RODO.
@@ -110,6 +122,7 @@ const sections: LegalSection[] = [
     body: (
       <ul>
         <li>dane związane z umową – przez czas jej wykonywania, a potem do upływu terminów przedawnienia roszczeń,</li>
+        <li>zapytania z formularza wyceny – do 12 miesięcy od ostatniej zmiany, potem są automatycznie usuwane,</li>
         <li>dokumenty księgowe – przez okres wymagany przepisami podatkowymi (zwykle 5 lat od końca roku podatkowego),</li>
         <li>sesja logowania na stronie – do 7 dni albo do wylogowania,</li>
         <li>logi serwera i logi moderacyjne – nie dłużej niż jest to potrzebne do celów bezpieczeństwa,</li>

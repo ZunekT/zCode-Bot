@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import tls from 'node:tls';
 import type { MonitoredBot } from '../../generated/prisma/client.js';
 import type { ZxClient } from '../../client.js';
 import { env } from '../../config/env.js';
@@ -22,6 +23,7 @@ export const MODES = {
   http: { label: 'HTTP (adres health-check)', emoji: 'server' },
   heartbeat: { label: 'Heartbeat (bot sam się zgłasza)', emoji: 'lightning' },
   presence: { label: 'Status online na Discordzie', emoji: 'discord' },
+  site: { label: 'Strona internetowa (WWW + SSL)', emoji: 'laptop' },
 } as const satisfies Record<string, { label: string; emoji: EmojiName }>;
 export type Mode = keyof typeof MODES;
 
@@ -36,7 +38,44 @@ export interface CheckResult {
   ms?: number;
   error?: string;
   version?: string;
+  sslExpiresAt?: Date | null;
 }
+
+const SSL_WARN_DAYS = 14;
+const SSL_CACHE_MS = 6 * 3600_000;
+const sslCache = new Map<string, { at: number; exp: Date | null }>();
+
+export async function sslExpiry(rawUrl: string): Promise<Date | null> {
+  let u: URL;
+  try {
+    u = new URL(rawUrl);
+  } catch {
+    return null;
+  }
+  if (u.protocol !== 'https:') return null;
+  const hit = sslCache.get(u.host);
+  if (hit && Date.now() - hit.at < SSL_CACHE_MS) return hit.exp;
+  const exp = await new Promise<Date | null>((resolve) => {
+    const sock = tls.connect(
+      { host: u.hostname, port: Number(u.port) || 443, servername: u.hostname, timeout: 8000 },
+      () => {
+        const cert = sock.getPeerCertificate();
+        sock.end();
+        resolve(cert?.valid_to ? new Date(cert.valid_to) : null);
+      },
+    );
+    sock.on('error', () => resolve(null));
+    sock.on('timeout', () => {
+      sock.destroy();
+      resolve(null);
+    });
+  });
+  sslCache.set(u.host, { at: Date.now(), exp });
+  return exp;
+}
+
+export const isSite = (b: Pick<MonitoredBot, 'mode'>) => b.mode === 'site';
+const what = (b: Pick<MonitoredBot, 'mode'>) => (isSite(b) ? 'Twoja strona' : 'Twój bot');
 
 export async function checkBot(client: ZxClient, bot: MonitoredBot): Promise<CheckResult> {
   if (bot.mode === 'heartbeat') {
@@ -67,6 +106,13 @@ export async function checkBot(client: ZxClient, bot: MonitoredBot): Promise<Che
       headers: { 'user-agent': 'zxCode-Monitor/1.0' },
     });
     const ms = Math.round(performance.now() - start);
+    if (isSite(bot)) {
+      await res.body?.cancel().catch(() => undefined);
+      const sslExpiresAt = await sslExpiry(bot.healthUrl);
+      return res.ok
+        ? { ok: true, ms, sslExpiresAt }
+        : { ok: false, ms, error: `HTTP ${res.status}`, sslExpiresAt };
+    }
     let version: string | undefined;
     if (res.headers.get('content-type')?.includes('json')) {
       const body = (await res.json().catch(() => null)) as { version?: unknown } | null;
@@ -124,9 +170,9 @@ async function alert(client: ZxClient, bot: MonitoredBot, down: boolean, result:
           card({
             tone: down ? 'error' : 'success',
             emoji: 'bot',
-            title: down ? `Twój bot ${bot.name} ma problem` : `Twój bot ${bot.name} znowu działa`,
+            title: down ? `${what(bot)} ${bot.name} ma problem` : `${what(bot)} ${bot.name} znowu działa`,
             description: down
-              ? 'Wykryliśmy, że bot przestał odpowiadać. Już się tym zajmujemy – nie musisz nic robić.'
+              ? `Wykryliśmy, że ${isSite(bot) ? 'strona przestała' : 'bot przestał'} odpowiadać. Już się tym zajmujemy – nie musisz nic robić.`
               : `Wszystko wróciło do normy${downtime ? ` (przerwa: ${downtime})` : ''}. Dziękujemy za cierpliwość!`,
           }),
         ),
@@ -153,8 +199,10 @@ export async function processBot(client: ZxClient, bot: MonitoredBot): Promise<b
       ...(result.version && { version: result.version }),
       ...(goesDown && { online: false, lastDownAt: new Date() }),
       ...(goesUp && { online: true, lastUpAt: new Date() }),
+      ...(result.sslExpiresAt !== undefined && { sslExpiresAt: result.sslExpiresAt }),
     },
   });
+  await checkSsl(client, updated);
   if (goesDown || goesUp) {
     log.warn(
       `${bot.name}: ${goesDown ? 'AWARIA' : 'działa ponownie'}${result.error ? ` (${result.error})` : ''}`,
@@ -164,12 +212,58 @@ export async function processBot(client: ZxClient, bot: MonitoredBot): Promise<b
   return goesDown || goesUp;
 }
 
+async function checkSsl(client: ZxClient, bot: MonitoredBot) {
+  if (!isSite(bot) || !bot.sslExpiresAt) return;
+  const days = Math.floor((bot.sslExpiresAt.getTime() - Date.now()) / 86_400_000);
+  if (days > SSL_WARN_DAYS + 6 && bot.sslWarnedAt) {
+    await prisma.monitoredBot.update({ where: { id: bot.id }, data: { sslWarnedAt: null } });
+    return;
+  }
+  if (days > SSL_WARN_DAYS) return;
+  if (bot.sslWarnedAt && Date.now() - bot.sslWarnedAt.getTime() < 3 * 86_400_000) return;
+  await prisma.monitoredBot.update({ where: { id: bot.id }, data: { sslWarnedAt: new Date() } });
+  const when = days < 0 ? 'wygasł' : days === 0 ? 'wygasa dziś' : `wygasa za ${days} dni`;
+  const config = await getConfig();
+  const channel = await getSendableChannel(client, config.staffAlertChannelId);
+  await channel
+    ?.send(
+      v2Message(
+        card({
+          tone: 'warning',
+          emoji: 'lock',
+          title: `Certyfikat SSL: ${bot.name}`,
+          description: `Certyfikat ${when} (${discordTime(bot.sslExpiresAt, 'D')}). Odnów go, zanim przeglądarki zaczną ostrzegać odwiedzających.`,
+          fields: [
+            { emoji: 'laptop', label: 'Strona', value: bot.healthUrl },
+            { emoji: 'user', label: 'Klient', value: bot.ownerId ? `<@${bot.ownerId}>` : null },
+          ],
+        }),
+      ),
+    )
+    .catch(() => undefined);
+  if (bot.ownerId) {
+    const owner = await client.users.fetch(bot.ownerId).catch(() => null);
+    await owner
+      ?.send(
+        v2Message(
+          card({
+            tone: 'warning',
+            emoji: 'lock',
+            title: `Certyfikat SSL strony ${bot.name} ${when}`,
+            description: 'Wiemy o tym i zajmiemy się odnowieniem – nie musisz nic robić.',
+          }),
+        ),
+      )
+      .catch(() => undefined);
+  }
+}
+
 export function statusBoard(bots: MonitoredBot[]): Panel {
   const allOk = bots.every((b) => b.online);
-  const panel = new Panel({ tone: allOk ? 'success' : 'error' }).title('server', 'Status botów zxCode');
-  if (!bots.length) return panel.text('-# Brak monitorowanych botów.');
+  const panel = new Panel({ tone: allOk ? 'success' : 'error' }).title('server', 'Status usług zxCode');
+  if (!bots.length) return panel.text('-# Brak monitorowanych usług.');
   panel.text(
-    allOk ? '**Wszystkie systemy działają.**' : '**Część botów ma problemy** – już nad tym pracujemy.',
+    allOk ? '**Wszystkie systemy działają.**' : '**Część usług ma problemy** – już nad tym pracujemy.',
   );
 
   const nameW = Math.min(24, Math.max(...bots.map((b) => b.name.length)));
@@ -179,7 +273,9 @@ export function statusBoard(bots: MonitoredBot[]): Panel {
       (b.online ? 'online' : 'offline').padEnd(8),
       uptime(b).padEnd(8),
       b.version ? `v${b.version.replace(/^v/, '')}` : '',
-      b.online && b.mode === 'http' && b.lastResponseMs !== null ? `${b.lastResponseMs} ms` : '',
+      b.online && (b.mode === 'http' || b.mode === 'site') && b.lastResponseMs !== null
+        ? `${b.lastResponseMs} ms`
+        : '',
       !b.online && b.lastDownAt ? `od ${formatDuration(Date.now() - b.lastDownAt.getTime())}` : '',
     ];
     return [b.online ? '+' : '-', cols.filter(Boolean).join('  ').trimEnd()];

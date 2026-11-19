@@ -1,13 +1,14 @@
 import { Hero } from '@/components/site/Hero';
 import {
+  ClientPanelShowcase,
   FinalCta,
-  PanelShowcase,
   PortfolioPreview,
   Process,
   ReviewsPreview,
-  Services,
+  ServicesSplit,
   Stats,
   TechStrip,
+  WhyUs,
 } from '@/components/site/Sections';
 import { getSite } from '@/lib/site';
 
@@ -24,10 +25,11 @@ export default async function Home() {
       <Hero rating={data.stats.rating} reviews={data.stats.reviews} avatars={avatars} />
       <TechStrip />
       <Stats stats={data.stats} />
-      <Services />
+      <ServicesSplit packages={data.packages} />
+      <WhyUs />
       <Process />
       <PortfolioPreview items={data.portfolio} />
-      <PanelShowcase />
+      <ClientPanelShowcase />
       <ReviewsPreview reviews={data.reviews} />
       <FinalCta />
     </>
