@@ -7,3 +7,5 @@ backups/
 transcripts/
 dump.rdb
 .zxcode-cache.json
+
+web/AGENTS.md
