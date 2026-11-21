@@ -29,7 +29,7 @@
     "uptime",
     "zxcode"
   ],
-  "license": "UNLICENSED",
+  "license": "MIT",
   "peerDependencies": {
     "discord.js": ">=14"
   },
