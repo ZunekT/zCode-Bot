@@ -1,0 +1,38 @@
+{
+  "name": "zxcode-cms",
+  "version": "1.0.0",
+  "description": "Treść strony internetowej edytowana w panelu zxcode.pl – teksty, zdjęcia, listy i cenniki bez programisty.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.mjs",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "cms",
+    "headless-cms",
+    "nextjs",
+    "content",
+    "zxcode",
+    "website"
+  ],
+  "license": "MIT",
+  "homepage": "https://zxcode.pl",
+  "author": "zxCode (https://zxcode.pl)",
+  "publishConfig": {
+    "access": "public"
+  }
+}

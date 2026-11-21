@@ -3,6 +3,7 @@ import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { env } from './env';
 import type { BotDetails, BotMembers, GuildSettings, PublicBot } from './types';
+import type { CmsAsset, CmsEditorData, CmsSiteSummary } from './cms';
 
 export class ApiError extends Error {
   constructor(
@@ -381,6 +382,17 @@ export const api = {
     internal<{ users: string[]; roles: string[] }>('PUT', `${adm(userId)}/admins`, body),
   sites: (userId: string) =>
     internal<{ sites: ClientSite[] }>('GET', `${user(userId)}/sites`).then((r) => r.sites),
+  cmsSites: (userId: string) =>
+    internal<{ sites: CmsSiteSummary[] }>('GET', `${user(userId)}/cms`).then((r) => r.sites),
+  cmsSite: (userId: string, id: string) =>
+    orNotFound(internal<CmsEditorData>('GET', `${user(userId)}/cms/${Number(id) || 0}`)),
+  cmsSave: (userId: string, id: number, body: { content: unknown; revision?: number }) =>
+    internal<{ revision: number }>('PUT', `${user(userId)}/cms/${id}/content`, body),
+  cmsUpload: (userId: string, id: number, body: { name: string; data: string }) =>
+    internal<CmsAsset>('POST', `${user(userId)}/cms/${id}/assets`, body),
+  cmsDeleteAsset: (userId: string, id: number, assetId: string) =>
+    internal<{ ok: true }>('DELETE', `${user(userId)}/cms/${id}/assets/${assetId}`),
+  cmsRefresh: (userId: string, id: number) => internal<{ ok: boolean }>('POST', `${user(userId)}/cms/${id}/refresh`, {}),
   leads: (userId: string, status?: string) =>
     orNotFound(
       internal<{ counts: Record<string, number>; leads: LeadRow[] }>(

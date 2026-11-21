@@ -5,12 +5,13 @@ import { createLogger } from '../utils/logger.js';
 import { githubRoutes } from './routes/github.js';
 import { heartbeatRoutes } from './routes/heartbeat.js';
 import { sdkRoutes } from '../modules/sdk/routes.js';
+import { cmsRoutes } from '../modules/cms/routes.js';
 
 const log = createLogger('http');
 
 const PRIVATE =
   /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::1$|::ffff:(127|10|192\.168|172\.(1[6-9]|2\d|3[01]))\.|f[cd])/;
-const GUARDED = /^\/(sdk|heartbeat|webhooks)\//;
+const GUARDED = /^\/(sdk|cms|heartbeat|webhooks)\//;
 
 const authLimiter = (() => {
   const WINDOW = 10 * 60_000;
@@ -69,6 +70,7 @@ export async function startHttpServer(client: ZxClient): Promise<FastifyInstance
   await app.register(githubRoutes);
   await app.register(heartbeatRoutes);
   await app.register(sdkRoutes);
+  await app.register(cmsRoutes);
 
   await app.listen({ port: env.HTTP_PORT, host: '0.0.0.0' });
   log.info(`Serwer HTTP nasłuchuje na porcie ${env.HTTP_PORT}`);

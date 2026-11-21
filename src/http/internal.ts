@@ -11,6 +11,7 @@ import { adminRoutes } from './admin.js';
 import { adminMoreRoutes } from './admin-more.js';
 import { clientOrderRoutes } from './client-orders.js';
 import { leadRoutes } from './leads.js';
+import { cmsInternalRoutes } from './cms.js';
 import { getAccess, setAccess } from '../modules/site/service.js';
 import { guildData, publicBot, setConfig, setProfile, type Profile } from '../modules/sdk/service.js';
 import { uptime } from '../modules/monitoring/service.js';
@@ -271,6 +272,7 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
 
   adminRoutes(app, client, adminCheck as never);
   leadRoutes(app, client, adminCheck as never);
+  cmsInternalRoutes(app, client);
   adminMoreRoutes(app, client, adminCheck as never, ownerCheck as never);
 
   app.get('/internal/users/:userId/admin/admins', async (request, reply) => {

@@ -2,6 +2,7 @@ import type { BotModule } from '../core/types.js';
 import { adminModule } from './admin/index.js';
 import { announcementsModule } from './announcements/index.js';
 import { changelogModule } from './changelog/index.js';
+import { cmsModule } from './cms/index.js';
 import { clientsModule } from './clients/index.js';
 import { faqModule } from './faq/index.js';
 import { giveawaysModule } from './giveaways/index.js';
@@ -45,6 +46,7 @@ export const modules: BotModule[] = [
   remindersModule,
   statsModule,
   sdkModule,
+  cmsModule,
   vpsModule,
   siteModule,
 ];

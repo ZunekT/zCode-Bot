@@ -52,7 +52,8 @@ strona zxcode.pl z panelem klienta i administracją (`web/`) oraz pakiety npm dl
     (emituje zdarzenie `zx:result` dla efektów zapisu).
   - Nagłówki: CSP, HSTS, Permissions-Policy, COOP, nosniff (w `next.config.ts`).
   - Next nie pozwala na dodatkowe eksporty z `page.tsx` – pomocnicze funkcje trzymaj w `lib/`.
-- **Pakiety** (`packages/`): `zxcode-sdk` (boty klientów łączą się z panelem) i `zxcode-heartbeat` (monitoring).
+- **Pakiety** (`packages/`, opublikowane na npm, licencja MIT): `zxcode-sdk` (boty klientów łączą się z panelem),
+  `zxcode-heartbeat` (monitoring) i `zxcode-cms` (treść stron klientów edytowana w panelu).
 
 ## Model uprawnień
 - Właściciel = `OWNER_ID` z `.env` (albo właściciel serwera). Administratorzy = SiteSetting `admins` (`{users, roles}`),
@@ -89,6 +90,19 @@ strona zxcode.pl z panelem klienta i administracją (`web/`) oraz pakiety npm dl
 - `src/modules/polls`: `/ankieta utworz|zakoncz`, 2–10 odpowiedzi, wielokrotny wybór, ukryte wyniki, zamykanie przez job.
 - Edycja wiadomości przy głosach/zapisach jest zbijana (`src/utils/refresh.ts`), żeby nie wpaść w limity Discorda.
 - Ustawienia wszystkich trzech modułów są w panelu WWW (`src/modules/sdk/self.ts`).
+
+## Edycja treści stron klientów (CMS)
+- Jak SDK dla botów, tylko dla stron: `/cms dodaj|lista|klucz|wlasciciel|usun` daje klucz `zxs_<id>_<48hex>`
+  (`src/modules/cms`). Strona klienta używa paczki `packages/zxcode-cms` (`createSite`, `field.*`, `content()`,
+  `webhook()`), deklaruje sekcje i pola (text, textarea, number, boolean, select, color, url, image, list bez
+  zagnieżdżeń). Schemat wysyła sama przy pierwszym pobraniu treści.
+- Publiczne API bota: `GET /cms/v1/content` i `PUT /cms/v1/schema` (Bearer), `GET /cms/v1/assets/:siteId/:id.ext`
+  (publiczne, cache na rok, CSP sandbox). Zdjęcia w bazie (`CmsAsset`), tylko PNG/JPG/WebP/GIF sprawdzane po
+  zawartości, maks. 4 MB, 400 zdjęć i 150 MB na stronę.
+- Zapis z panelu: walidacja względem schematu (`src/modules/cms/schema.ts`), kontrola wersji (konflikt = błąd),
+  historia 30 wersji (`CmsVersion`), webhook do strony podpisany HMAC kluczem `sha256(klucz)` z znacznikiem czasu.
+- Panel: „Moje strony” → edytor (`web/src/components/ContentEditor.tsx`), trasy `web/src/app/api/strony/*`.
+  Dostęp: właściciel strony, właściciel zxCode i administratorzy.
 
 ## Mapa strony
 - Publiczne: `/` (hub), `/strony-internetowe`, `/boty-discord`, `/realizacje?typ=strony|boty`, `/cennik#strony|#boty`,

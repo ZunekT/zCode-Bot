@@ -12,13 +12,13 @@ const host = (url: string | null) => (url ? url.replace(/^https?:\/\//, '').repl
 
 export default async function SitesPage() {
   const session = await requireSession();
-  const sites = await api.sites(session.id).catch(() => []);
+  const [sites, cms] = await Promise.all([api.sites(session.id).catch(() => []), api.cmsSites(session.id).catch(() => [])]);
   return (
     <div className="app-page">
       <div className="app-head">
         <div>
           <h1>Moje strony</h1>
-          <p>Dostępność, szybkość i certyfikaty SSL Twoich stron – sprawdzamy je co minutę.</p>
+          <p>Treść, dostępność, szybkość i certyfikaty SSL Twoich stron.</p>
         </div>
         <div className="spacer" />
         <Link href="/zamow/strona" className="btn btn-primary">
@@ -26,7 +26,30 @@ export default async function SitesPage() {
         </Link>
       </div>
 
-      {sites.length === 0 ? (
+      {cms.length > 0 && (
+        <section className="cms-sites">
+          <h2 className="section-title">Edycja treści</h2>
+          <div className="cms-site-grid">
+            {cms.map((c) => (
+              <Link key={c.id} href={`/panel/strony/${c.id}`} className="card cms-site glow">
+                <span className="site-ico">
+                  <Icon name="documentation" size={22} />
+                </span>
+                <span className="grow" style={{ minWidth: 0 }}>
+                  <b>{c.name}</b>
+                  <small>
+                    {c.connected ? `${c.sections} ${c.sections === 1 ? 'sekcja' : c.sections % 10 >= 2 && c.sections % 10 <= 4 && (c.sections % 100 < 10 || c.sections % 100 >= 20) ? 'sekcje' : 'sekcji'} · zmiana ${timeAgo(c.updatedAt)}` : 'Czeka na połączenie strony'}
+                  </small>
+                </span>
+                <span className="btn btn-sm btn-primary">Edytuj treść</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {cms.length > 0 && sites.length > 0 && <h2 className="section-title">Monitoring</h2>}
+      {sites.length === 0 && cms.length > 0 ? null : sites.length === 0 ? (
         <EmptyState
           icon="laptop"
           title="Nie masz jeszcze stron pod opieką"
