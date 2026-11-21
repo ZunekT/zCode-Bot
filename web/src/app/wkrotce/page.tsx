@@ -100,7 +100,6 @@ export default function ComingSoon() {
             </a>
           )}
         </div>
-        <p className="soon-note">Nie musisz czekać na start – wycenę przygotujemy już teraz, bezpłatnie i bez zobowiązań.</p>
       </section>
 
       <section className="soon-cards" aria-label="Czym się zajmujemy">

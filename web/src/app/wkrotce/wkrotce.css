@@ -229,12 +229,6 @@
 .soon-btn.primary:hover {
   box-shadow: 0 14px 40px -8px rgba(26, 159, 255, 0.85);
 }
-.soon-note {
-  margin: 16px 0 0;
-  color: var(--faint, #5d6878);
-  font-size: 13.5px;
-  animation: soon-in 0.9s 0.42s cubic-bezier(0.21, 0.8, 0.3, 1) both;
-}
 
 .soon-cards {
   width: min(1100px, 100%);
