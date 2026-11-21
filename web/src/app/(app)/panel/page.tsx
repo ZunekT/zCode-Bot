@@ -31,11 +31,11 @@ export default async function Dashboard() {
           <h1>
             {hello()}, <span className="grad-text">{name}</span>
           </h1>
-          <p>Twoje boty, zlecenia i płatności w jednym miejscu.</p>
+          <p>Twoje boty, strony, zlecenia i płatności w jednym miejscu.</p>
         </div>
         <div className="actions">
           <a href="/zamow" className="btn btn-primary">
-            <Icon name="cart" size={16} /> Zamów bota
+            <Icon name="cart" size={16} /> Nowe zamówienie
           </a>
         </div>
       </div>
@@ -84,7 +84,7 @@ export default async function Dashboard() {
             </Link>
           </div>
           {active.length === 0 ? (
-            <EmptyState compact icon="package" title="Brak aktywnych zleceń" text="Zamówione boty i postęp prac pojawią się tutaj."><a href="/zamow" className="btn btn-sm btn-primary">Zamów bota</a></EmptyState>
+            <EmptyState compact icon="package" title="Brak aktywnych zleceń" text="Zamówione boty i strony oraz postęp prac pojawią się tutaj."><a href="/zamow" className="btn btn-sm btn-primary">Zamów</a></EmptyState>
           ) : (
             <div className="list">
               {active.map((o) => (

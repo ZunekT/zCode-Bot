@@ -49,14 +49,14 @@ export default async function ClientsPage() {
                       }
                     />
                   </td>
-                  <td className="r">
+                  <td className="r" data-label="Zlecenia">
                     {c.orders}
                     {c.completed > 0 && <span className="faint small"> ({c.completed} zak.)</span>}
                   </td>
                   <td className="r hide-sm">{c.active || '—'}</td>
                   <td className="r hide-sm">{c.tickets || '—'}</td>
-                  <td className="r">{pln(c.paid)}</td>
-                  <td className="r" style={{ color: c.due > 0 ? 'var(--warn)' : undefined }}>
+                  <td className="r" data-label="Zapłacono">{pln(c.paid)}</td>
+                  <td className="r" data-label="Należność" style={{ color: c.due > 0 ? 'var(--warn)' : undefined }}>
                     {c.due > 0 ? pln(c.due) : '—'}
                   </td>
                   <td className="r hide-sm muted">{date(c.lastActivity)}</td>

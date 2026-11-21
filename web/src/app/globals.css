@@ -1491,6 +1491,56 @@ textarea:focus {
   .dtable .hide-sm {
     display: none;
   }
+  .dtable,
+  .dtable tbody,
+  .dtable tfoot {
+    display: block;
+  }
+  .dtable thead {
+    display: none;
+  }
+  .dtable tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dtable tr:last-child {
+    border-bottom: 0;
+  }
+  .dtable td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+  .dtable td:not(.r):not(.mono) {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .dtable td:has(> .pill),
+  .dtable td:has(> .person) {
+    flex: 0 1 auto;
+  }
+  .dtable td.mono + td.mono {
+    margin-right: auto;
+  }
+  .dtable td.r {
+    margin-left: auto;
+  }
+  .dtable td.r + td.r {
+    margin-left: 0;
+  }
+  .dtable td[data-label]::before {
+    content: attr(data-label) ' ';
+    margin-right: 4px;
+    color: var(--faint);
+    font-size: 12px;
+  }
+  .table-wrap {
+    overflow: visible;
+  }
   .kpi-value {
     font-size: 22px;
   }

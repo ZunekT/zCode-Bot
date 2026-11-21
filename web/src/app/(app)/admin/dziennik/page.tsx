@@ -41,7 +41,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         ) : (
           <div className="list">
             {entries.map((e) => (
-              <div key={e.id} className="link-row">
+              <div key={e.id} className="link-row audit-row">
                 <PersonChip p={e.actor} />
                 <div className="grow" style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 14 }}>{e.summary}</div>

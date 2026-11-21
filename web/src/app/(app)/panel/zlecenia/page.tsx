@@ -30,9 +30,9 @@ export default async function MyOrders() {
         <div className="card empty">
           <Icon name="package" size={56} />
           <h2>Nie masz jeszcze zleceń</h2>
-          <p>Zamów bota na naszym Discordzie – zlecenie pojawi się tutaj, a postęp zobaczysz na żywo.</p>
+          <p>Zamów bota albo stronę – zlecenie pojawi się tutaj, a postęp zobaczysz na żywo.</p>
           <a href="/zamow" className="btn btn-primary">
-            Zamów bota
+            Zamów
           </a>
         </div>
       ) : (

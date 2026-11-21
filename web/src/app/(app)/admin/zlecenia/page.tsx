@@ -110,8 +110,8 @@ export default async function OrdersPage({
                     </td>
                     <td className="hide-sm muted">{o.tasksTotal ? `${o.tasksDone}/${o.tasksTotal}` : '—'}</td>
                     <td className="hide-sm muted">{date(o.deadline)}</td>
-                    <td className="r">{pln(o.total, 'do wyceny')}</td>
-                    <td className="r" style={{ color: (o.due ?? 0) > 0 ? 'var(--warn)' : undefined }}>
+                    <td className="r" data-label="Kwota">{pln(o.total, 'do wyceny')}</td>
+                    <td className="r" data-label="Do zapłaty" style={{ color: (o.due ?? 0) > 0 ? 'var(--warn)' : undefined }}>
                       {o.due === null ? '—' : pln(Math.max(0, o.due))}
                     </td>
                   </tr>
@@ -122,10 +122,10 @@ export default async function OrdersPage({
                   <td className="muted small" colSpan={5}>
                     {d.orders.length} zleceń
                   </td>
-                  <td className="r">
+                  <td className="r" data-label="Razem">
                     <b>{pln(sum.total)}</b>
                   </td>
-                  <td className="r">
+                  <td className="r" data-label="Do zapłaty">
                     <b>{pln(sum.due)}</b>
                   </td>
                 </tr>

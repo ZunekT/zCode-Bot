@@ -59,7 +59,7 @@ export function LeadActions({
     <div className="stack" style={{ gap: 14 }}>
       <div>
         <span className="field-label">Status</span>
-        <div style={{ marginTop: 8, overflowX: 'auto' }}>
+        <div style={{ marginTop: 8 }}>
           <Segmented value={current} onChange={setStatus} items={statuses} ariaLabel="Status zapytania" />
         </div>
       </div>

@@ -2970,3 +2970,41 @@ fieldset.invalid .q-chip {
     animation: none;
   }
 }
+@media (max-width: 700px) {
+  .section {
+    padding: 64px 0;
+  }
+  .steps {
+    gap: 0;
+    margin-top: 36px;
+  }
+  .step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    column-gap: 16px;
+    padding-bottom: 26px;
+  }
+  .step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    top: 48px;
+    bottom: 4px;
+    left: 21px;
+    width: 2px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, rgba(26, 159, 255, 0.45), var(--line-2));
+  }
+  .step-num {
+    grid-row: span 2;
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+    font-size: 14px;
+    box-shadow: none;
+  }
+  .step h3 {
+    margin: 10px 0 6px;
+    font-size: 17px;
+  }
+}
