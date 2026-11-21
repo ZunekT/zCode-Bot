@@ -27,6 +27,9 @@ export const env = {
   get internalSecret() {
     return required('INTERNAL_API_SECRET');
   },
+  get cmsPublicUrl() {
+    return process.env.CMS_PUBLIC_URL || null;
+  },
   get discordInvite() {
     return process.env.DISCORD_INVITE_URL || null;
   },

@@ -91,18 +91,24 @@ strona zxcode.pl z panelem klienta i administracją (`web/`) oraz pakiety npm dl
 - Edycja wiadomości przy głosach/zapisach jest zbijana (`src/utils/refresh.ts`), żeby nie wpaść w limity Discorda.
 - Ustawienia wszystkich trzech modułów są w panelu WWW (`src/modules/sdk/self.ts`).
 
-## Edycja treści stron klientów (CMS)
-- Jak SDK dla botów, tylko dla stron: `/cms dodaj|lista|klucz|wlasciciel|usun` daje klucz `zxs_<id>_<48hex>`
-  (`src/modules/cms`). Strona klienta używa paczki `packages/zxcode-cms` (`createSite`, `field.*`, `content()`,
-  `webhook()`), deklaruje sekcje i pola (text, textarea, number, boolean, select, color, url, image, list bez
-  zagnieżdżeń). Schemat wysyła sama przy pierwszym pobraniu treści.
-- Publiczne API bota: `GET /cms/v1/content` i `PUT /cms/v1/schema` (Bearer), `GET /cms/v1/assets/:siteId/:id.ext`
-  (publiczne, cache na rok, CSP sandbox). Zdjęcia w bazie (`CmsAsset`), tylko PNG/JPG/WebP/GIF sprawdzane po
-  zawartości, maks. 4 MB, 400 zdjęć i 150 MB na stronę.
-- Zapis z panelu: walidacja względem schematu (`src/modules/cms/schema.ts`), kontrola wersji (konflikt = błąd),
-  historia 30 wersji (`CmsVersion`), webhook do strony podpisany HMAC kluczem `sha256(klucz)` z znacznikiem czasu.
-- Panel: „Moje strony” → edytor (`web/src/components/ContentEditor.tsx`), trasy `web/src/app/api/strony/*`.
-  Dostęp: właściciel strony, właściciel zxCode i administratorzy.
+## Edycja treści stron (CMS) – strony klientów i zxcode.pl
+- Strony klientów: `/cms dodaj|lista|klucz|wlasciciel|usun` daje klucz `zxs_<id>_<48hex>` (`src/modules/cms`). Strona używa
+  paczki `packages/zxcode-cms` (1.1): `createSite`, `field.*` (text, textarea, richtext, number, boolean, select, color,
+  url, image, list), `content({draft})`, `state()`, `proxy()` (przerwa 503 + przekierowania + ciasteczko podglądu),
+  `preview()` (draftMode), `webhook()`, `renderRichText()` (bezpieczny HTML), skrypt statystyk `/cms/v1/t.js`.
+- zxcode.pl też jest stroną w CMS (`CmsSite.isSelf`, tworzona przy starcie bota dla właściciela). Schemat i domyślne
+  teksty w `web/src/lib/content.ts` (rejestrowany przy starcie strony – `web/src/instrumentation.ts`). Treść przez
+  wewnętrzne API (`/internal/cms/self/*`), nie przez paczkę. Edytuje tylko właściciel + osoby z nadanym dostępem
+  (administratorzy NIE). Zakładki Cennik/Realizacje/Opinie edytują te same tabele co komendy na Discordzie.
+- Funkcje każdej strony: wersja robocza + podgląd + publikacja teraz lub zaplanowana (job `cms-schedule`), historia 30
+  wersji, ogłoszenie (pasek, od–do, zamykany), przerwa techniczna (503, osoby z dostępem widzą stronę), przekierowania
+  (wykrywanie pętli), statystyki bez cookies (HyperLogLog w Redis z dobową solą, tabele `CmsStat`, `CmsStatRef`,
+  400 dni), dostęp (`CmsSiteMember`: content/publish/announcement/maintenance/redirects/stats/access + sekcje),
+  eksport JSON. Tytuły zxcode.pl: `{fragment}` = gradient (`Grad` w `primitives.tsx`).
+- zxcode.pl: przerwa i przekierowania w `web/src/proxy.ts` (stan z `/internal/site/access`, cache 15 s), ścieżki
+  /panel, /admin, /api, /logowanie działają mimo przerwy. Zapis w panelu robi `revalidateTag` + `revalidatePath`.
+  Publiczna część ma `revalidate = 60` (bez tego strony zbudowane bez API zostałyby statyczne na zawsze).
+- API panelu: jedna trasa `web/src/app/api/strony/[id]/[...akcja]/route.ts` z listą dozwolonych akcji.
 
 ## Mapa strony
 - Publiczne: `/` (hub), `/strony-internetowe`, `/boty-discord`, `/realizacje?typ=strony|boty`, `/cennik#strony|#boty`,
@@ -126,7 +132,7 @@ strona zxcode.pl z panelem klienta i administracją (`web/`) oraz pakiety npm dl
 ## Pomysły na dalszy rozwój (niezrobione)
 - Automatyczne maile (potwierdzenie zapytania, wysyłka wyceny) – potrzebny SMTP dla kontakt@zxcode.pl.
 - Akceptacja wyceny online przez klienta; zamiana zapytania w zlecenie jednym kliknięciem.
-- Statystyki bez cookies (np. Umami na VPS).
+- CMS: SEO w panelu, formularz kontaktowy w paczce, godziny otwarcia, wersje językowe.
 - Podstrony pojedynczych realizacji (SEO), więcej realizacji stron w portfolio.
 - Google Search Console (`/sitemap.xml`) i profil firmy w Google.
 

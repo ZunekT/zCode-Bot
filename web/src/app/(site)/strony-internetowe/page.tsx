@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Reveal, Arrow } from '@/components/site/primitives';
-import { FinalCta, MoreLinks, PageHero, Process, SiteTypes, WEB_STEPS, WebIncluded } from '@/components/site/Sections';
+import { Reveal, Arrow, Grad } from '@/components/site/primitives';
+import { FinalCta, MoreLinks, PageHero, Process, SiteTypes, WebIncluded } from '@/components/site/Sections';
+import { getContent } from '@/lib/content';
 import { WebMock } from '@/components/site/WebMock';
 
 export const metadata: Metadata = {
@@ -10,17 +11,14 @@ export const metadata: Metadata = {
     'Nowoczesne strony internetowe na zamówienie: wizytówki, strony firmowe, sklepy i aplikacje WWW. Szybkie, responsywne, z SEO i opieką po wdrożeniu.',
 };
 
-export default function WebsitesPage() {
+export default async function WebsitesPage() {
+  const { strony: c } = await getContent();
   return (
     <>
       <PageHero
         kicker="Strony internetowe"
-        title={
-          <>
-            Strony, które <span className="grad">robią wrażenie</span> i sprzedają
-          </>
-        }
-        lead="Projektujemy i kodujemy nowoczesne strony od zera – szybkie, piękne na każdym ekranie i przygotowane pod Google. Bez gotowych szablonów."
+        title={<Grad text={c.naglowek} />}
+        lead={c.opis}
       >
         <div className="hero2-actions">
           <Link href="/zamow/strona" className="cta-btn">
@@ -38,16 +36,9 @@ export default function WebsitesPage() {
         </Reveal>
       </section>
 
-      <SiteTypes />
-      <WebIncluded />
-      <Process
-        steps={WEB_STEPS}
-        title={
-          <>
-            Jak powstaje <span className="grad">Twoja strona</span>
-          </>
-        }
-      />
+      <SiteTypes title={c.rodzajeNaglowek} lead={c.rodzajeOpis} items={c.rodzaje} />
+      <WebIncluded title={c.standardNaglowek} items={c.standard} />
+      <Process steps={c.kroki.map((s) => ({ title: s.tytul, text: s.opis }))} title={<Grad text={c.krokiNaglowek} />} />
       <MoreLinks
         items={[
           { href: '/cennik#strony', icon: 'coins', title: 'Cennik stron', text: 'Pakiety i dodatki z cenami' },
@@ -56,14 +47,7 @@ export default function WebsitesPage() {
         ]}
       />
 
-      <FinalCta
-        title={
-          <>
-            Gotowy na nową stronę? <span className="grad">Porozmawiajmy.</span>
-          </>
-        }
-        lead="Opisz swój pomysł w krótkim formularzu – odezwiemy się z bezpłatną wyceną."
-      />
+      <FinalCta title={<Grad text={c.ctaNaglowek} />} lead={c.ctaOpis} />
     </>
   );
 }

@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Arrow } from '@/components/site/primitives';
+import { Arrow, Grad } from '@/components/site/primitives';
 import { Reveal } from '@/components/site/primitives';
-import { BOT_STEPS, BotServices, FinalCta, MoreLinks, PageHero, PanelShowcase, Process } from '@/components/site/Sections';
+import { BotServices, FinalCta, MoreLinks, PageHero, PanelShowcase, Process } from '@/components/site/Sections';
+import { getContent, lines } from '@/lib/content';
 import { BotMock } from '@/components/site/WebMock';
 import { env } from '@/lib/env';
 
@@ -12,18 +13,15 @@ export const metadata: Metadata = {
     'Boty Discord na zamówienie: tickety, ekonomia, RP, moderacja i integracje. Panel ustawień online, monitoring 24/7 i opieka po wdrożeniu.',
 };
 
-export default function BotsPage() {
+export default async function BotsPage() {
+  const { boty: c } = await getContent();
   const order = env.discordInvite ?? '/zamow';
   return (
     <>
       <PageHero
         kicker="Boty Discord"
-        title={
-          <>
-            Boty, które <span className="grad">pracują za Ciebie</span>
-          </>
-        }
-        lead="Tickety, ekonomia, RP, moderacja i integracje. Projektujemy, piszemy i utrzymujemy boty dla Twojej społeczności – a ustawienia zmieniasz sam w panelu."
+        title={<Grad text={c.naglowek} />}
+        lead={c.opis}
       >
         <div className="hero2-actions">
           <a href={order} className="cta-btn" target={env.discordInvite ? '_blank' : undefined} rel="noreferrer">
@@ -43,9 +41,9 @@ export default function BotsPage() {
         </Reveal>
       </section>
 
-      <BotServices />
+      <BotServices title={c.uslugiNaglowek} lead={c.uslugiOpis} chips={lines(c.funkcje)} />
       <PanelShowcase />
-      <Process steps={BOT_STEPS} title={<>Od pomysłu do działającego bota <span className="grad">w 4 krokach</span></>} />
+      <Process steps={c.kroki.map((s) => ({ title: s.tytul, text: s.opis }))} title={<Grad text={c.krokiNaglowek} />} />
       <MoreLinks
         items={[
           { href: '/cennik#boty', icon: 'coins', title: 'Cennik botów', text: 'Pakiety i moduły z cenami' },
@@ -54,14 +52,7 @@ export default function BotsPage() {
         ]}
       />
 
-      <FinalCta
-        title={
-          <>
-            Masz pomysł na bota? <span className="grad">Zróbmy go razem.</span>
-          </>
-        }
-        lead="Opisz pomysł w tickecie na Discordzie – przygotujemy bezpłatną wycenę."
-      />
+      <FinalCta title={<Grad text={c.ctaNaglowek} />} lead={c.ctaOpis} />
     </>
   );
 }

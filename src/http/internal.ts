@@ -12,6 +12,9 @@ import { adminMoreRoutes } from './admin-more.js';
 import { clientOrderRoutes } from './client-orders.js';
 import { leadRoutes } from './leads.js';
 import { cmsInternalRoutes } from './cms.js';
+import { selfSite } from '../modules/cms/service.js';
+import { activeMaintenance, readRedirects } from '../modules/cms/state.js';
+import { siteAccess } from '../modules/cms/access.js';
 import { getAccess, setAccess } from '../modules/site/service.js';
 import { guildData, publicBot, setConfig, setProfile, type Profile } from '../modules/sdk/service.js';
 import { uptime } from '../modules/monitoring/service.js';
@@ -245,12 +248,16 @@ export async function startInternalServer(client: ZxClient): Promise<FastifyInst
     try {
       const user = (request.query as { user?: string }).user;
       const access = await getAccess();
-      if (access.launched) return { launched: true, allowed: true };
       const id = user && /^\d{17,20}$/.test(user) ? user : null;
-      const allowed =
-        !!id &&
-        (access.previewUsers.includes(id) || (await isOwner(client, id)) || (await isSiteAdmin(client, id)));
-      return { launched: false, allowed };
+      const self = await selfSite();
+      const maintenance = self ? activeMaintenance(self) : null;
+      const redirects = self ? readRedirects(self) : [];
+      const staff = !!id && ((await isOwner(client, id)) || (await isSiteAdmin(client, id)));
+      const editor = staff || (!!id && !!self && !!(await siteAccess(client, self.id, id)));
+      const cms = { maintenance, redirects, editor };
+      if (access.launched) return { launched: true, allowed: true, ...cms };
+      const allowed = !!id && (access.previewUsers.includes(id) || staff);
+      return { launched: false, allowed, ...cms };
     } catch (err) {
       return sendError(reply, err);
     }

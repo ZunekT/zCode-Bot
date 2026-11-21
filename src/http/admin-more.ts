@@ -20,7 +20,7 @@ import { invoiceHtml } from './client-orders.js';
 type OwnerCheck = (params: unknown, reply: FastifyReply) => Promise<string | null>;
 
 const names = new Map<string, { name: string; avatar: string | null; at: number }>();
-async function person(client: ZxClient, id: string) {
+export async function person(client: ZxClient, id: string) {
   const hit = names.get(id);
   if (hit && Date.now() - hit.at < 3600_000) return { id, name: hit.name, avatar: hit.avatar };
   const u = await client.users.fetch(id).catch(() => null);

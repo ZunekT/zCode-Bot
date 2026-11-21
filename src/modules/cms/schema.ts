@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-export const CMS_FIELD_TYPES = ['text', 'textarea', 'number', 'boolean', 'select', 'color', 'url', 'image', 'list'] as const;
+export const CMS_FIELD_TYPES = ['text', 'textarea', 'richtext', 'number', 'boolean', 'select', 'color', 'url', 'image', 'list'] as const;
 export type CmsFieldType = (typeof CMS_FIELD_TYPES)[number];
 
 export interface CmsField {
@@ -69,7 +69,7 @@ function sanitizeField(f: Record<string, unknown>, nested: boolean, warn: (m: st
   const description = str(f.description, LIMITS.description);
   if (description) field.description = description;
   if (f.required === true) field.required = true;
-  if (type === 'text' || type === 'textarea') {
+  if (type === 'text' || type === 'textarea' || type === 'richtext') {
     const cap = type === 'text' ? LIMITS.text : LIMITS.textarea;
     field.maxLength = Math.min(cap, Math.max(1, Number(f.maxLength) || cap));
   }
@@ -162,7 +162,8 @@ export function validateValue(field: CmsField, v: unknown, assetExists: (id: str
     case 'boolean':
       return typeof v === 'boolean' ? { ok: true, value: v } : { ok: false, error: 'oczekiwano tak/nie' };
     case 'text':
-    case 'textarea': {
+    case 'textarea':
+    case 'richtext': {
       if (typeof v !== 'string') return { ok: false, error: 'oczekiwano tekstu' };
       const value = field.type === 'text' ? v.replace(/[\r\n]+/g, ' ').trim() : v.replace(/\r\n/g, '\n');
       const max = field.maxLength ?? LIMITS.text;
@@ -264,7 +265,7 @@ export function validateContent(schema: CmsSchema, input: unknown, assetExists: 
         out[section.key]![field.key] = defaultOf(field);
         continue;
       }
-      if ((v === null || v === '') && field.type !== 'image' && field.type !== 'url' && field.type !== 'text' && field.type !== 'textarea') {
+      if ((v === null || v === '') && field.type !== 'image' && field.type !== 'url' && field.type !== 'text' && field.type !== 'textarea' && field.type !== 'richtext') {
         if (field.required) errors.push({ path: `${section.key}.${field.key}`, message: 'pole wymagane' });
         out[section.key]![field.key] = emptyOf(field);
         continue;

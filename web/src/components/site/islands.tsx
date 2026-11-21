@@ -190,7 +190,7 @@ export function FaqList({
   items,
   firstOpen = true,
 }: {
-  items: { id: number | string; question: string; answer: string }[];
+  items: { id: number | string; question: string; answer: string; html?: string }[];
   firstOpen?: boolean;
 }) {
   const [open, setOpen] = useState<number | string | null>(firstOpen ? (items[0]?.id ?? null) : null);
@@ -212,7 +212,7 @@ export function FaqList({
             </button>
             <div id={id} className="faq-body" role="region">
               <div>
-                <div className="faq-a">{f.answer}</div>
+                {f.html ? <div className="faq-a rich" dangerouslySetInnerHTML={{ __html: f.html }} /> : <div className="faq-a">{f.answer}</div>}
               </div>
             </div>
           </div>

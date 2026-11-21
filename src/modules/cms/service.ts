@@ -1,11 +1,13 @@
 import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
-import type { CmsSite, Prisma } from '../../generated/prisma/client.js';
+import { Prisma, type CmsSite } from '../../generated/prisma/client.js';
 import { env } from '../../config/env.js';
 import { prisma } from '../../db/prisma.js';
 import { UserError } from '../../core/errors.js';
 import { createLogger } from '../../utils/logger.js';
 import { inspectImage } from './images.js';
+import { listMembers, type SiteAccess } from './access.js';
+import { publicState, readAnnouncement, readMaintenance, readRedirects } from './state.js';
 import {
   assetIds,
   mergeDefaults,
@@ -33,7 +35,15 @@ export function generateCmsKey(id: number) {
 
 export async function createSite(name: string, ownerId: string, url: string | null) {
   const temp = await prisma.cmsSite.create({
-    data: { name, ownerId, url, keyHash: `pending-${randomBytes(8).toString('hex')}`, keyPrefix: '' },
+    data: {
+      name,
+      ownerId,
+      url,
+      keyHash: `pending-${randomBytes(8).toString('hex')}`,
+      keyPrefix: '',
+      previewToken: randomBytes(24).toString('hex'),
+      trackId: randomBytes(8).toString('hex'),
+    },
   });
   const k = generateCmsKey(temp.id);
   const site = await prisma.cmsSite.update({ where: { id: temp.id }, data: { keyHash: k.hash, keyPrefix: k.prefix } });
@@ -91,8 +101,8 @@ export function assetUrl(base: string, siteId: number, id: string, ext: string) 
 
 const EXT: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' };
 
-export async function deliverContent(site: CmsSite, base: string) {
-  const content = mergeDefaults(asSchema(site), asContent(site));
+export async function deliverContent(site: CmsSite, base: string, draft = false) {
+  const content = mergeDefaults(asSchema(site), draft && site.draft ? (site.draft as CmsContent) : asContent(site));
   const ids = [...assetIds(content)];
   const assets = ids.length
     ? await prisma.cmsAsset.findMany({ where: { siteId: site.id, id: { in: ids } }, select: { id: true, contentType: true, width: true, height: true } })
@@ -110,55 +120,163 @@ export async function deliverContent(site: CmsSite, base: string) {
     }
     return v;
   };
-  await prisma.cmsSite.update({ where: { id: site.id }, data: { lastFetchAt: new Date() } }).catch(() => undefined);
-  return { revision: site.revision, updatedAt: site.updatedAt.toISOString(), content: expand(content) };
+  if (!draft) await prisma.cmsSite.update({ where: { id: site.id }, data: { lastFetchAt: new Date() } }).catch(() => undefined);
+  return { revision: site.revision, draft: draft && !!site.draft, updatedAt: site.updatedAt.toISOString(), content: expand(content), state: publicState(site) };
 }
 
-export function canEditSite(site: CmsSite, userId: string, admin: boolean) {
-  return admin || site.ownerId === userId;
-}
-
-export async function siteForUser(id: number, userId: string, admin: boolean) {
-  const site = Number.isInteger(id) ? await prisma.cmsSite.findUnique({ where: { id } }) : null;
-  if (!site || !canEditSite(site, userId, admin)) return null;
-  return site;
-}
-
-export async function listSites(userId: string, admin: boolean) {
+export async function listSites(userId: string) {
   const sites = await prisma.cmsSite.findMany({
-    where: admin ? {} : { ownerId: userId },
-    orderBy: { createdAt: 'asc' },
+    where: { OR: [{ ownerId: userId }, { members: { some: { userId } } }] },
+    orderBy: [{ isSelf: 'desc' }, { createdAt: 'asc' }],
     include: { _count: { select: { assets: true } } },
   });
   return sites.map((s) => ({
     id: s.id,
     name: s.name,
     url: s.url,
-    ownerId: s.ownerId,
+    shared: s.ownerId !== userId,
+    isSelf: s.isSelf,
     revision: s.revision,
     updatedAt: s.updatedAt.toISOString(),
     connected: !!s.schemaAt,
     sections: asSchema(s).sections.length,
-    lastFetchAt: s.lastFetchAt?.toISOString() ?? null,
+    hasDraft: !!s.draft,
+    maintenance: readMaintenance(s).enabled,
     assets: s._count.assets,
   }));
 }
 
-export async function editorData(site: CmsSite) {
-  const [assets, versions] = await Promise.all([
+export async function editorData(a: SiteAccess) {
+  const site = a.site;
+  const [assets, versions, members] = await Promise.all([
     prisma.cmsAsset.findMany({
       where: { siteId: site.id },
       orderBy: { createdAt: 'desc' },
       select: { id: true, name: true, contentType: true, size: true, width: true, height: true, createdAt: true },
     }),
     prisma.cmsVersion.findMany({ where: { siteId: site.id }, orderBy: { revision: 'desc' }, take: KEEP_VERSIONS }),
+    a.perms.has('access') ? listMembers(site.id) : Promise.resolve(null),
   ]);
+  const schema = asSchema(site);
   return {
-    site: { id: site.id, name: site.name, url: site.url, revision: site.revision, updatedAt: site.updatedAt.toISOString(), connected: !!site.schemaAt, webhook: !!site.webhookUrl },
+    site: {
+      id: site.id,
+      name: site.name,
+      url: site.url,
+      ownerId: site.ownerId,
+      isSelf: site.isSelf,
+      revision: site.revision,
+      updatedAt: site.updatedAt.toISOString(),
+      connected: !!site.schemaAt,
+      webhook: !!site.webhookUrl,
+      trackId: site.trackId,
+      previewToken: a.perms.has('content') || a.perms.has('maintenance') ? site.previewToken : null,
+    },
+    me: { owner: a.owner, perms: [...a.perms], sections: a.sections },
+    schema,
+    content: mergeDefaults(schema, asContent(site)),
+    draft: site.draft ? mergeDefaults(schema, site.draft as CmsContent) : null,
+    draftAt: site.draftAt?.toISOString() ?? null,
+    scheduledAt: site.scheduledAt?.toISOString() ?? null,
+    announcement: readAnnouncement(site),
+    maintenance: readMaintenance(site),
+    redirects: readRedirects(site),
+    members,
+    assets: assets.map((x) => ({ ...x, createdAt: x.createdAt.toISOString() })),
+    versions: versions.map((v) => ({ revision: v.revision, authorId: v.authorId, createdAt: v.createdAt.toISOString(), content: v.content })),
+  };
+}
+
+async function knownAssets(siteId: number) {
+  return new Set((await prisma.cmsAsset.findMany({ where: { siteId }, select: { id: true } })).map((x) => x.id));
+}
+
+function scoped(a: SiteAccess, base: CmsContent, input: unknown): unknown {
+  if (!a.sections || !input || typeof input !== 'object') return input;
+  const out: CmsContent = { ...base };
+  for (const key of a.sections) if (key in (input as CmsContent)) out[key] = (input as CmsContent)[key]!;
+  return out;
+}
+
+export async function saveDraft(a: SiteAccess, input: unknown) {
+  const site = a.site;
+  const base = mergeDefaults(asSchema(site), (site.draft as CmsContent | null) ?? asContent(site));
+  const known = await knownAssets(site.id);
+  const content = validateContent(asSchema(site), scoped(a, base, input), (id) => known.has(id));
+  await prisma.cmsSite.update({
+    where: { id: site.id },
+    data: { draft: content as unknown as Prisma.InputJsonValue, draftAt: new Date(), draftBy: a.userId },
+  });
+  return { draftAt: new Date().toISOString() };
+}
+
+export async function discardDraft(a: SiteAccess) {
+  await prisma.cmsSite.update({ where: { id: a.site.id }, data: { draft: Prisma.DbNull, draftAt: null, draftBy: null, scheduledAt: null, scheduledBy: null } });
+}
+
+export async function publish(a: SiteAccess, input: unknown, revision?: number) {
+  const site = a.site;
+  const source = input !== undefined ? input : site.draft;
+  if (!source) throw new UserError('Nie ma zmian do opublikowania.');
+  const base = mergeDefaults(asSchema(site), asContent(site));
+  const result = await saveContent(site, scoped(a, base, source), a.userId, revision);
+  await prisma.cmsSite.update({ where: { id: site.id }, data: { draft: Prisma.DbNull, draftAt: null, draftBy: null, scheduledAt: null, scheduledBy: null } });
+  return result;
+}
+
+export async function schedule(a: SiteAccess, input: unknown, at: unknown) {
+  const when = new Date(String(at));
+  if (Number.isNaN(when.getTime())) throw new UserError('Nieprawidłowa data publikacji.');
+  if (when.getTime() < Date.now() + 60_000) throw new UserError('Data publikacji musi być co najmniej minutę w przyszłości.');
+  if (when.getTime() > Date.now() + 366 * 86_400_000) throw new UserError('Publikację można zaplanować maksymalnie rok do przodu.');
+  if (input !== undefined) await saveDraft(a, input);
+  const fresh = await prisma.cmsSite.findUniqueOrThrow({ where: { id: a.site.id } });
+  if (!fresh.draft) throw new UserError('Nie ma zmian do opublikowania.');
+  await prisma.cmsSite.update({ where: { id: a.site.id }, data: { scheduledAt: when, scheduledBy: a.userId } });
+  return { scheduledAt: when.toISOString() };
+}
+
+export async function cancelSchedule(a: SiteAccess) {
+  await prisma.cmsSite.update({ where: { id: a.site.id }, data: { scheduledAt: null, scheduledBy: null } });
+}
+
+export async function publishDue(): Promise<void> {
+  const due = await prisma.cmsSite.findMany({ where: { scheduledAt: { lte: new Date() } }, take: 20 });
+  for (const site of due) {
+    try {
+      const claimed = await prisma.cmsSite.updateMany({ where: { id: site.id, scheduledAt: site.scheduledAt }, data: { scheduledAt: null } });
+      if (!claimed.count || !site.draft) continue;
+      await saveContent(site, site.draft, site.scheduledBy ?? site.ownerId);
+      await prisma.cmsSite.update({ where: { id: site.id }, data: { draft: Prisma.DbNull, draftAt: null, draftBy: null, scheduledBy: null } });
+      log.info(`Zaplanowana publikacja strony #${site.id} wykonana`);
+    } catch (err) {
+      log.warn(`Zaplanowana publikacja strony #${site.id} nie powiodła się`, err);
+    }
+  }
+}
+
+export async function rotatePreviewToken(siteId: number) {
+  const token = randomBytes(24).toString('hex');
+  await prisma.cmsSite.update({ where: { id: siteId }, data: { previewToken: token, stateRev: { increment: 1 } } });
+  void notifySite(siteId, 0, 'state.updated');
+  return token;
+}
+
+export async function exportSite(a: SiteAccess, base: string) {
+  const site = a.site;
+  const assets = await prisma.cmsAsset.findMany({ where: { siteId: site.id }, select: { id: true, name: true, contentType: true, size: true, width: true, height: true, createdAt: true } });
+  return {
+    format: 'zxcode-cms-export',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    site: { name: site.name, url: site.url, revision: site.revision },
     schema: asSchema(site),
     content: mergeDefaults(asSchema(site), asContent(site)),
-    assets: assets.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() })),
-    versions: versions.map((v) => ({ revision: v.revision, authorId: v.authorId, createdAt: v.createdAt.toISOString(), content: v.content })),
+    draft: site.draft ?? null,
+    announcement: readAnnouncement(site),
+    maintenance: readMaintenance(site),
+    redirects: readRedirects(site),
+    assets: assets.map((x) => ({ ...x, createdAt: x.createdAt.toISOString(), url: assetUrl(base, site.id, x.id, EXT[x.contentType] ?? 'bin') })),
   };
 }
 
@@ -206,10 +324,10 @@ export function signPayload(keyHash: string, timestamp: string, body: string) {
   return `sha256=${createHmac('sha256', keyHash).update(`${timestamp}.${body}`).digest('hex')}`;
 }
 
-export async function notifySite(siteId: number, revision: number): Promise<boolean> {
+export async function notifySite(siteId: number, revision: number, event: 'content.updated' | 'state.updated' = 'content.updated'): Promise<boolean> {
   const site = await prisma.cmsSite.findUnique({ where: { id: siteId } });
   if (!site?.webhookUrl) return false;
-  const body = JSON.stringify({ event: 'content.updated', siteId, revision });
+  const body = JSON.stringify({ event, siteId, revision });
   const ts = String(Math.floor(Date.now() / 1000));
   try {
     const res = await fetch(site.webhookUrl, {
@@ -226,3 +344,16 @@ export async function notifySite(siteId: number, revision: number): Promise<bool
     return false;
   }
 }
+
+export async function ensureSelfSite(ownerId: string | null): Promise<CmsSite | null> {
+  const existing = await prisma.cmsSite.findFirst({ where: { isSelf: true } });
+  if (existing) {
+    if (ownerId && existing.ownerId !== ownerId) return prisma.cmsSite.update({ where: { id: existing.id }, data: { ownerId } });
+    return existing;
+  }
+  if (!ownerId) return null;
+  const { site } = await createSite('zxcode.pl', ownerId, 'https://zxcode.pl');
+  return prisma.cmsSite.update({ where: { id: site.id }, data: { isSelf: true } });
+}
+
+export const selfSite = () => prisma.cmsSite.findFirst({ where: { isSelf: true } });

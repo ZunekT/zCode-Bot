@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
 import type { SiteData } from '@/lib/site';
 import { Icon } from '../Icon';
 import { FaqList, LiveSwitches, PanelMock, Spotlight } from './islands';
-import { Arrow, Check, Reveal, Stars } from './primitives';
+import { Arrow, Check, Grad, Reveal, Stars } from './primitives';
 
 export { FaqList };
 
@@ -87,18 +87,14 @@ function UptimeBars() {
   );
 }
 
-export function BotServices() {
+export function BotServices({ title, lead, chips }: { title: string; lead: string; chips: string[] }) {
   return (
     <section id="uslugi" className="section cv">
       <div className="wrap">
         <SectionHead
           kicker="Co robimy"
-          title={
-            <>
-              Wszystko, czego potrzebuje <span className="grad">Twój serwer</span>
-            </>
-          }
-          lead="Od pomysłu, przez kod, po wdrożenie i opiekę. Dostajesz gotowego bota, panel do jego ustawień i pewność, że ktoś pilnuje, żeby działał."
+          title={<Grad text={title} />}
+          lead={lead}
         />
         <div className="bento">
           <Reveal className="cell xl">
@@ -112,18 +108,7 @@ export function BotServices() {
                 danych.
               </p>
               <div className="chips2">
-                {[
-                  'Tickety',
-                  'Ekonomia',
-                  'Serwery RP',
-                  'Moderacja',
-                  'Weryfikacja',
-                  'Giveaway',
-                  'Statystyki',
-                  'Logi',
-                  'Sklep',
-                  'Poziomy',
-                ].map((c) => (
+                {chips.map((c) => (
                   <span key={c}>{c}</span>
                 ))}
               </div>
@@ -204,29 +189,6 @@ export function BotServices() {
 }
 
 type Step = { title: string; text: string };
-
-export const WEB_STEPS: Step[] = [
-  { title: 'Brief i wycena', text: 'Poznajemy Twoją firmę, cele i konkurencję. Dostajesz zakres, cenę i termin.' },
-  {
-    title: 'Projekt graficzny',
-    text: 'Projektujemy wygląd strony na komputery i telefony. Wprowadzamy poprawki, aż będzie idealnie.',
-  },
-  {
-    title: 'Kodowanie i testy',
-    text: 'Zamieniamy projekt w szybką stronę, dodajemy treści i testujemy na różnych urządzeniach.',
-  },
-  {
-    title: 'Start i opieka',
-    text: 'Podpinamy domenę, SSL i analitykę. Pilnujemy, żeby strona działała i była aktualna.',
-  },
-];
-
-export const BOT_STEPS: Step[] = [
-  { title: 'Ticket na Discordzie', text: 'Opisujesz, czego potrzebujesz. Dopytamy o szczegóły i zaproponujemy rozwiązanie.' },
-  { title: 'Wycena i termin', text: 'Dostajesz konkretną cenę, zakres i termin. Zaczynamy po akceptacji.' },
-  { title: 'Realizacja', text: 'Postęp widzisz w panelu zlecenia. Testujesz bota na swoim serwerze przed odbiorem.' },
-  { title: 'Wdrożenie i opieka', text: 'Uruchamiamy bota, dajemy dostęp do panelu i pilnujemy, żeby działał.' },
-];
 
 export function Process({ steps, title }: { steps: Step[]; title: React.ReactNode }) {
   return (
@@ -513,28 +475,20 @@ export function FinalCta({ title, lead }: { title?: React.ReactNode; lead?: stri
   );
 }
 
-export function SiteTypes() {
-  const types = [
-    ['idea', 'Wizytówka i landing page', 'Jedna, dopracowana strona, która przedstawia Twoją firmę lub produkt i zbiera zapytania.'],
-    ['partnership', 'Strona firmowa', 'Kilka podstron, oferta, realizacje, blog i kontakt. Treści zmieniasz sam w panelu.'],
-    ['store', 'Sklep internetowy', 'Produkty, koszyk, płatności online i panel zamówień – gotowe do sprzedaży od pierwszego dnia.'],
-    ['code', 'Aplikacje i panele WWW', 'Panele klienta, systemy rezerwacji, dashboardy i integracje – także z Discordem.'],
-  ];
+type Item = { ikona: string; tytul: string; opis: string };
+
+export function SiteTypes({ title, lead, items }: { title: string; lead: string; items: Item[] }) {
   return (
     <section className="section cv">
       <div className="wrap">
         <SectionHead
           kicker="Co budujemy"
-          title={
-            <>
-              Strona dopasowana <span className="grad">do Twojego celu</span>
-            </>
-          }
-          lead="Niezależnie od tego, czy potrzebujesz prostej wizytówki, czy rozbudowanej aplikacji – zaprojektujemy i zbudujemy ją od zera."
+          title={<Grad text={title} />}
+          lead={lead}
         />
         <div className="types">
-          {types.map(([icon, title, text], i) => (
-            <Reveal key={title} delay={i * 0.06}>
+          {items.map(({ ikona: icon, tytul: title, opis: text }, i) => (
+            <Reveal key={`${i}-${title}`} delay={i * 0.06}>
               <Spotlight className="type-card">
                 <span className="type-num">0{i + 1}</span>
                 <div className="tile-icon">
@@ -551,32 +505,18 @@ export function SiteTypes() {
   );
 }
 
-export function WebIncluded() {
-  const items = [
-    ['mobile', 'Responsywność', 'idealny wygląd na telefonach, tabletach i komputerach'],
-    ['lightning', 'Szybkość', 'wynik 90+ w Google PageSpeed i lekki kod'],
-    ['documentation', 'SEO od podstaw', 'meta, mapa strony, dane strukturalne, podgląd w social media'],
-    ['lock', 'HTTPS i bezpieczeństwo', 'certyfikat SSL, aktualne biblioteki, ochrona formularzy'],
-    ['checklist', 'RODO i cookies', 'polityka prywatności i informacja o plikach cookies'],
-    ['coins', 'Analityka', 'statystyki odwiedzin, żeby wiedzieć, co działa'],
-    ['tools', 'Panel do edycji', 'treści, zdjęcia i wpisy zmieniasz bez programisty (opcjonalnie)'],
-    ['server', 'Monitoring i opieka', 'pilnujemy, żeby strona działała, a certyfikat był ważny'],
-  ];
+export function WebIncluded({ title, items }: { title: string; items: Item[] }) {
   return (
     <section className="section cv">
       <div className="wrap">
         <SectionHead
           kicker="W standardzie"
-          title={
-            <>
-              Wszystko, czego potrzebuje <span className="grad">nowoczesna strona</span>
-            </>
-          }
+          title={<Grad text={title} />}
         />
         <Reveal>
           <div className="included">
-            {items.map(([icon, b, t]) => (
-              <div key={b} className="included-item">
+            {items.map(({ ikona: icon, tytul: b, opis: t }, i) => (
+              <div key={`${i}-${b}`} className="included-item">
                 <Icon name={icon!} size={24} />
                 <span>
                   <b>{b}</b>

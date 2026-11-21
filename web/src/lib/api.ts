@@ -393,6 +393,8 @@ export const api = {
   cmsDeleteAsset: (userId: string, id: number, assetId: string) =>
     internal<{ ok: true }>('DELETE', `${user(userId)}/cms/${id}/assets/${assetId}`),
   cmsRefresh: (userId: string, id: number) => internal<{ ok: boolean }>('POST', `${user(userId)}/cms/${id}/refresh`, {}),
+  cmsCall: <T,>(userId: string, method: string, id: number, path: string, body?: unknown) =>
+    internal<T>(method, `${user(userId)}/cms/${id}/${path}`, body),
   leads: (userId: string, status?: string) =>
     orNotFound(
       internal<{ counts: Record<string, number>; leads: LeadRow[] }>(

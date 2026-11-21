@@ -1,13 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
+import type { SiteContent } from '@/lib/content';
 import { byKind, type SiteData } from '@/lib/site';
 import { Icon } from '../Icon';
 import { CountUp, TypeRotate } from './islands';
 import { Arrow, Stars } from './primitives';
 
-const PHRASES = ['strony internetowe', 'boty Discord', 'sklepy online', 'aplikacje WWW', 'landing page'];
-const TYPED = PHRASES.map((p) => `${p},`);
 const d = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties;
 const DISCORD_CDN = /^https:\/\/cdn\.discordapp\.com\//;
 
@@ -16,7 +15,10 @@ const from = (list: SiteData['packages']) => (list.length ? Math.min(...list.map
 const plural = (n: number, one: string, few: string, many: string) =>
   n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many;
 
-export function Hero({ data }: { data: SiteData }) {
+export function Hero({ data, c }: { data: SiteData; c: SiteContent['glowna'] }) {
+  const phrases = c.hasla.split('\n').map((p) => p.trim()).filter(Boolean);
+  const PHRASES = phrases.length ? phrases : ['strony internetowe'];
+  const TYPED = PHRASES.map((p) => `${p},`);
   const { stats, packages, portfolio, reviews } = data;
   const webFrom = from(byKind(packages, 'WEBSITE'));
   const botFrom = from(byKind(packages, 'BOT'));
@@ -40,11 +42,13 @@ export function Hero({ data }: { data: SiteData }) {
       </div>
       <div className="wrap home-grid">
         <div className="home-copy">
-          <Link href="/strony-internetowe" className="pill-badge enter" style={d(0)}>
-            <b>NOWE</b>
-            <span>Robimy też strony internetowe</span>
-            <Arrow />
-          </Link>
+          {c.plakietka && (
+            <Link href={c.plakietkaLink.startsWith('/') ? c.plakietkaLink : '/strony-internetowe'} className="pill-badge enter" style={d(0)}>
+              {c.etykieta && <b>{c.etykieta}</b>}
+              <span>{c.plakietka}</span>
+              <Arrow />
+            </Link>
+          )}
           <h1>
             <span className="word enter" style={d(80)}>
               Tworzymy
@@ -63,12 +67,11 @@ export function Hero({ data }: { data: SiteData }) {
             </span>
           </h1>
           <p className="home-sub enter" style={d(380)}>
-            Projektujemy, kodujemy i utrzymujemy szybkie strony internetowe i boty Discord – dopracowane w każdym szczególe i
-            pod stałą opieką.
+            {c.podtytul}
           </p>
           <div className="home-actions enter" style={d(460)}>
             <Link href="/zamow" className="cta-btn">
-              Bezpłatna wycena <Arrow />
+              {c.przycisk} <Arrow />
             </Link>
             <Link href="/realizacje" className="ghost-btn">
               Realizacje
@@ -103,7 +106,7 @@ export function Hero({ data }: { data: SiteData }) {
               <i className="btn" />
             </span>
             <b>Strony internetowe</b>
-            <small>Wizytówki, strony firmowe, sklepy i aplikacje WWW</small>
+            <small>{c.kafelekStrony}</small>
             <Arrow />
           </Link>
 
@@ -120,7 +123,7 @@ export function Hero({ data }: { data: SiteData }) {
               <i />
             </span>
             <b>Boty Discord</b>
-            <small>Tickety, ekonomia, RP, moderacja i integracje</small>
+            <small>{c.kafelekBoty}</small>
             <Arrow />
           </Link>
 

@@ -1,6 +1,6 @@
 {
   "name": "zxcode-cms",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Treść strony internetowej edytowana w panelu zxcode.pl – teksty, zdjęcia, listy i cenniki bez programisty.",
   "main": "index.js",
   "types": "index.d.ts",

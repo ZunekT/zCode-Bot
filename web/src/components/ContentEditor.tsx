@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { del, post, put } from '@/lib/client';
-import { assetSrc, type CmsAsset, type CmsContent, type CmsEditorData, type CmsField, type CmsImageRef, type CmsSection } from '@/lib/cms';
+import { assetSrc, previewUrl, type CmsAsset, type CmsContent, type CmsEditorData, type CmsField, type CmsImageRef, type CmsSection } from '@/lib/cms';
 import { Icon } from './Icon';
 import { useToast } from './Toast';
 import { Modal } from './ui/Modal';
+import { RichTextInput } from './cms/RichTextInput';
 
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
@@ -210,6 +211,8 @@ function Input({ field, value, onChange, id, ctx }: { field: CmsField; value: un
   switch (field.type) {
     case 'textarea':
       return <textarea id={id} className="input" rows={Math.min(14, Math.max(4, String(value ?? '').split('\n').length + 1))} maxLength={field.maxLength} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />;
+    case 'richtext':
+      return <RichTextInput id={id} value={String(value ?? '')} onChange={onChange} maxLength={field.maxLength} />;
     case 'number':
       return (
         <input
@@ -256,8 +259,8 @@ function Input({ field, value, onChange, id, ctx }: { field: CmsField; value: un
 
 function FieldRow({ field, value, onChange, path, error, ctx }: { field: CmsField; value: unknown; onChange: (v: unknown) => void; path: string; error?: string; ctx: Ctx }) {
   const id = `f-${path}`;
-  const wide = field.type === 'textarea' || field.type === 'list' || field.type === 'image';
-  const len = (field.type === 'text' || field.type === 'textarea') && field.maxLength ? String(value ?? '').length : null;
+  const wide = field.type === 'textarea' || field.type === 'richtext' || field.type === 'list' || field.type === 'image';
+  const len = (field.type === 'text' || field.type === 'textarea' || field.type === 'richtext') && field.maxLength ? String(value ?? '').length : null;
   return (
     <div className={`field${wide ? ' wide' : ''}${error ? ' invalid' : ''}`}>
       {field.type === 'boolean' ? (
@@ -351,23 +354,38 @@ function ListInput({ field, value, onChange, id, ctx }: { field: CmsField; value
   );
 }
 
+const local = (iso: string) => {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 export function ContentEditor({ data, viewerId }: { data: CmsEditorData; viewerId: string }) {
-  const sections = data.schema.sections;
-  const [saved, setSaved] = useState<CmsContent>(() => clone(data.content));
-  const [values, setValues] = useState<CmsContent>(() => clone(data.content));
+  const can = (p: CmsEditorData['me']['perms'][number]) => data.me.perms.includes(p);
+  const canEdit = can('content');
+  const canPublish = can('publish');
+  const sections = data.schema.sections.filter((s) => !data.me.sections || data.me.sections.includes(s.key));
+  const [published, setPublished] = useState<CmsContent>(() => clone(data.content));
+  const [saved, setSaved] = useState<CmsContent>(() => clone(data.draft ?? data.content));
+  const [values, setValues] = useState<CmsContent>(() => clone(data.draft ?? data.content));
+  const [draftAt, setDraftAt] = useState(data.draftAt);
+  const [scheduledAt, setScheduledAt] = useState(data.scheduledAt);
   const [revision, setRevision] = useState(data.site.revision);
   const [assets, setAssets] = useState<CmsAsset[]>(data.assets);
   const [versions, setVersions] = useState(data.versions);
   const [active, setActive] = useState(sections[0]?.key);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [barError, setBarError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
   const [picker, setPicker] = useState<((a: CmsAsset) => void) | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [planOpen, setPlanOpen] = useState(false);
+  const [planAt, setPlanAt] = useState(() => local(new Date(Date.now() + 86_400_000).toISOString()));
   const toast = useToast();
 
   const dirtySections = useMemo(() => sections.filter((s) => !same(values[s.key], saved[s.key])).map((s) => s.key), [sections, values, saved]);
   const dirty = dirtySections.length > 0;
+  const hasDraft = !!draftAt;
 
   useEffect(() => {
     if (!dirty) return;
@@ -399,28 +417,89 @@ export function ContentEditor({ data, viewerId }: { data: CmsEditorData; viewerI
     setBarError(null);
   }
 
-  async function save() {
-    setSaving(true);
-    setBarError(null);
-    const res = await put<{ revision: number }>(`/api/strony/${data.site.id}`, { content: values, revision });
-    setSaving(false);
-    if (!res.ok || !res.data) {
-      const map: Record<string, string> = {};
-      for (const e of res.errors ?? []) map[e.path] = e.message;
-      setErrors(map);
-      setBarError(res.error ?? 'Nie udało się zapisać.');
-      const first = Object.keys(map)[0];
-      if (first) {
-        setActive(first.split('.')[0]!);
-        setTimeout(() => document.getElementById(`f-${first}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-      }
-      return;
+  function showErrors(res: { error?: string; errors?: { path: string; message: string }[] }) {
+    const map: Record<string, string> = {};
+    for (const e of res.errors ?? []) map[e.path] = e.message;
+    setErrors(map);
+    setBarError(res.error ?? 'Nie udało się zapisać.');
+    const first = Object.keys(map)[0];
+    if (first) {
+      setActive(first.split('.')[0]!);
+      setTimeout(() => document.getElementById(`f-${first}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
     }
-    setRevision(res.data.revision);
-    setVersions((v) => [{ revision: res.data!.revision, authorId: viewerId, createdAt: new Date().toISOString(), content: clone(values) }, ...v].slice(0, 30));
+  }
+
+  const base = `/api/strony/${data.site.id}`;
+
+  async function saveDraft(quiet = false) {
+    setBusy('draft');
+    setBarError(null);
+    const res = await put<{ draftAt: string }>(`${base}/draft`, { content: values });
+    setBusy(null);
+    if (!res.ok || !res.data) {
+      showErrors(res);
+      return false;
+    }
+    setDraftAt(res.data.draftAt);
     setSaved(clone(values));
     setErrors({});
-    toast.show(true, data.site.webhook ? 'Zapisano. Strona już pokazuje nową treść.' : 'Zapisano. Strona pokaże zmiany w ciągu kilku minut.');
+    if (!quiet) toast.show(true, 'Zapisano wersję roboczą. Na stronie nic się jeszcze nie zmieniło.');
+    return true;
+  }
+
+  async function publishNow() {
+    setBusy('publish');
+    setBarError(null);
+    const res = await post<{ revision: number }>(`${base}/publish`, dirty || !hasDraft ? { content: values, revision } : { revision });
+    setBusy(null);
+    if (!res.ok || !res.data) return showErrors(res);
+    setRevision(res.data.revision);
+    setVersions((v) => [{ revision: res.data!.revision, authorId: viewerId, createdAt: new Date().toISOString(), content: clone(values) }, ...v].slice(0, 30));
+    setPublished(clone(values));
+    setSaved(clone(values));
+    setDraftAt(null);
+    setScheduledAt(null);
+    setErrors({});
+    toast.show(true, data.site.webhook || data.site.isSelf ? 'Opublikowano. Strona już pokazuje nową treść.' : 'Opublikowano. Strona pokaże zmiany w ciągu kilku minut.');
+  }
+
+  async function plan() {
+    setBusy('plan');
+    const res = await post<{ scheduledAt: string }>(`${base}/schedule`, { ...(dirty || !hasDraft ? { content: values } : {}), at: new Date(planAt).toISOString() });
+    setBusy(null);
+    if (!res.ok || !res.data) {
+      setPlanOpen(false);
+      return showErrors(res);
+    }
+    setScheduledAt(res.data.scheduledAt);
+    setDraftAt((d) => d ?? new Date().toISOString());
+    setSaved(clone(values));
+    setPlanOpen(false);
+    toast.show(true, `Zaplanowano publikację na ${dateTime(res.data.scheduledAt)}.`);
+  }
+
+  async function unplan() {
+    const res = await del(`${base}/schedule`);
+    if (!res.ok) return toast.show(false, res.error ?? 'Nie udało się anulować.');
+    setScheduledAt(null);
+    toast.show(true, 'Anulowano zaplanowaną publikację. Zmiany zostały w wersji roboczej.');
+  }
+
+  async function discard() {
+    if (!confirm('Odrzucić wersję roboczą? Wrócisz do treści opublikowanej na stronie.')) return;
+    const res = await del(`${base}/draft`);
+    if (!res.ok) return toast.show(false, res.error ?? 'Nie udało się odrzucić.');
+    setDraftAt(null);
+    setScheduledAt(null);
+    setValues(clone(published));
+    setSaved(clone(published));
+    toast.show(true, 'Odrzucono wersję roboczą.');
+  }
+
+  async function openPreview() {
+    if (dirty && canEdit && !(await saveDraft(true))) return;
+    const url = previewUrl(data.site);
+    if (url) window.open(url, '_blank', 'noopener');
   }
 
   function reset() {
@@ -434,28 +513,73 @@ export function ContentEditor({ data, viewerId }: { data: CmsEditorData; viewerI
     if (!v) return;
     setValues((prev) => ({ ...prev, ...clone(v.content) }));
     setHistoryOpen(false);
-    toast.show(true, `Wczytano wersję ${rev}. Zapisz, żeby ją opublikować.`);
+    toast.show(true, `Wczytano wersję ${rev}. Zapisz albo opublikuj, żeby ją przywrócić.`);
   }
 
   if (!sections.length) {
     return (
       <div className="card empty">
         <Icon name="tools" size={56} />
-        <h2>Strona jeszcze się nie połączyła</h2>
-        <p>Pola do edycji pojawią się tutaj, gdy strona pierwszy raz połączy się z panelem zxCode.</p>
+        <h2>{data.schema.sections.length ? 'Brak sekcji do edycji' : 'Strona jeszcze się nie połączyła'}</h2>
+        <p>{data.schema.sections.length ? 'Nie masz dostępu do żadnej sekcji tej strony.' : 'Pola do edycji pojawią się tutaj, gdy strona pierwszy raz połączy się z panelem zxCode.'}</p>
       </div>
     );
   }
 
+  const preview = previewUrl(data.site);
+  const author = (id: string) => (id === viewerId ? 'Ty' : (data.people[id]?.name ?? 'zxCode'));
+
   return (
     <>
+      <div className={`cms-status${scheduledAt ? ' plan' : hasDraft ? ' draft' : ''}`}>
+        <span className="cms-status-dot" />
+        <div className="grow" style={{ minWidth: 0 }}>
+          <b>{scheduledAt ? 'Publikacja zaplanowana' : hasDraft ? 'Wersja robocza – jeszcze nie na stronie' : 'Strona jest aktualna'}</b>
+          <small>
+            {scheduledAt
+              ? `Zmiany pojawią się na stronie ${dateTime(scheduledAt)}.`
+              : hasDraft
+                ? `Zapisana ${dateTime(draftAt!)}. Odwiedzający widzą jeszcze poprzednią treść.`
+                : `Opublikowana wersja ${revision}.`}
+          </small>
+        </div>
+        <div className="cms-status-actions">
+          {preview && (
+            <button type="button" className="btn btn-sm" onClick={openPreview}>
+              Podgląd
+            </button>
+          )}
+          {scheduledAt && canPublish && (
+            <button type="button" className="btn btn-sm btn-ghost" onClick={unplan}>
+              Anuluj plan
+            </button>
+          )}
+          {hasDraft && !dirty && canPublish && !scheduledAt && (
+            <>
+              <button type="button" className="btn btn-sm" onClick={() => setPlanOpen(true)}>
+                Zaplanuj
+              </button>
+              <button type="button" className={`btn btn-sm btn-primary${busy === 'publish' ? ' loading' : ''}`} disabled={!!busy} onClick={publishNow}>
+                Opublikuj
+              </button>
+            </>
+          )}
+          {hasDraft && canEdit && (
+            <button type="button" className="btn btn-sm btn-ghost" onClick={discard}>
+              Odrzuć
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="cms-toolbar">
-        <button type="button" className="btn btn-sm" onClick={() => setPicker(() => () => setPicker(null))}>
+        <button type="button" className="btn btn-sm" disabled={!canEdit} onClick={() => setPicker(() => () => setPicker(null))}>
           <Icon name="cloud_upload" size={16} /> Zdjęcia ({assets.length})
         </button>
         <button type="button" className="btn btn-sm" onClick={() => setHistoryOpen(true)} disabled={!versions.length}>
           <Icon name="calendar" size={16} /> Historia zmian
         </button>
+        {!canEdit && <span className="pill pill-muted">Tylko podgląd</span>}
       </div>
 
       <div className="settings">
@@ -463,6 +587,7 @@ export function ContentEditor({ data, viewerId }: { data: CmsEditorData; viewerI
           <div className="side-title">Sekcje</div>
           {sections.map((s) => {
             const hasError = Object.keys(errors).some((k) => k.startsWith(`${s.key}.`));
+            const changed = !same(values[s.key], published[s.key]);
             return (
               <a
                 key={s.key}
@@ -475,7 +600,7 @@ export function ContentEditor({ data, viewerId }: { data: CmsEditorData; viewerI
                   select(s.key);
                 }}
               >
-                <span className={`dot ${dirtySections.includes(s.key) || hasError ? 'dirty' : 'on'}`} />
+                <span className={`dot ${dirtySections.includes(s.key) || hasError || changed ? 'dirty' : 'on'}`} />
                 {s.label}
               </a>
             );
@@ -493,23 +618,32 @@ export function ContentEditor({ data, viewerId }: { data: CmsEditorData; viewerI
                     {s.description && <p>{s.description}</p>}
                   </div>
                 </div>
-                <div className="module-fields">
-                  {s.fields.map((f) => (
-                    <FieldRow key={f.key} field={f} value={values[s.key]?.[f.key]} onChange={(v) => set(s, f.key, v)} path={`${s.key}.${f.key}`} error={errors[`${s.key}.${f.key}`]} ctx={ctx} />
-                  ))}
-                </div>
+                <fieldset className="cms-fields" disabled={!canEdit}>
+                  <div className="module-fields">
+                    {s.fields.map((f) => (
+                      <FieldRow key={f.key} field={f} value={values[s.key]?.[f.key]} onChange={(v) => set(s, f.key, v)} path={`${s.key}.${f.key}`} error={errors[`${s.key}.${f.key}`]} ctx={ctx} />
+                    ))}
+                  </div>
+                </fieldset>
               </section>
             ))}
         </div>
 
         <div className={`savebar${dirty ? ' show' : ''}${barError ? ' error' : ''}`} role="region" aria-label="Niezapisane zmiany">
           <p style={barError ? { color: 'var(--err)' } : undefined}>{barError ?? 'Masz niezapisane zmiany'}</p>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={reset} disabled={saving}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={reset} disabled={!!busy}>
             Cofnij
           </button>
-          <button type="button" className="btn btn-primary btn-sm" onClick={save} disabled={saving}>
-            {saving ? 'Zapisywanie…' : 'Opublikuj zmiany'}
-          </button>
+          {canEdit && (
+            <button type="button" className={`btn btn-sm${busy === 'draft' ? ' loading' : ''}`} onClick={() => saveDraft()} disabled={!!busy}>
+              Zapisz roboczo
+            </button>
+          )}
+          {canPublish && (
+            <button type="button" className={`btn btn-primary btn-sm${busy === 'publish' ? ' loading' : ''}`} onClick={publishNow} disabled={!!busy}>
+              Opublikuj
+            </button>
+          )}
         </div>
       </div>
 
@@ -526,20 +660,43 @@ export function ContentEditor({ data, viewerId }: { data: CmsEditorData; viewerI
         onDeleted={(id) => setAssets((list) => list.filter((a) => a.id !== id))}
       />
 
+      <Modal
+        open={planOpen}
+        onClose={() => setPlanOpen(false)}
+        title="Zaplanuj publikację"
+        busy={busy === 'plan'}
+        actions={
+          <>
+            <button type="button" className="btn btn-ghost" onClick={() => setPlanOpen(false)}>
+              Anuluj
+            </button>
+            <button type="button" className={`btn btn-primary${busy === 'plan' ? ' loading' : ''}`} onClick={plan} disabled={!!busy}>
+              Zaplanuj
+            </button>
+          </>
+        }
+      >
+        <p className="muted">Zmiany z wersji roboczej pojawią się na stronie automatycznie o wybranej godzinie.</p>
+        <label className="field" style={{ marginTop: 12 }}>
+          <span className="field-label">Data i godzina</span>
+          <input className="input" type="datetime-local" value={planAt} min={local(new Date().toISOString())} onChange={(e) => setPlanAt(e.target.value)} />
+        </label>
+      </Modal>
+
       <Modal open={historyOpen} onClose={() => setHistoryOpen(false)} title="Historia zmian">
         <ul className="cms-versions">
           {versions.map((v) => (
             <li key={v.revision}>
               <div>
                 <b>Wersja {v.revision}</b>
-                {v.revision === revision && <span className="pill pill-ok" style={{ marginLeft: 8 }}>aktualna</span>}
+                {v.revision === revision && <span className="pill pill-ok" style={{ marginLeft: 8 }}>na stronie</span>}
                 <div className="faint small">
-                  {dateTime(v.createdAt)} · {v.authorId === viewerId ? 'Ty' : 'zxCode'}
+                  {dateTime(v.createdAt)} · {author(v.authorId)}
                 </div>
               </div>
-              {v.revision !== revision && (
+              {v.revision !== revision && canEdit && (
                 <button type="button" className="btn btn-sm" onClick={() => restore(v.revision)}>
-                  Przywróć
+                  Wczytaj
                 </button>
               )}
             </li>

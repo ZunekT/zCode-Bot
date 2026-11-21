@@ -5,6 +5,8 @@ import { prisma } from '../../db/prisma.js';
 import { UserError } from '../../core/errors.js';
 import { createLogger } from '../../utils/logger.js';
 import { authenticateSite, deliverContent, registerSchema } from './service.js';
+import { publicState } from './state.js';
+import { recordHit, TRACKER_JS } from './stats.js';
 
 const log = createLogger('cms:http');
 const FILE_RE = /^([a-f0-9]{24})\.(png|jpg|webp|gif)$/;
@@ -23,7 +25,44 @@ function fail(reply: FastifyReply, err: unknown) {
   return reply.code(500).send({ error: 'Błąd serwera' });
 }
 
+const trackCache = new Map<string, { at: number; site: { id: number; url: string | null } | null }>();
+
+async function siteByTrack(trackId: string) {
+  const hit = trackCache.get(trackId);
+  if (hit && Date.now() - hit.at < 60_000) return hit.site;
+  const site = await prisma.cmsSite.findUnique({ where: { trackId }, select: { id: true, url: true } });
+  if (trackCache.size > 2000) trackCache.clear();
+  trackCache.set(trackId, { at: Date.now(), site });
+  return site;
+}
+
 export async function cmsRoutes(app: FastifyInstance): Promise<void> {
+  app.get('/cms/v1/t.js', async (_request, reply) =>
+    reply
+      .header('content-type', 'application/javascript; charset=utf-8')
+      .header('cache-control', 'public, max-age=86400')
+      .header('cross-origin-resource-policy', 'cross-origin')
+      .header('access-control-allow-origin', '*')
+      .send(TRACKER_JS),
+  );
+
+  app.options('/cms/v1/hit', async (_request, reply) =>
+    reply.header('access-control-allow-origin', '*').header('access-control-allow-methods', 'POST').header('access-control-allow-headers', 'content-type').code(204).send(),
+  );
+
+  app.post('/cms/v1/hit', { bodyLimit: 4096 }, async (request, reply) => {
+    reply.header('access-control-allow-origin', '*');
+    try {
+      const raw = typeof request.body === 'string' ? JSON.parse(request.body) : request.body;
+      const b = (raw ?? {}) as { t?: unknown; p?: unknown; r?: unknown };
+      if (typeof b.t === 'string' && /^[a-f0-9]{16}$/.test(b.t)) {
+        const site = await siteByTrack(b.t);
+        if (site) await recordHit(site, { path: b.p, referrer: b.r, ip: request.ip, ua: String(request.headers['user-agent'] ?? '') });
+      }
+    } catch {}
+    return reply.code(204).send();
+  });
+
   app.get('/cms/v1/assets/:siteId/:file', async (request, reply) => {
     const { siteId, file } = request.params as { siteId: string; file: string };
     const m = FILE_RE.exec(file);
@@ -51,13 +90,17 @@ export async function cmsRoutes(app: FastifyInstance): Promise<void> {
     secured.get('/cms/v1/content', async (request, reply) => {
       try {
         const site = request.cmsSite!;
-        const since = Number((request.query as { since?: string }).since);
-        if (Number.isInteger(since) && since === site.revision) return reply.code(304).send();
-        return await deliverContent(site, baseUrl(request));
+        const q = request.query as { since?: string; draft?: string };
+        const draft = q.draft === '1';
+        const since = Number(q.since);
+        if (!draft && Number.isInteger(since) && since === site.revision) return reply.code(304).send();
+        return await deliverContent(site, baseUrl(request), draft);
       } catch (err) {
         return fail(reply, err);
       }
     });
+
+    secured.get('/cms/v1/state', async (request) => publicState(request.cmsSite!));
 
     secured.put('/cms/v1/schema', async (request, reply) => {
       try {

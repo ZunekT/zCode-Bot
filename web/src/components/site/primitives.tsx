@@ -54,3 +54,12 @@ export const Check = () => (
     </svg>
   </span>
 );
+
+export function Grad({ text }: { text: string }) {
+  const parts = text.split(/(\{[^{}]*\})/g).filter(Boolean);
+  return (
+    <>
+      {parts.map((p, i) => (p.startsWith('{') && p.endsWith('}') ? <span key={i} className="grad">{p.slice(1, -1)}</span> : <span key={i}>{p}</span>))}
+    </>
+  );
+}

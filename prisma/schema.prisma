@@ -689,25 +689,74 @@ model PollVote {
 }
 
 model CmsSite {
-  id          Int          @id @default(autoincrement())
+  id          Int             @id @default(autoincrement())
   name        String
   ownerId     String
   url         String?
-  keyHash     String       @unique
+  keyHash     String          @unique
   keyPrefix   String
-  schema      Json         @default("{\"sections\":[]}")
+  schema      Json            @default("{\"sections\":[]}")
   schemaHash  String?
   schemaAt    DateTime?
-  content     Json         @default("{}")
-  revision    Int          @default(0)
+  content     Json            @default("{}")
+  revision    Int             @default(0)
   webhookUrl  String?
   lastFetchAt DateTime?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   assets      CmsAsset[]
   versions    CmsVersion[]
+  members     CmsSiteMember[]
+
+  draft        Json?
+  draftAt      DateTime?
+  draftBy      String?
+  scheduledAt  DateTime?
+  scheduledBy  String?
+  previewToken String    @default("")
+  announcement Json      @default("{}")
+  maintenance  Json      @default("{}")
+  redirects    Json      @default("[]")
+  stateRev     Int       @default(0)
+  isSelf       Boolean   @default(false)
+  trackId      String?   @unique
 
   @@index([ownerId])
+  @@index([scheduledAt])
+}
+
+model CmsSiteMember {
+  id          Int      @id @default(autoincrement())
+  siteId      Int
+  userId      String
+  permissions String[]
+  sections    String[] @default([])
+  addedBy     String
+  createdAt   DateTime @default(now())
+  site        CmsSite  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, userId])
+  @@index([userId])
+}
+
+model CmsStat {
+  siteId   Int
+  day      String
+  path     String
+  views    Int    @default(0)
+  visitors Int    @default(0)
+
+  @@id([siteId, day, path])
+  @@index([siteId, day])
+}
+
+model CmsStatRef {
+  siteId Int
+  day    String
+  source String
+  views  Int    @default(0)
+
+  @@id([siteId, day, source])
 }
 
 model CmsAsset {

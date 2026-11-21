@@ -15,7 +15,7 @@ export interface CmsImage {
 export interface FieldDef<T = unknown> {
   readonly __zxCmsField: true;
   readonly __value?: T;
-  type: 'text' | 'textarea' | 'number' | 'boolean' | 'select' | 'color' | 'url' | 'image' | 'list';
+  type: 'text' | 'textarea' | 'richtext' | 'number' | 'boolean' | 'select' | 'color' | 'url' | 'image' | 'list';
 }
 
 type ValueOf<F> = F extends FieldDef<infer T> ? T : never;
@@ -24,6 +24,7 @@ type ItemOf<F extends Record<string, FieldDef>> = { [K in keyof F]: ValueOf<F[K]
 export declare const field: {
   text(o: Base<string> & { maxLength?: number }): FieldDef<string>;
   textarea(o: Base<string> & { maxLength?: number }): FieldDef<string>;
+  richtext(o: Base<string> & { maxLength?: number }): FieldDef<string>;
   number(o: Base<number> & { min?: number; max?: number; integer?: boolean }): FieldDef<number | null>;
   toggle(o: Base<boolean>): FieldDef<boolean>;
   select<V extends string>(o: Base<V> & { options: (V | { value: V; label: string })[] }): FieldDef<V>;
@@ -49,15 +50,28 @@ export interface SiteOptions<S extends Record<string, SectionDef>> {
   revalidate?: number | false;
   tag?: string;
   ttl?: number;
+  stateTtl?: number;
   timeout?: number;
   debug?: boolean;
+}
+
+export interface SiteState {
+  stateRev: number;
+  announcement: { text: string; link: string; linkLabel: string; tone: 'info' | 'success' | 'warning' | 'promo'; dismissible: boolean; version: number } | null;
+  maintenance: { title: string; message: string; until: string | null } | null;
+  redirects: { from: string; to: string; permanent: boolean }[];
+  bypass: string;
 }
 
 export interface Site<S extends Record<string, SectionDef>> {
   readonly schema: unknown;
   readonly defaults: Content<S>;
   readonly tag: string;
-  content(): Promise<Content<S>>;
+  readonly trackerUrl: string;
+  content(options?: { draft?: boolean }): Promise<Content<S>>;
+  state(): Promise<SiteState>;
+  proxy(request: Request): Promise<Response | undefined>;
+  preview(enableDraft?: () => unknown): (request: Request) => Promise<Response>;
   section<K extends keyof S>(name: K): Promise<Content<S>[K]>;
   webhook(onUpdate?: (payload: { event: string; siteId: number; revision: number }) => unknown): (request: Request) => Promise<Response>;
   invalidate(): void;
@@ -66,7 +80,9 @@ export interface Site<S extends Record<string, SectionDef>> {
 
 export declare function createSite<S extends Record<string, SectionDef>>(options: SiteOptions<S>): Site<S>;
 export declare function verifySignature(key: string, timestamp: string | null, signature: string | null, body: string, now?: number): boolean;
+export declare function renderRichText(source: string): string;
+export declare function maintenanceHtml(m: SiteState['maintenance']): string;
 export declare const CMS_VERSION: string;
 
-declare const cms: { createSite: typeof createSite; field: typeof field; verifySignature: typeof verifySignature; CMS_VERSION: string };
+declare const cms: { createSite: typeof createSite; field: typeof field; verifySignature: typeof verifySignature; renderRichText: typeof renderRichText; maintenanceHtml: typeof maintenanceHtml; CMS_VERSION: string };
 export default cms;

@@ -9,6 +9,10 @@ const log = createLogger('http:site');
 const CACHE_MS = 5 * 60_000;
 let cache: { at: number; data: unknown } | null = null;
 
+export function invalidatePublicSite() {
+  cache = null;
+}
+
 const users = new Map<string, { name: string; avatar: string | null; at: number }>();
 async function author(client: ZxClient, userId: string) {
   const hit = users.get(userId);

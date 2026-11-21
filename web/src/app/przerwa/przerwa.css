@@ -1,0 +1,49 @@
+.maint {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(26, 159, 255, 0.18), transparent 70%),
+    var(--bg, #06080c);
+}
+.maint-card {
+  max-width: 520px;
+  text-align: center;
+}
+.maint-logo {
+  margin: 0 auto 24px;
+  border-radius: 20px;
+  animation: maint-float 4s ease-in-out infinite;
+}
+.maint h1 {
+  margin: 0 0 12px;
+  font-size: clamp(28px, 6vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.maint p {
+  margin: 0 0 10px;
+  color: var(--muted, #8b97a8);
+  line-height: 1.65;
+  white-space: pre-line;
+}
+.maint .maint-until {
+  color: var(--text, #e9eef5);
+  font-weight: 600;
+}
+.maint-mail {
+  display: inline-block;
+  margin-top: 18px;
+  color: var(--brand, #1a9fff);
+}
+@keyframes maint-float {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .maint-logo {
+    animation: none;
+  }
+}

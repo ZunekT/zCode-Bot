@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Icon } from '../Icon';
 
-export function Footer() {
+export function Footer({ about }: { about: string }) {
   return (
     <footer className="sfooter">
       <div className="wrap">
@@ -13,7 +13,7 @@ export function Footer() {
                 zx<b>Code</b>
               </span>
             </Link>
-            <p>Strony internetowe i boty Discord. Projekt, kod, wdrożenie i opieka – w jednym miejscu.</p>
+            <p>{about}</p>
             <a href="mailto:kontakt@zxcode.pl" className="sfooter-mail">
               kontakt@zxcode.pl
             </a>

@@ -97,6 +97,72 @@ export const POST = site.webhook(() => revalidateTag(site.tag, { expire: 0 }));
 
 Bez webhooka strona odświeży treść sama co `revalidate` sekund (domyślnie 300).
 
+### Przerwa techniczna i przekierowania – `proxy.ts`
+
+Klient włącza przerwę techniczną i ustawia przekierowania w panelu. Żeby strona je respektowała, dodaj w głównym katalogu projektu `proxy.ts` (Next.js 16; w starszych wersjach `middleware.ts`):
+
+```ts
+import { NextResponse, type NextRequest } from 'next/server';
+import { site } from '@/lib/cms';
+
+export async function proxy(request: NextRequest) {
+  return (await site.proxy(request)) ?? NextResponse.next();
+}
+
+export const config = { matcher: ['/((?!_next/|favicon.ico).*)'] };
+```
+
+Podczas przerwy odwiedzający dostają stronę „Przerwa techniczna” z kodem 503 (Google nie obniża pozycji). Klient i osoby z dostępem widzą normalną stronę po otwarciu linku podglądu z panelu.
+
+### Podgląd wersji roboczej
+
+`app/api/zxcode/preview/route.ts`:
+
+```ts
+import { draftMode } from 'next/headers';
+import { site } from '@/lib/cms';
+
+export const GET = site.preview(async () => (await draftMode()).enable());
+```
+
+Na stronach:
+
+```tsx
+const { isEnabled } = await draftMode();
+const tresc = await site.content({ draft: isEnabled });
+```
+
+### Ogłoszenie na stronie
+
+```tsx
+const { announcement } = await site.state();
+{announcement && <div className={`pasek pasek-${announcement.tone}`}>{announcement.text}{announcement.link && <a href={announcement.link}>{announcement.linkLabel || 'Więcej'}</a>}</div>}
+```
+
+`dismissible` i `version` pozwalają zapamiętać zamknięcie w `localStorage` (np. klucz `ogloszenie-${version}`).
+
+### Tekst z formatowaniem
+
+Pole `field.richtext()` daje w panelu edytor z pogrubieniem, kursywą, listami, nagłówkami i linkami. Na stronie zamień je na bezpieczny HTML:
+
+```tsx
+import { renderRichText } from 'zxcode-cms';
+
+<div dangerouslySetInnerHTML={{ __html: renderRichText(tresc.oNas.opis) }} />
+```
+
+`renderRichText` najpierw zamienia cały tekst na bezpieczny, a dopiero potem dodaje dozwolone znaczniki – skrypty i niebezpieczne linki nie przejdą.
+
+### Statystyki odwiedzin (bez cookies)
+
+W panelu w zakładce „Statystyki” jest gotowy kod. Wklej go do layoutu strony:
+
+```tsx
+<script defer src="https://bot.zxcode.pl/cms/v1/t.js" data-site="IDENTYFIKATOR_Z_PANELU" />
+```
+
+Skrypt nie używa cookies ani nie zapisuje adresów IP – liczymy wejścia i dzienne unikalne wizyty (z dobowym, zmiennym kluczem), więc nie potrzeba banera zgody.
+
 Dla `next/image` dodaj domenę zdjęć do `next.config`:
 
 ```ts
@@ -109,6 +175,7 @@ images: { remotePatterns: [{ protocol: 'https', hostname: 'bot.zxcode.pl', pathn
 |---|---|---|
 | `field.text()` | tekst w jednej linii | `maxLength` (do 500) |
 | `field.textarea()` | dłuższy tekst | `maxLength` (do 20 000) |
+| `field.richtext()` | tekst z formatowaniem (`renderRichText`) | `maxLength` (do 20 000) |
 | `field.number()` | liczba albo `null` | `min`, `max`, `integer` |
 | `field.toggle()` | `true` / `false` | – |
 | `field.select()` | wartość z listy | `options` |
@@ -119,7 +186,7 @@ images: { remotePatterns: [{ protocol: 'https', hostname: 'bot.zxcode.pl', pathn
 
 Każde pole przyjmuje `label`, `description`, `required` i (poza zdjęciem i listą) `default`.
 
-Teksty zwracamy jako zwykły tekst – React sam je bezpiecznie wyświetla. Nie wstawiaj ich przez `dangerouslySetInnerHTML`.
+Teksty zwracamy jako zwykły tekst – React sam je bezpiecznie wyświetla. Nie wstawiaj ich przez `dangerouslySetInnerHTML` (wyjątek: wynik `renderRichText`).
 
 ## Opcje `createSite`
 

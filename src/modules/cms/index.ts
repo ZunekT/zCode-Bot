@@ -3,11 +3,12 @@ import { env } from '../../config/env.js';
 import { prisma } from '../../db/prisma.js';
 import { audit } from '../../core/audit.js';
 import { UserError } from '../../core/errors.js';
-import { defineCommand, defineModule } from '../../core/types.js';
+import { defineCommand, defineJob, defineModule } from '../../core/types.js';
 import { v2 } from '../../ui/builders/payload.js';
 import { card, codeBlock } from '../../ui/components/card.js';
 import { discordTime, truncate } from '../../utils/format.js';
-import { createSite, rotateKey } from './service.js';
+import { createSite, ensureSelfSite, publishDue, rotateKey } from './service.js';
+import { pruneStats } from './stats.js';
 
 const API_URL = () => env.PUBLIC_URL?.replace(/\/$/, '') ?? `http://ADRES-SERWERA:${env.HTTP_PORT}`;
 
@@ -24,7 +25,7 @@ function setupText(key: string) {
 
 async function siteAutocomplete(interaction: AutocompleteInteraction) {
   const q = interaction.options.getFocused();
-  const sites = await prisma.cmsSite.findMany({ where: { name: { contains: q, mode: 'insensitive' } }, orderBy: { name: 'asc' }, take: 25 });
+  const sites = await prisma.cmsSite.findMany({ where: { name: { contains: q, mode: 'insensitive' }, isSelf: false }, orderBy: { name: 'asc' }, take: 25 });
   await interaction.respond(sites.map((s) => ({ name: truncate(`${s.name} (#${s.id})`, 100), value: String(s.id) })));
 }
 
@@ -149,4 +150,12 @@ export const cmsModule = defineModule({
   description: 'Edycja treści stron klientów w panelu (zxcode-cms)',
   toggleable: false,
   commands: [cmsCommand],
+  jobs: [
+    defineJob({ name: 'cms-schedule', intervalMs: 30_000, runOnStart: true, run: publishDue }),
+    defineJob({ name: 'cms-stats-prune', intervalMs: 86_400_000, run: pruneStats }),
+  ],
+  async onReady(client) {
+    const guild = client.guilds.cache.get(env.GUILD_ID);
+    await ensureSelfSite(env.OWNER_ID ?? guild?.ownerId ?? null);
+  },
 });

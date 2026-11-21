@@ -1,14 +1,28 @@
 import type { Metadata } from 'next';
 import { FaqList, FinalCta, PageHero } from '@/components/site/Sections';
-import { FAQ_GROUPS } from '@/lib/faq';
+import { getContent } from '@/lib/content';
+import { renderRichText } from '@/lib/richtext';
 import { getSite } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'FAQ', description: 'Najczęstsze pytania o zamawianie botów Discord, panel, hosting i wsparcie.' };
 
 export default async function FaqPage() {
-  const { faq } = await getSite();
-  const groups = [...FAQ_GROUPS, ...(faq.length ? [{ id: 'inne', title: 'Inne pytania', items: faq }] : [])];
+  const [{ faq }, { faq: c }] = await Promise.all([getSite(), getContent()]);
+  const GROUPS = [
+    { id: 'zamowienie', title: 'Zamówienie i płatności', items: c.zamowienie },
+    { id: 'strony', title: 'Strony internetowe', items: c.strony },
+    { id: 'boty', title: 'Boty Discord', items: c.boty },
+    { id: 'hosting', title: 'Hosting i wsparcie', items: c.hosting },
+  ];
+  const groups = [
+    ...GROUPS.filter((g) => g.items.length).map((g) => ({
+      id: g.id,
+      title: g.title,
+      items: g.items.map((q, i) => ({ id: `${g.id}-${i}`, question: q.pytanie, answer: q.odpowiedz, html: renderRichText(q.odpowiedz) })),
+    })),
+    ...(faq.length ? [{ id: 'inne', title: 'Inne pytania', items: faq }] : []),
+  ];
   return (
     <>
       <PageHero
@@ -18,7 +32,7 @@ export default async function FaqPage() {
             Najczęstsze <span className="grad">pytania</span>
           </>
         }
-        lead="Nie ma tu Twojego pytania? Napisz przez formularz wyceny, na Discordzie albo na kontakt@zxcode.pl."
+        lead={c.opis}
       >
         <div className="jump">
           {groups.map((g) => (

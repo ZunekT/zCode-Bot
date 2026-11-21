@@ -44,7 +44,7 @@ export async function getSite(): Promise<SiteData> {
   try {
     const res = await fetch(`${env.internalUrl}/internal/public/site`, {
       headers: { 'x-internal-secret': env.internalSecret },
-      next: { revalidate: 300 },
+      cache: 'no-store',
       signal: AbortSignal.timeout(5000),
     });
     return res.ok ? ((await res.json()) as SiteData) : EMPTY;
