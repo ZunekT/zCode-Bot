@@ -101,3 +101,13 @@ strona zxcode.pl z panelem klienta i administracją (`web/`) oraz pakiety npm dl
 - Statystyki bez cookies (np. Umami na VPS).
 - Podstrony pojedynczych realizacji (SEO), więcej realizacji stron w portfolio.
 - Google Search Console (`/sitemap.xml`) i profil firmy w Google.
+
+## Animacja reklamowa
+- Zbudowana w konektorze Animki (LottieFiles Creator), dokument `zxcode-promo`, kompozycja „zxCode promo”,
+  1920×1080, 60 kl./s, 20 s, 5 scen (logo, hasło z pisaniem, strona + Discord, karty, finał z CTA). Opis i prompt:
+  `docs/MARKA.md`.
+- Eksport MP4: `creator.export('zxcode-promo.mp4', 'mp4', { fps: 60 })`, potem `creator_download_file`.
+  Wymaga podłączonego konta i obszaru roboczego LottieFiles w konektorze (claude.ai/customize/connectors).
+- Przy budowie w Animki: media podawaj jako stałe ścieżki (`{ file: 'media/x.png' }`), dzieci dodawaj do grupy
+  przed animowaniem grupy (inaczej `setParentInPlace` dokłada klatki kompensujące), gradient na tekście rób
+  animatorem `TextFillColor` z selektorem RampUp (matte na tekście nie renderuje się).
