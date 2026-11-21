@@ -150,6 +150,46 @@ const MODULES: ModuleDef[] = [
     ],
   },
   {
+    key: 'moderation',
+    label: 'Moderacja',
+    toggle: 'moderation',
+    fields: [
+      [ch('kanal_spraw', 'Kanał spraw', TEXT, 'Kary i zmiany spraw; puste = kanał logów „Moderacja”'), 'modLogChannelId'],
+      [bool('dm', 'Wiadomość do ukaranej osoby', true, 'Powód i czas kary w wiadomości prywatnej'), 'modDmUsers'],
+      [
+        {
+          key: 'odwolania',
+          type: 'textarea',
+          label: 'Informacja o odwołaniach',
+          description: 'Dopisywana do wiadomości o karze, np. gdzie można się odwołać',
+          maxLength: 1000,
+        },
+        'modAppealText',
+      ],
+      [bool('wymagany_powod', 'Wymagaj powodu kary', false), 'modRequireReason'],
+      [num('waznosc', 'Ważność ostrzeżeń (dni)', 0, 365, 30, '0 = ostrzeżenia nie wygasają'), 'warnExpireDays'],
+      [num('wyciszenie_przy', 'Wyciszenie po ostrzeżeniach', 0, 20, 3, '0 = wyłączone'), 'warnTimeoutAt'],
+      [num('czas_wyciszenia', 'Czas automatycznego wyciszenia (min)', 1, 40_320, 60), 'warnTimeoutMinutes'],
+      [num('kick_przy', 'Wyrzucenie po ostrzeżeniach', 0, 20, 0, '0 = wyłączone'), 'warnKickAt'],
+      [num('ban_przy', 'Ban po ostrzeżeniach', 0, 20, 0, '0 = wyłączone'), 'warnBanAt'],
+    ],
+  },
+  {
+    key: 'giveaways',
+    label: 'Giveawaye',
+    toggle: 'giveaways',
+    fields: [
+      [role('organizatorzy', 'Rola organizatorów', 'Może tworzyć giveawaye (obsługa zawsze może)'), 'giveawayManagerRoleId'],
+      [role('powiadomienia', 'Rola do powiadomień', 'Oznaczana przy nowym giveawayu'), 'giveawayPingRoleId'],
+    ],
+  },
+  {
+    key: 'polls',
+    label: 'Ankiety',
+    toggle: 'polls',
+    fields: [[bool('dla_wszystkich', 'Ankiety dla wszystkich', false, 'Bez tego ankiety tworzy tylko obsługa'), 'pollsForEveryone']],
+  },
+  {
     key: 'logs',
     label: 'Logi serwera',
     toggle: 'logs',

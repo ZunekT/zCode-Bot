@@ -117,3 +117,29 @@ export function parseWhen(input: string, now = new Date()): Date | null {
 }
 
 export const WHEN_HINT = '30m, 2h, 1h30m, 3d, 18:00, jutro 10:00, 24.12 18:00';
+
+const DURATION_UNITS: Record<string, number> = {
+  sek: 1_000,
+  s: 1_000,
+  min: 60_000,
+  m: 60_000,
+  godz: 3_600_000,
+  g: 3_600_000,
+  h: 3_600_000,
+  dni: 86_400_000,
+  dzien: 86_400_000,
+  d: 86_400_000,
+  tyg: 604_800_000,
+  w: 604_800_000,
+};
+const DURATION_PART = /(\d{1,6})(sek|min|godz|dni|dzien|tyg|s|m|g|h|d|w)/g;
+
+export function parseDuration(input: string): number | null {
+  const s = input.toLowerCase().replace(/\s+/g, '').replace(/ń/g, 'n');
+  if (!s || s.replace(DURATION_PART, '') !== '') return null;
+  let ms = 0;
+  for (const m of s.matchAll(DURATION_PART)) ms += Number(m[1]) * DURATION_UNITS[m[2]!]!;
+  return ms > 0 ? ms : null;
+}
+
+export const DURATION_HINT = '10m, 1h, 1h30m, 3d, 2w';

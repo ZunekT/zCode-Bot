@@ -52,6 +52,20 @@ model GuildConfig {
 
   paymentDetails String?
 
+  modLogChannelId    String?
+  modDmUsers         Boolean @default(true)
+  modAppealText      String?
+  modRequireReason   Boolean @default(false)
+  warnExpireDays     Int     @default(30)
+  warnTimeoutAt      Int     @default(3)
+  warnTimeoutMinutes Int     @default(60)
+  warnKickAt         Int     @default(0)
+  warnBanAt          Int     @default(0)
+
+  giveawayManagerRoleId String?
+  giveawayPingRoleId    String?
+  pollsForEveryone      Boolean @default(false)
+
   updatedAt DateTime @updatedAt
 }
 
@@ -426,21 +440,6 @@ model RoadmapItem {
   createdAt DateTime      @default(now())
 }
 
-model Giveaway {
-  id              Int      @id @default(autoincrement())
-  prize           String
-  winnersCount    Int      @default(1)
-  requiredRole    String?
-  minDaysOnServer Int?
-  participants    String[]
-  winners         String[]
-  channelId       String
-  messageId       String?
-  endsAt          DateTime
-  ended           Boolean  @default(false)
-  createdBy       String
-}
-
 model Partnership {
   id          Int      @id @default(autoincrement())
   applicantId String
@@ -600,4 +599,91 @@ model Lead {
 
   @@index([status])
   @@index([createdAt])
+}
+
+enum ModAction {
+  WARN
+  NOTE
+  TIMEOUT
+  UNTIMEOUT
+  KICK
+  SOFTBAN
+  BAN
+  UNBAN
+}
+
+model ModCase {
+  id           Int       @id @default(autoincrement())
+  action       ModAction
+  userId       String
+  userTag      String?
+  moderatorId  String
+  reason       String?
+  durationMs   BigInt?
+  expiresAt    DateTime?
+  active       Boolean   @default(true)
+  auto         Boolean   @default(false)
+  revokedById  String?
+  revokedAt    DateTime?
+  revokeReason String?
+  createdAt    DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, active, expiresAt])
+}
+
+model Giveaway {
+  id             Int             @id @default(autoincrement())
+  channelId      String
+  messageId      String?
+  hostId         String
+  prize          String
+  description    String?
+  winners        Int
+  endsAt         DateTime
+  requiredRoleId String?
+  minAccountDays Int             @default(0)
+  ended          Boolean         @default(false)
+  cancelled      Boolean         @default(false)
+  winnerIds      String[]        @default([])
+  createdAt      DateTime        @default(now())
+  entries        GiveawayEntry[]
+
+  @@index([ended, endsAt])
+}
+
+model GiveawayEntry {
+  giveawayId Int
+  userId     String
+  createdAt  DateTime @default(now())
+  giveaway   Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+
+  @@id([giveawayId, userId])
+}
+
+model Poll {
+  id          Int        @id @default(autoincrement())
+  channelId   String
+  messageId   String?
+  authorId    String
+  question    String
+  options     String[]
+  multi       Boolean    @default(false)
+  hideResults Boolean    @default(false)
+  endsAt      DateTime?
+  ended       Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  votes       PollVote[]
+
+  @@index([ended, endsAt])
+}
+
+model PollVote {
+  pollId    Int
+  userId    String
+  option    Int
+  createdAt DateTime @default(now())
+  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  @@id([pollId, userId, option])
 }

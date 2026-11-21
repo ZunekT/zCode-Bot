@@ -4,10 +4,13 @@ import { announcementsModule } from './announcements/index.js';
 import { changelogModule } from './changelog/index.js';
 import { clientsModule } from './clients/index.js';
 import { faqModule } from './faq/index.js';
+import { giveawaysModule } from './giveaways/index.js';
 import { leadsModule } from './leads/index.js';
 import { logsModule } from './logs/index.js';
+import { moderationModule } from './moderation/index.js';
 import { monitoringModule } from './monitoring/index.js';
 import { ordersModule } from './orders/index.js';
+import { pollsModule } from './polls/index.js';
 import { portfolioModule } from './portfolio/index.js';
 import { pricingModule } from './pricing/index.js';
 import { remindersModule } from './reminders/index.js';
@@ -27,6 +30,9 @@ export const modules: BotModule[] = [
   faqModule,
   logsModule,
   verificationModule,
+  moderationModule,
+  giveawaysModule,
+  pollsModule,
   ordersModule,
   leadsModule,
   pricingModule,

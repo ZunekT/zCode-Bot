@@ -76,6 +76,20 @@ strona zxcode.pl z panelem klienta i administracją (`web/`) oraz pakiety npm dl
 - Cennik: `/cennik domyslne` dodaje przykładowe pakiety botów i stron (ceny stron są przykładowe – do ustalenia
   przez właściciela). Panel cennika na Discordzie: max 3 pakiety na rodzaj (limit 40 komponentów wiadomości).
 
+## Moderacja, giveawaye, ankiety (bot)
+- `src/modules/moderation`: `/ban` (z `czas` = ban czasowy), `/softban`, `/unban`, `/kick`, `/timeout`, `/untimeout`, `/warn`,
+  `/historia`, `/sprawa pokaz|powod|cofnij|notatka`, `/wyczysc`, `/slowmode`, `/zablokuj`, `/odblokuj`, menu kontekstowe
+  „Moderuj” (panel z przyciskami i modalem). Każda kara to `ModCase` (numer sprawy). Wspólna logika w `punish()`
+  (`service.ts`): hierarchia ról, DM przed kick/ban, log na `modLogChannelId` albo kanale logów „Moderacja”.
+- Obsługa: ostrzeżenia, wyciszenia, kicki, czyszczenie. Bany: administracja albo uprawnienie „Banowanie członków”.
+- Automatyczne kary za liczbę aktywnych ostrzeżeń (`warnTimeoutAt`, `warnKickAt`, `warnBanAt`, ważność `warnExpireDays`).
+  Bany czasowe zdejmuje job `tempban-expiry` (co minutę).
+- `src/modules/giveaways`: `/giveaway start|zakoncz|reroll|anuluj|lista`, przycisk udziału, wymagana rola i wiek konta,
+  losowanie `crypto.randomInt` przez job co 15 s. Stary nieużywany model `Giveaway` ze szkieletu zastąpiony nowym.
+- `src/modules/polls`: `/ankieta utworz|zakoncz`, 2–10 odpowiedzi, wielokrotny wybór, ukryte wyniki, zamykanie przez job.
+- Edycja wiadomości przy głosach/zapisach jest zbijana (`src/utils/refresh.ts`), żeby nie wpaść w limity Discorda.
+- Ustawienia wszystkich trzech modułów są w panelu WWW (`src/modules/sdk/self.ts`).
+
 ## Mapa strony
 - Publiczne: `/` (hub), `/strony-internetowe`, `/boty-discord`, `/realizacje?typ=strony|boty`, `/cennik#strony|#boty`,
   `/opinie`, `/faq#zamowienie|#strony|#boty|#hosting`, `/zamow`, `/zamow/strona`, `/regulamin`,
